@@ -1,0 +1,46 @@
+Thyroid                  , Cervical Cancer                   , PCOS                  , Endometriosis
+age                      , Age                               , Sl. No                , Age
+sex                      , Number of sexual partners         , Patient File No.      , Menstrual_Irregularity
+on thyroxine             , First sexual intercourse          , PCOS (Y/N)            , Chronic_Pain_Level
+query on thyroxine       , Num of pregnancies                , Age (yrs)             , Hormone_Level_Abnormality
+on antithyroid medication, Smokes                            , Weight (Kg)           , Infertility
+sick                     , Smokes (years)                    , Height(Cm)            , BMI
+pregnant                 , Smokes (packs/year)               , BMI                   , Diagnosis
+thyroid surgery          , Hormonal Contraceptives           , Blood Group           , 
+I131 treatment           , Hormonal Contraceptives (years)   , Pulse rate(bpm)       , 
+query hypothyroid        , IUD                               , RR (breaths/min)      , 
+query hyperthyroid       , IUD (years)                       , Hb(g/dl)              , 
+lithium                  , STDs                              , Cycle(R/I)            , 
+goitre                   , STDs (number)                     , Cycle length(days)    , 
+tumor                    , STDs:condylomatosis               , Marraige Status (Yrs) , 
+hypopituitary            , STDs:cervical condylomatosis      , Pregnant(Y/N)         , 
+psych                    , STDs:vaginal condylomatosis       , No. of abortions      , 
+TSH measured             , STDs:vulvo-perineal condylomatosis, I   beta-HCG(mIU/mL)  , 
+TSH                      , STDs:syphilis                     , II    beta-HCG(mIU/mL), 
+T3 measured              , STDs:pelvic inflammatory disease  , FSH(mIU/mL)           , 
+TT4 measured             , STDs:genital herpes               , LH(mIU/mL)            , 
+TT4                      , STDs:molluscum contagiosum        , FSH/LH                , 
+T4U measured             , STDs:AIDS                         , Hip(inch)             , 
+T4U                      , STDs:HIV                          , Waist(inch)           , 
+FTI measured             , STDs:Hepatitis B                  , Waist:Hip Ratio       , 
+FTI                      , STDs:HPV                          , TSH (mIU/L)           , 
+binaryClass              , STDs: Number of diagnosis         , AMH(ng/mL)            , 
+                         , STDs: Time since first diagnosis  , PRL(ng/mL)            , 
+                         , STDs: Time since last diagnosis   , Vit D3 (ng/mL)        , 
+                         , Dx:Cancer                         , PRG(ng/mL)            , 
+                         , Dx:CIN                            , RBS(mg/dl)            , 
+                         , Dx:HPV                            , Weight gain(Y/N)      , 
+                         , Dx                                , hair growth(Y/N)      , 
+                         , Hinselmann                        , Skin darkening (Y/N)  , 
+                         , Schiller                          , Hair loss(Y/N)        , 
+                         , Citology                          , Pimples(Y/N)          , 
+                         , Biopsy                            , Fast food (Y/N)       , 
+                         ,                                   , Reg.Exercise(Y/N)     , 
+                         ,                                   , BP _Systolic (mmHg)   , 
+                         ,                                   , BP _Diastolic (mmHg)  , 
+                         ,                                   , Follicle No. (L)      , 
+                         ,                                   , Follicle No. (R)      , 
+                         ,                                   , Avg. F size (L) (mm)  , 
+                         ,                                   , Avg. F size (R) (mm)  , 
+                         ,                                   , Endometrium (mm)      , 
+                         ,                                   ,                       , 
