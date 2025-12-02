@@ -17,7 +17,11 @@ Utilities to train a Random Forest and compute feature importances.
 """
 
 import matplotlib.pyplot as plt
+import os
 
+# directory to save outputs (CSVs/plots)
+OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "outputs")
+os.makedirs(OUTPUT_DIR, exist_ok=True)
 thyroid = pd.read_csv('C:\\Users\\user\\SreelakshmiK\\personal\\Projects\\She-Health\\backend\\data\\cleaned_dataset_Thyroid1.csv')
 cervical = pd.read_csv('C:\\Users\\user\\SreelakshmiK\\personal\\Projects\\She-Health\\backend\\data\\cervical-cancer_csv.csv')
 pcos = pd.read_csv('C:\\Users\\user\\SreelakshmiK\\personal\\Projects\\She-Health\\backend\\data\\PCOS_data.csv')
@@ -128,240 +132,87 @@ def train_random_forest(
     return result
 
 
-def plot_importances(importances_df: pd.DataFrame, top_n: int = 20, figsize: Tuple[int, int] = (8, 6), title: Optional[str] = None):
-    """
-    Plot horizontal bar chart of top_n importances DataFrame (columns: feature, importance).
-    """
-    df = importances_df.copy().head(top_n)
-    plt.figure(figsize=figsize)
-    plt.barh(df["feature"][::-1], df["importance"][::-1])
-    plt.xlabel("Importance")
-    plt.tight_layout()
-    if title:
-        plt.title(title)
-    plt.show()
-
-
 if __name__ == "__main__":
 
-    # Train a Decision Tree on the thyroid dataset and print feature precedence
-    def train_decision_tree_on_thyroid(df: pd.DataFrame, target_col: str = "binaryClass", random_state: int = 42, max_depth: Optional[int] = None):
-        df = df.copy()
-        # normalize column names
-        df.columns = [c.strip() for c in df.columns]
 
-        if target_col not in df.columns:
-            raise ValueError(f"Target column '{target_col}' not found in dataframe columns: {df.columns.tolist()}")
-
-        # Convert all columns except target to numeric where possible
-        for col in df.columns:
-            df[col] = pd.to_numeric(df[col], errors="coerce")
-
-        # Drop rows with missing target
-        df = df.dropna(subset=[target_col])
-
-        X = df.drop(columns=[target_col])
-        y = df[target_col]
-
-        # simple imputation: fill numeric NaNs with median
-        X = X.fillna(X.median())
-
-        # ensure integer labels if binary
+    def process_dataset(df, name, target_col: Optional[str] = None, target_candidates: Optional[list] = None,
+                        contains: Optional[str] = None, n_estimators: int = 200):
+        """
+        Generic processing + RF training for a dataset.
+        - df: DataFrame
+        - name: short name used for prints and output filenames
+        - target_col: explicit target column name (preferred)
+        - target_candidates: list of candidate names to try in order
+        - contains: substring to search for in column names (case-insensitive)
+        """
         try:
-            y = y.astype(int)
-        except Exception:
-            pass
+            print(f"\nTraining Random Forest on {name} dataset...")
+            dfc = df.copy()
+            dfc.columns = [c.strip() for c in dfc.columns]
 
-        # train/test split for a quick check (not strictly necessary for importances)
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_state, stratify=y if len(set(y))>1 else None)
+            # Determine target column
+            if target_col is None:
+                if target_candidates:
+                    for c in target_candidates:
+                        if c in dfc.columns:
+                            target_col = c
+                            break
+                if target_col is None and contains:
+                    for c in dfc.columns:
+                        if contains in c.lower():
+                            target_col = c
+                            break
+                if target_col is None:
+                    target_col = dfc.columns[-1]  # fallback
 
-        clf = DecisionTreeClassifier(random_state=random_state, max_depth=max_depth)
-        clf.fit(X_train, y_train)
+            print(f"Using target column: {target_col}")
 
-        importances = clf.feature_importances_
-        df_imp = pd.DataFrame({"feature": X.columns, "importance": importances})
-        df_imp = df_imp.sort_values("importance", ascending=False).reset_index(drop=True)
+            # Convert columns to numeric where possible
+            for col in dfc.columns:
+                dfc[col] = pd.to_numeric(dfc[col], errors="coerce")
 
-        # Print features in precedence order
-        print("\nDecision Tree feature precedence (highest -> lowest):")
-        for idx, row in df_imp.iterrows():
-            print(f"{idx+1}. {row['feature']}: {row['importance']:.6f}")
+            dfc = dfc.dropna(subset=[target_col])
 
-        return {"model": clf, "importances": df_imp}
+            X = dfc.drop(columns=[target_col])
+            y = dfc[target_col]
 
-    try:
-        print("\nTraining Decision Tree on thyroid dataset...")
-        dt_out = train_decision_tree_on_thyroid(thyroid)
-        # also show top 10
-        print('\nTop 10 features:')
-        print(dt_out['importances'].head(10).to_string(index=False))
-    except Exception as e:
-        print(f"Failed to train Decision Tree on thyroid dataset: {e}")
+            # Simple imputation for features
+            X = X.fillna(X.median())
 
-    # Train a Random Forest on the thyroid dataset and print feature precedence
-    try:
-        print("\nTraining Random Forest on thyroid dataset...")
-        df = thyroid.copy()
-        df.columns = [c.strip() for c in df.columns]
-        target_col = "binaryClass"
-        if target_col not in df.columns:
-            raise ValueError(f"Target column '{target_col}' not found in dataframe columns: {df.columns.tolist()}")
+            try:
+                y = y.astype(int)
+            except Exception:
+                pass
 
-        for col in df.columns:
-            df[col] = pd.to_numeric(df[col], errors="coerce")
+            rf_out = train_random_forest(X, y, compute_permutation=True, n_estimators=n_estimators)
 
-        df = df.dropna(subset=[target_col])
+            print(f"\n{name.capitalize()} Random Forest feature precedence (built-in importance):")
+            print(rf_out['importances'].to_string(index=False))
 
-        X_rf = df.drop(columns=[target_col])
-        y_rf = df[target_col]
+            if rf_out.get('permutation_importances') is not None:
+                print(f"\n{name.capitalize()} Random Forest permutation importances:")
+                print(rf_out['permutation_importances'].to_string(index=False))
 
-        X_rf = X_rf.fillna(X_rf.median())
-        try:
-            y_rf = y_rf.astype(int)
-        except Exception:
-            pass
+            # save importances
+            try:
+                rf_out['importances'].to_csv(os.path.join(OUTPUT_DIR, f'{name}_rf_importances.csv'), index=False)
+                if rf_out.get('permutation_importances') is not None:
+                    rf_out['permutation_importances'].to_csv(os.path.join(OUTPUT_DIR, f'{name}_rf_permutation_importances.csv'), index=False)
+            except Exception:
+                print(f'Warning: Failed to save {name} RF importances to CSV')
+        except Exception as e:
+            print(f"Failed to train Random Forest on {name} dataset: {e}")
 
-        rf_out = train_random_forest(X_rf, y_rf, compute_permutation=True, n_estimators=200)
 
-        print("\nRandom Forest feature precedence (built-in importance):")
-        print(rf_out['importances'].to_string(index=False))
+    if __name__ == "__main__":
+        # thyroid: explicit binaryClass target
+        process_dataset(thyroid, "thyroid", target_col="binaryClass", n_estimators=200)
 
-        if rf_out.get('permutation_importances') is not None:
-            print("\nRandom Forest permutation importances:")
-            print(rf_out['permutation_importances'].to_string(index=False))
-    except Exception as e:
-        print(f"Failed to train Random Forest on thyroid dataset: {e}")
+        # cervical: prefer Biopsy, then Dx, else last column
+        process_dataset(cervical, "cervical", target_candidates=["Biopsy", "Dx"], n_estimators=200)
 
-    # Train a Random Forest on the cervical dataset and print feature precedence
-    try:
-        print("\nTraining Random Forest on cervical dataset...")
-        dfc = cervical.copy()
-        dfc.columns = [c.strip() for c in dfc.columns]
-        # choose target column (use 'Biopsy' if present, otherwise try common Dx columns)
-        if 'Biopsy' in dfc.columns:
-            target_col = 'Biopsy'
-        elif 'Dx' in dfc.columns:
-            target_col = 'Dx'
-        else:
-            # fallback to last column
-            target_col = dfc.columns[-1]
+        # PCOS: search for column names containing 'pcos' (case-insensitive) or common variants
+        process_dataset(pcos, "pcos", target_candidates=["PCOS (Y/N)", "PCOS"], contains="pcos", n_estimators=200)
 
-        print(f"Using target column: {target_col}")
-
-        for col in dfc.columns:
-            dfc[col] = pd.to_numeric(dfc[col], errors='coerce')
-
-        dfc = dfc.dropna(subset=[target_col])
-
-        X_c = dfc.drop(columns=[target_col])
-        y_c = dfc[target_col]
-
-        X_c = X_c.fillna(X_c.median())
-        try:
-            y_c = y_c.astype(int)
-        except Exception:
-            pass
-
-        rf_out_c = train_random_forest(X_c, y_c, compute_permutation=True, n_estimators=200)
-
-        print("\nCervical Random Forest feature precedence (built-in importance):")
-        print(rf_out_c['importances'].to_string(index=False))
-
-        if rf_out_c.get('permutation_importances') is not None:
-            print("\nCervical Random Forest permutation importances:")
-            print(rf_out_c['permutation_importances'].to_string(index=False))
-    except Exception as e:
-        print(f"Failed to train Random Forest on cervical dataset: {e}")
-
-    # Train a Random Forest on the PCOS dataset and print feature precedence
-    try:
-        print("\nTraining Random Forest on PCOS dataset...")
-        dfp = pcos.copy()
-        dfp.columns = [c.strip() for c in dfp.columns]
-
-        # detect a sensible target column: look for 'pcos' in column name, else try common variants
-        target_col = None
-        for c in dfp.columns:
-            if 'pcos' in c.lower():
-                target_col = c
-                break
-        if target_col is None:
-            # try exact common name
-            for candidate in ['PCOS (Y/N)', 'PCOS', 'PCOS (Y/N)']:
-                if candidate in dfp.columns:
-                    target_col = candidate
-                    break
-        if target_col is None:
-            # fallback to a column named like 'PCOS (Y/N)' with variable whitespace
-            for c in dfp.columns:
-                if 'pcos' in c.replace(' ', '').lower():
-                    target_col = c
-                    break
-        if target_col is None:
-            raise ValueError('Could not find a PCOS target column in PCOS dataset')
-
-        print(f"Using target column: {target_col}")
-
-        for col in dfp.columns:
-            dfp[col] = pd.to_numeric(dfp[col], errors='coerce')
-
-        dfp = dfp.dropna(subset=[target_col])
-
-        X_p = dfp.drop(columns=[target_col])
-        y_p = dfp[target_col]
-
-        X_p = X_p.fillna(X_p.median())
-        try:
-            y_p = y_p.astype(int)
-        except Exception:
-            pass
-
-        rf_out_p = train_random_forest(X_p, y_p, compute_permutation=True, n_estimators=200)
-
-        print("\nPCOS Random Forest feature precedence (built-in importance):")
-        print(rf_out_p['importances'].to_string(index=False))
-
-        if rf_out_p.get('permutation_importances') is not None:
-            print("\nPCOS Random Forest permutation importances:")
-            print(rf_out_p['permutation_importances'].to_string(index=False))
-    except Exception as e:
-        print(f"Failed to train Random Forest on PCOS dataset: {e}")
-
-    # Train a Random Forest on the endometriosis dataset and print feature precedence
-    try:
-        print("\nTraining Random Forest on endometriosis dataset...")
-        dfe = endometriosis.copy()
-        dfe.columns = [c.strip() for c in dfe.columns]
-
-        # prefer a Diagnosis-like column
-        if 'Diagnosis' in dfe.columns:
-            target_col = 'Diagnosis'
-        else:
-            target_col = dfe.columns[-1]
-
-        print(f"Using target column: {target_col}")
-
-        for col in dfe.columns:
-            dfe[col] = pd.to_numeric(dfe[col], errors='coerce')
-
-        dfe = dfe.dropna(subset=[target_col])
-
-        X_e = dfe.drop(columns=[target_col])
-        y_e = dfe[target_col]
-
-        X_e = X_e.fillna(X_e.median())
-        try:
-            y_e = y_e.astype(int)
-        except Exception:
-            pass
-
-        rf_out_e = train_random_forest(X_e, y_e, compute_permutation=True, n_estimators=200)
-
-        print("\nEndometriosis Random Forest feature precedence (built-in importance):")
-        print(rf_out_e['importances'].to_string(index=False))
-
-        if rf_out_e.get('permutation_importances') is not None:
-            print("\nEndometriosis Random Forest permutation importances:")
-            print(rf_out_e['permutation_importances'].to_string(index=False))
-    except Exception as e:
-        print(f"Failed to train Random Forest on endometriosis dataset: {e}")
+        # endometriosis: prefer 'Diagnosis' else last column
+        process_dataset(endometriosis, "endometriosis", target_candidates=["Diagnosis"], n_estimators=200)
