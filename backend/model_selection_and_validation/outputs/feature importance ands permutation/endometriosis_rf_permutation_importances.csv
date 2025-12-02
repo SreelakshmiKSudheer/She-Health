@@ -1,0 +1,7 @@
+feature                  , importance
+Chronic_Pain_Level       , 0.2763104749430466
+BMI                      , 0.27109769106258474
+Age                      , 0.18104864742977933
+Hormone_Level_Abnormality, 0.1471344820060518
+Infertility              , 0.09171927187580828
+Menstrual_Irregularity   , 0.0869975060615668

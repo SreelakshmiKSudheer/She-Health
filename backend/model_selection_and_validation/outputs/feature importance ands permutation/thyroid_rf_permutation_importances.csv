@@ -1,0 +1,26 @@
+feature                  , importance
+TSH                      , 0.11087189437927081
+on thyroxine             , 0.0017535154244183947
+TT4                      , 0.0002515108425168777
+thyroid surgery          , 7.095034956755564e-05
+FTI                      , 6.092744006002127e-05
+query hypothyroid        , 5.184263538360323e-06
+age                      , 2.9130623691253633e-06
+T4U                      , 1.629339969222432e-06
+sex                      , 9.874787691988018e-07
+query on thyroxine       , 2.2204460492503132e-17
+goitre                   , 1.1102230246251566e-17
+tumor                    , 1.1102230246251566e-17
+T3 measured              , 1.1102230246251566e-17
+I131 treatment           , 0.0
+pregnant                 , 0.0
+sick                     , 0.0
+on antithyroid medication, 0.0
+TSH measured             , 0.0
+psych                    , 0.0
+hypopituitary            , 0.0
+lithium                  , 0.0
+query hyperthyroid       , 0.0
+TT4 measured             , 0.0
+T4U measured             , 0.0
+FTI measured             , 0.0

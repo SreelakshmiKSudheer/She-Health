@@ -1,0 +1,36 @@
+feature,importance
+Schiller,0.051241286100441
+Citology,0.001821027173139822
+First sexual intercourse,0.0016135533741167384
+Age,0.0008607198748043721
+Num of pregnancies,0.0007492768056148402
+Number of sexual partners,0.0007279366434295942
+Hormonal Contraceptives (years),0.00027030872101293515
+STDs:genital herpes,0.00016835016835016204
+Hinselmann,9.128847157018339e-05
+Dx:CIN,7.350500308245245e-05
+Dx,2.371129131695238e-06
+Smokes (packs/year),2.3711291316841353e-06
+Dx:Cancer,2.2204460492503132e-17
+STDs:HIV,1.1102230246251566e-17
+IUD,1.1102230246251566e-17
+IUD (years),1.1102230246251566e-17
+STDs: Time since first diagnosis,1.1102230246251566e-17
+Smokes (years),0.0
+Smokes,0.0
+STDs:pelvic inflammatory disease,0.0
+STDs:syphilis,0.0
+STDs:vulvo-perineal condylomatosis,0.0
+STDs:vaginal condylomatosis,0.0
+STDs:cervical condylomatosis,0.0
+STDs:condylomatosis,0.0
+STDs (number),0.0
+STDs,0.0
+Hormonal Contraceptives,0.0
+STDs:molluscum contagiosum,0.0
+STDs:Hepatitis B,0.0
+STDs:AIDS,0.0
+Dx:HPV,0.0
+STDs:HPV,0.0
+STDs: Time since last diagnosis,0.0
+STDs: Number of diagnosis,-2.2204460492503132e-17

@@ -1,0 +1,45 @@
+feature               , importance
+Follicle No. (R)      , 0.006705935307630218
+Follicle No. (L)      , 0.00020022350530825018
+hair growth(Y/N)      , 0.00011485689451791181
+Skin darkening (Y/N)  , 2.560998323711816e-05
+Hb(g/dl)              , 3.3306690738754695e-17
+Endometrium (mm)      , 3.3306690738754695e-17
+Waist:Hip Ratio       , 3.3306690738754695e-17
+FSH(mIU/mL)           , 3.3306690738754695e-17
+LH(mIU/mL)            , 2.2204460492503132e-17
+Height(Cm)            , 2.2204460492503132e-17
+Cycle length(days)    , 2.2204460492503132e-17
+Fast food (Y/N)       , 2.2204460492503132e-17
+TSH (mIU/L)           , 2.2204460492503132e-17
+RBS(mg/dl)            , 2.2204460492503132e-17
+Avg. F size (R) (mm)  , 2.2204460492503132e-17
+I   beta-HCG(mIU/mL)  , 2.2204460492503132e-17
+PRG(ng/mL)            , 2.2204460492503132e-17
+Avg. F size (L) (mm)  , 1.1102230246251566e-17
+Weight (Kg)           , 1.1102230246251566e-17
+Blood Group           , 1.1102230246251566e-17
+Sl. No                , 1.1102230246251566e-17
+Weight gain(Y/N)      , 1.1102230246251566e-17
+Reg.Exercise(Y/N)     , 1.1102230246251566e-17
+FSH/LH                , 1.1102230246251566e-17
+BMI                   , 1.1102230246251566e-17
+Age (yrs)             , 1.1102230246251566e-17
+II    beta-HCG(mIU/mL), 1.1102230246251566e-17
+Marraige Status (Yrs) , 1.1102230246251566e-17
+Vit D3 (ng/mL)        , 1.1102230246251566e-17
+RR (breaths/min)      , 0.0
+Pulse rate(bpm)       , 0.0
+Patient File No.      , 0.0
+Cycle(R/I)            , 0.0
+Pregnant(Y/N)         , 0.0
+No. of abortions      , 0.0
+Hip(inch)             , 0.0
+AMH(ng/mL)            , 0.0
+PRL(ng/mL)            , 0.0
+Waist(inch)           , 0.0
+Pimples(Y/N)          , 0.0
+Hair loss(Y/N)        , 0.0
+BP _Diastolic (mmHg)  , 0.0
+BP _Systolic (mmHg)   , 0.0
+                      , 0.0
