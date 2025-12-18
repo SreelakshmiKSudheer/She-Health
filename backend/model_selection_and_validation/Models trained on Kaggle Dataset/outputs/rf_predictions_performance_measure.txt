@@ -1,0 +1,260 @@
+=== thyroid - random_forest ===
+Target:  binaryClass
+Timestamp (UTC): 2025-12-03T09:48:25.535761Z
+Predictions CSV: C:\Users\user\SreelakshmiK\personal\Projects\She-Health\backend\model_selection_and_validation\Models trained on Kaggle Dataset\outputs\thyroid_rf_predictions.csv
+accuracy: 0.9955830388692579
+precision: 0.9555555555555556
+recall: 0.9885057471264368
+f1: 0.9717514124293786
+roc_auc: 0.9993510421822582
+
+=== thyroid - xgboost ===
+Target:  binaryClass
+Timestamp (UTC): 2025-12-03T09:48:25.787647Z
+Predictions CSV: C:\Users\user\SreelakshmiK\personal\Projects\She-Health\backend\model_selection_and_validation\Models trained on Kaggle Dataset\outputs\thyroid_xgboost_predictions.csv
+accuracy: 0.9946996466431095
+precision: 0.9550561797752809
+recall: 0.9770114942528736
+f1: 0.9659090909090909
+roc_auc: 0.998064125831821
+
+=== thyroid - lightgbm ===
+Target:  binaryClass
+Timestamp (UTC): 2025-12-03T09:48:28.285838Z
+Predictions CSV: C:\Users\user\SreelakshmiK\personal\Projects\She-Health\backend\model_selection_and_validation\Models trained on Kaggle Dataset\outputs\thyroid_lightgbm_predictions.csv
+accuracy: 0.9946996466431095
+precision: 0.945054945054945
+recall: 0.9885057471264368
+f1: 0.9662921348314607
+roc_auc: 0.9985370950888193
+
+=== thyroid - catboost ===
+Target:  binaryClass
+Timestamp (UTC): 2025-12-03T09:48:34.686078Z
+Predictions CSV: C:\Users\user\SreelakshmiK\personal\Projects\She-Health\backend\model_selection_and_validation\Models trained on Kaggle Dataset\outputs\thyroid_catboost_predictions.csv
+accuracy: 0.9964664310954063
+precision: 0.9662921348314607
+recall: 0.9885057471264368
+f1: 0.9772727272727273
+roc_auc: 0.9986140900841445
+
+=== thyroid - svm ===
+Target:  binaryClass
+Timestamp (UTC): 2025-12-03T09:48:35.712279Z
+Predictions CSV: C:\Users\user\SreelakshmiK\personal\Projects\She-Health\backend\model_selection_and_validation\Models trained on Kaggle Dataset\outputs\thyroid_svm_predictions.csv
+accuracy: 0.9522968197879859
+precision: 0.9024390243902439
+recall: 0.42528735632183906
+f1: 0.578125
+roc_auc: 0.9884947478413902
+
+=== thyroid - knn ===
+Target:  binaryClass
+Timestamp (UTC): 2025-12-03T09:48:36.008851Z
+Predictions CSV: C:\Users\user\SreelakshmiK\personal\Projects\She-Health\backend\model_selection_and_validation\Models trained on Kaggle Dataset\outputs\thyroid_knn_predictions.csv
+accuracy: 0.9558303886925795
+precision: 0.8363636363636363
+recall: 0.5287356321839081
+f1: 0.647887323943662
+roc_auc: 0.8773964692295001
+
+=== thyroid - nb ===
+Target:  binaryClass
+Timestamp (UTC): 2025-12-03T09:48:36.090455Z
+Predictions CSV: C:\Users\user\SreelakshmiK\personal\Projects\She-Health\backend\model_selection_and_validation\Models trained on Kaggle Dataset\outputs\thyroid_nb_predictions.csv
+accuracy: 0.21819787985865724
+precision: 0.088659793814433
+recall: 0.9885057471264368
+f1: 0.16272469252601704
+roc_auc: 0.9123411978221416
+
+=== cervical - random_forest ===
+Target:  Biopsy
+Timestamp (UTC): 2025-12-03T09:48:36.459925Z
+Predictions CSV: C:\Users\user\SreelakshmiK\personal\Projects\She-Health\backend\model_selection_and_validation\Models trained on Kaggle Dataset\outputs\cervical_rf_predictions.csv
+accuracy: 0.9482071713147411
+precision: 0.6153846153846154
+recall: 0.5
+f1: 0.5517241379310345
+roc_auc: 0.9469414893617021
+
+=== cervical - xgboost ===
+Target:  Biopsy
+Timestamp (UTC): 2025-12-03T09:48:36.711489Z
+Predictions CSV: C:\Users\user\SreelakshmiK\personal\Projects\She-Health\backend\model_selection_and_validation\Models trained on Kaggle Dataset\outputs\cervical_xgboost_predictions.csv
+accuracy: 0.9561752988047809
+precision: 0.631578947368421
+recall: 0.75
+f1: 0.6857142857142857
+roc_auc: 0.9311170212765958
+
+=== cervical - catboost ===
+Target:  Biopsy
+Timestamp (UTC): 2025-12-03T09:48:39.938107Z
+Predictions CSV: C:\Users\user\SreelakshmiK\personal\Projects\She-Health\backend\model_selection_and_validation\Models trained on Kaggle Dataset\outputs\cervical_catboost_predictions.csv
+accuracy: 0.9561752988047809
+precision: 0.6086956521739131
+recall: 0.875
+f1: 0.717948717948718
+roc_auc: 0.9353723404255319
+
+=== cervical - svm ===
+Target:  Biopsy
+Timestamp (UTC): 2025-12-03T09:48:40.103570Z
+Predictions CSV: C:\Users\user\SreelakshmiK\personal\Projects\She-Health\backend\model_selection_and_validation\Models trained on Kaggle Dataset\outputs\cervical_svm_predictions.csv
+accuracy: 0.9362549800796812
+precision: 0.0
+recall: 0.0
+f1: 0.0
+roc_auc: 0.760904255319149
+
+=== cervical - knn ===
+Target:  Biopsy
+Timestamp (UTC): 2025-12-03T09:48:40.205623Z
+Predictions CSV: C:\Users\user\SreelakshmiK\personal\Projects\She-Health\backend\model_selection_and_validation\Models trained on Kaggle Dataset\outputs\cervical_knn_predictions.csv
+accuracy: 0.9362549800796812
+precision: 0.0
+recall: 0.0
+f1: 0.0
+roc_auc: 0.5777925531914894
+
+=== cervical - nb ===
+Target:  Biopsy
+Timestamp (UTC): 2025-12-03T09:48:40.304336Z
+Predictions CSV: C:\Users\user\SreelakshmiK\personal\Projects\She-Health\backend\model_selection_and_validation\Models trained on Kaggle Dataset\outputs\cervical_nb_predictions.csv
+accuracy: 0.852589641434263
+precision: 0.2857142857142857
+recall: 0.875
+f1: 0.4307692307692308
+roc_auc: 0.8654255319148935
+
+=== pcos - random_forest ===
+Target:  PCOS (Y/N)
+Timestamp (UTC): 2025-12-03T09:48:40.723865Z
+Predictions CSV: C:\Users\user\SreelakshmiK\personal\Projects\She-Health\backend\model_selection_and_validation\Models trained on Kaggle Dataset\outputs\pcos_rf_predictions.csv
+accuracy: 0.8650306748466258
+precision: 0.8604651162790697
+recall: 0.6981132075471698
+f1: 0.7708333333333334
+roc_auc: 0.9309605488850772
+
+=== pcos - xgboost ===
+Target:  PCOS (Y/N)
+Timestamp (UTC): 2025-12-03T09:48:40.977875Z
+Predictions CSV: C:\Users\user\SreelakshmiK\personal\Projects\She-Health\backend\model_selection_and_validation\Models trained on Kaggle Dataset\outputs\pcos_xgboost_predictions.csv
+accuracy: 0.9079754601226994
+precision: 0.88
+recall: 0.8301886792452831
+f1: 0.8543689320388349
+roc_auc: 0.9495711835334476
+
+=== pcos - catboost ===
+Target:  PCOS (Y/N)
+Timestamp (UTC): 2025-12-03T09:48:46.397173Z
+Predictions CSV: C:\Users\user\SreelakshmiK\personal\Projects\She-Health\backend\model_selection_and_validation\Models trained on Kaggle Dataset\outputs\pcos_catboost_predictions.csv
+accuracy: 0.9079754601226994
+precision: 0.9130434782608695
+recall: 0.7924528301886793
+f1: 0.8484848484848485
+roc_auc: 0.9540308747855918
+
+=== pcos - svm ===
+Target:  PCOS (Y/N)
+Timestamp (UTC): 2025-12-03T09:48:46.540466Z
+Predictions CSV: C:\Users\user\SreelakshmiK\personal\Projects\She-Health\backend\model_selection_and_validation\Models trained on Kaggle Dataset\outputs\pcos_svm_predictions.csv
+accuracy: 0.6809815950920245
+precision: 1.0
+recall: 0.018867924528301886
+f1: 0.037037037037037035
+roc_auc: 0.7456260720411665
+
+=== pcos - knn ===
+Target:  PCOS (Y/N)
+Timestamp (UTC): 2025-12-03T09:48:46.617009Z
+Predictions CSV: C:\Users\user\SreelakshmiK\personal\Projects\She-Health\backend\model_selection_and_validation\Models trained on Kaggle Dataset\outputs\pcos_knn_predictions.csv
+accuracy: 0.6441717791411042
+precision: 0.43902439024390244
+recall: 0.33962264150943394
+f1: 0.3829787234042553
+roc_auc: 0.6310463121783876
+
+=== pcos - nb ===
+Target:  PCOS (Y/N)
+Timestamp (UTC): 2025-12-03T09:48:46.686743Z
+Predictions CSV: C:\Users\user\SreelakshmiK\personal\Projects\She-Health\backend\model_selection_and_validation\Models trained on Kaggle Dataset\outputs\pcos_nb_predictions.csv
+accuracy: 0.7116564417177914
+precision: 0.532608695652174
+recall: 0.9245283018867925
+f1: 0.6758620689655173
+roc_auc: 0.8884219554030874
+
+=== endometriosis - random_forest ===
+Target:  Diagnosis
+Timestamp (UTC): 2025-12-03T09:48:48.887163Z
+Predictions CSV: C:\Users\user\SreelakshmiK\personal\Projects\She-Health\backend\model_selection_and_validation\Models trained on Kaggle Dataset\outputs\endometriosis_rf_predictions.csv
+accuracy: 0.5933333333333334
+precision: 0.5020120724346077
+recall: 0.4076797385620915
+f1: 0.4499549143372408
+roc_auc: 0.5921866259641995
+
+=== endometriosis - xgboost ===
+Target:  Diagnosis
+Timestamp (UTC): 2025-12-03T09:48:49.201688Z
+Predictions CSV: C:\Users\user\SreelakshmiK\personal\Projects\She-Health\backend\model_selection_and_validation\Models trained on Kaggle Dataset\outputs\endometriosis_xgboost_predictions.csv
+accuracy: 0.5836666666666667
+precision: 0.4880382775119617
+recall: 0.4166666666666667
+f1: 0.4495372410753636
+roc_auc: 0.5978414075840546
+
+=== endometriosis - lightgbm ===
+Target:  Diagnosis
+Timestamp (UTC): 2025-12-03T09:48:49.428870Z
+Predictions CSV: C:\Users\user\SreelakshmiK\personal\Projects\She-Health\backend\model_selection_and_validation\Models trained on Kaggle Dataset\outputs\endometriosis_lightgbm_predictions.csv
+accuracy: 0.6066666666666667
+precision: 0.5246636771300448
+recall: 0.38235294117647056
+f1: 0.44234404536862004
+roc_auc: 0.6268731967261378
+
+=== endometriosis - catboost ===
+Target:  Diagnosis
+Timestamp (UTC): 2025-12-03T09:48:56.330797Z
+Predictions CSV: C:\Users\user\SreelakshmiK\personal\Projects\She-Health\backend\model_selection_and_validation\Models trained on Kaggle Dataset\outputs\endometriosis_catboost_predictions.csv
+accuracy: 0.6103333333333333
+precision: 0.5310033821871477
+recall: 0.38480392156862747
+f1: 0.4462340123164377
+roc_auc: 0.6364162876111407
+
+=== endometriosis - svm ===
+Target:  Diagnosis
+Timestamp (UTC): 2025-12-03T09:49:19.340406Z
+Predictions CSV: C:\Users\user\SreelakshmiK\personal\Projects\She-Health\backend\model_selection_and_validation\Models trained on Kaggle Dataset\outputs\endometriosis_svm_predictions.csv
+accuracy: 0.5926666666666667
+precision: 0.6666666666666666
+recall: 0.0032679738562091504
+f1: 0.0065040650406504065
+roc_auc: 0.6353150025025025
+
+=== endometriosis - knn ===
+Target:  Diagnosis
+Timestamp (UTC): 2025-12-03T09:49:19.574111Z
+Predictions CSV: C:\Users\user\SreelakshmiK\personal\Projects\She-Health\backend\model_selection_and_validation\Models trained on Kaggle Dataset\outputs\endometriosis_knn_predictions.csv
+accuracy: 0.5636666666666666
+precision: 0.46097337006427913
+recall: 0.41013071895424835
+f1: 0.4340683095546909
+roc_auc: 0.5672754556026615
+
+=== endometriosis - nb ===
+Target:  Diagnosis
+Timestamp (UTC): 2025-12-03T09:49:19.667231Z
+Predictions CSV: C:\Users\user\SreelakshmiK\personal\Projects\She-Health\backend\model_selection_and_validation\Models trained on Kaggle Dataset\outputs\endometriosis_nb_predictions.csv
+accuracy: 0.6246666666666667
+precision: 0.5572429906542056
+recall: 0.3897058823529412
+f1: 0.45865384615384613
+roc_auc: 0.6504956243007715
+

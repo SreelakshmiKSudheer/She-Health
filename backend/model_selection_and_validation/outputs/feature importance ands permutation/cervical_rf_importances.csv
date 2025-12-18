@@ -1,36 +1,36 @@
-feature,importance
-Schiller,0.2764235884799938
-Hinselmann,0.13428505270514896
-Age,0.0937815471366734
-First sexual intercourse,0.07628681353560779
-Hormonal Contraceptives (years),0.06889581234851044
-Number of sexual partners,0.054289369291989346
-Citology,0.05293938396934731
-Num of pregnancies,0.05208260073017887
-Smokes (years),0.019801913984252604
-IUD (years),0.01808348388561747
-Smokes (packs/year),0.01769437480900067
-Hormonal Contraceptives,0.014756297464984903
-Dx:CIN,0.0129457647403184
-Dx,0.012007748706989145
-STDs: Time since first diagnosis,0.00975380069142573
-STDs:genital herpes,0.009542145696200818
-STDs: Time since last diagnosis,0.009482304845441785
-Dx:Cancer,0.00908584341188865
-Smokes,0.008567753604719237
-IUD,0.008406463603411808
-STDs:HIV,0.007229199124219171
-Dx:HPV,0.007128403218020311
-STDs (number),0.006554300473758865
-STDs: Number of diagnosis,0.00550634597618948
-STDs:condylomatosis,0.00448274428350109
-STDs:vulvo-perineal condylomatosis,0.0037406372847429824
-STDs,0.003242155248538685
-STDs:syphilis,0.002477559233187582
-STDs:vaginal condylomatosis,0.00027370444711974075
-STDs:Hepatitis B,0.00012076757161732093
-STDs:HPV,6.313830030382635e-05
-STDs:molluscum contagiosum,5.7907857635809e-05
-STDs:pelvic inflammatory disease,1.1073339463963096e-05
-STDs:cervical condylomatosis,0.0
-STDs:AIDS,0.0
+feature                           , importance
+Schiller                          , 0.2764235884799938
+Hinselmann                        , 0.13428505270514896
+Age                               , 0.0937815471366734
+First sexual intercourse          , 0.07628681353560779
+Hormonal Contraceptives (years)   , 0.06889581234851044
+Number of sexual partners         , 0.054289369291989346
+Citology                          , 0.05293938396934731
+Num of pregnancies                , 0.05208260073017887
+Smokes (years)                    , 0.019801913984252604
+IUD (years)                       , 0.01808348388561747
+Smokes (packs/year)               , 0.01769437480900067
+Hormonal Contraceptives           , 0.014756297464984903
+Dx:CIN                            , 0.0129457647403184
+Dx                                , 0.012007748706989145
+STDs: Time since first diagnosis  , 0.00975380069142573
+STDs:genital herpes               , 0.009542145696200818
+STDs: Time since last diagnosis   , 0.009482304845441785
+Dx:Cancer                         , 0.00908584341188865
+Smokes                            , 0.008567753604719237
+IUD                               , 0.008406463603411808
+STDs:HIV                          , 0.007229199124219171
+Dx:HPV                            , 0.007128403218020311
+STDs (number)                     , 0.006554300473758865
+STDs: Number of diagnosis         , 0.00550634597618948
+STDs:condylomatosis               , 0.00448274428350109
+STDs:vulvo-perineal condylomatosis, 0.0037406372847429824
+STDs                              , 0.003242155248538685
+STDs:syphilis                     , 0.002477559233187582
+STDs:vaginal condylomatosis       , 0.00027370444711974075
+STDs:Hepatitis B                  , 0.00012076757161732093
+STDs:HPV                          , 6.313830030382635e-05
+STDs:molluscum contagiosum        , 5.7907857635809e-05
+STDs:pelvic inflammatory disease  , 1.1073339463963096e-05
+STDs:cervical condylomatosis      , 0.0
+STDs:AIDS                         , 0.0
