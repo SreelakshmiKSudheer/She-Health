@@ -47,9 +47,14 @@ from sklearn.naive_bayes import GaussianNB
 # Keep them near the top so it's easy to swap or parameterize later.
 
 # thyroid = pd.read_csv('C:/Users/Lenovo/Desktop/navaneetha/Major Project/She-Health/backend/data/set_1/cleaned_dataset_Thyroid1.csv')
-# cervical = pd.read_csv('C:/Users/Lenovo/Desktop/navaneetha/Major Project/She-Health/backend/data/set_1/cervical-cancer_csv.csv')
+cervical = pd.read_csv('C:/Users/Lenovo/Desktop/navaneetha/Major Project/She-Health/backend/data/final_dataset/cervical_cancer.csv')
 pcos = pd.read_csv('C:/Users/Lenovo/Desktop/navaneetha/Major Project/She-Health/backend/data/final_dataset/pcos.csv')
-# endometriosis = pd.read_csv('C:/Users/Lenovo/Desktop/navaneetha/Major Project/She-Health/backend/data/set_1/structured_endometriosis_data.csv')
+endometriosis = pd.read_csv('C:/Users/Lenovo/Desktop/navaneetha/Major Project/She-Health/backend/data/set_2/endometriosis/cleaned1.csv')
+
+# Strip column names to remove leading/trailing spaces
+cervical.columns = cervical.columns.str.strip()
+pcos.columns = pcos.columns.str.strip()
+endometriosis.columns = endometriosis.columns.str.strip()
 
 def _infer_problem_type(y) -> str:
     t = type_of_target(y)
@@ -79,8 +84,17 @@ def train_random_forest(df, target_col, output_path: str = 'predictions.csv', te
     X = data.drop(columns=[target_col])
     y = data[target_col]
 
-    if _infer_problem_type(y) != "classification":
-        raise ValueError("Provided target looks like a regression target. Expecting classification.")
+    # if _infer_problem_type(y) != "classification":
+    #     raise ValueError("Provided target looks like a regression target. Expecting classification.")
+
+    # Encode target if it's categorical
+    if y.dtype == 'object':
+        from sklearn.preprocessing import LabelEncoder
+        le = LabelEncoder()
+        y = le.fit_transform(y)
+
+    # Sanitize column names to avoid issues with special characters in model libraries
+    X.columns = [''.join(c for c in col if c.isalnum() or c in ['_', '-']).replace(' ', '_').replace(':', '_').replace('/', '_').replace('(', '').replace(')', '').replace('"', '').replace(',', '_') for col in X.columns]
 
     # Simple preprocessing steps:
     # 1) Convert object/categorical columns to integer codes (preserves ordinals as codes).
@@ -146,7 +160,7 @@ def train_random_forest(df, target_col, output_path: str = 'predictions.csv', te
 
     # Prepare output DataFrame containing test features and prediction results.
     out_df = X_test.copy()
-    out_df[f"{target_col}_true"] = y_test.values
+    out_df[f"{target_col}_true"] = y_test
     out_df[f"{target_col}_pred"] = y_pred
     if y_prob is not None:
         if binary:
@@ -181,6 +195,18 @@ def train_generic_model(df, target_col, estimator, out_csv, out_pickle=None,
     data = data.dropna(subset=[target_col])
     X = data.drop(columns=[target_col])
     y = data[target_col]
+
+    # if _infer_problem_type(y) != "classification":
+    #     raise ValueError("Provided target looks like a regression target. Expecting classification.")
+
+    # Encode target if it's categorical
+    if y.dtype == 'object':
+        from sklearn.preprocessing import LabelEncoder
+        le = LabelEncoder()
+        y = le.fit_transform(y)
+
+    # Sanitize column names to avoid issues with special characters in model libraries
+    X.columns = [''.join(c for c in col if c.isalnum() or c in ['_', '-']).replace(' ', '_').replace(':', '_').replace('/', '_').replace('(', '').replace(')', '').replace('"', '').replace(',', '_') for col in X.columns]
 
     # same preprocessing as RF helper
     for col in X.select_dtypes(include=["object", "category"]).columns:
@@ -239,7 +265,7 @@ def train_generic_model(df, target_col, estimator, out_csv, out_pickle=None,
 
     # output dataframe
     out_df = X_test.copy()
-    out_df[f"{target_col}_true"] = y_test.values
+    out_df[f"{target_col}_true"] = y_test
     out_df[f"{target_col}_pred"] = y_pred
     if y_prob is not None:
         if binary:
@@ -283,9 +309,9 @@ if __name__ == "__main__":
     # List of datasets to process: (short_name, dataframe, explicit_target, candidate_names, contains_substr)
     jobs = [
         # ("thyroid", thyroid, "binaryClass", None, None),
-        # ("cervical", cervical, "Biopsy", None, None),
+        ("cervical", cervical, "Biopsy", None, None),
         ("pcos", pcos, "PCOS", None, None),
-        # ("endometriosis", endometriosis, "Diagnosis", None, None),
+        ("endometriosis", endometriosis, "label", None, None),
     ]
 
     # Collect metrics across all datasets/models and iterate datasets to train
