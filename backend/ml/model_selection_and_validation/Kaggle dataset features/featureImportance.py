@@ -22,10 +22,10 @@ import os
 # directory to save outputs (CSVs/plots)
 OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "outputs")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
-thyroid = pd.read_csv('C:\\Users\\user\\SreelakshmiK\\personal\\Projects\\She-Health\\backend\\data\\set_1\\cleaned_dataset_Thyroid1.csv')
-cervical = pd.read_csv('C:\\Users\\user\\SreelakshmiK\\personal\\Projects\\She-Health\\backend\\data\\set_1\\cervical-cancer_csv.csv')
-pcos = pd.read_csv('C:\\Users\\user\\SreelakshmiK\\personal\\Projects\\She-Health\\backend\\data\\set_1\\PCOS_data.csv')
-endometriosis = pd.read_csv('C:\\Users\\user\\SreelakshmiK\\personal\\Projects\\She-Health\\backend\\data\\set_1\\structured_endometriosis_data.csv')
+thyroid = pd.read_csv('C:\\Users\\user\\SreelakshmiK\\personal\\Projects\\She-Health\\backend\\dataset\\set_1\\cleaned_dataset_Thyroid1.csv')
+cervical = pd.read_csv('C:\\Users\\user\\SreelakshmiK\\personal\\Projects\\She-Health\\backend\\dataset\\set_1\\cervical-cancer_csv.csv')
+pcos = pd.read_csv('C:\\Users\\user\\SreelakshmiK\\personal\\Projects\\She-Health\\backend\\dataset\\set_1\\PCOS_data.csv')
+endometriosis = pd.read_csv('C:\\Users\\user\\SreelakshmiK\\personal\\Projects\\She-Health\\backend\\dataset\\set_1\\structured_endometriosis_data.csv')
 
 
 def _infer_problem_type(y) -> str:
