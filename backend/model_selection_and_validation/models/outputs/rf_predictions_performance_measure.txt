@@ -1,70 +1,210 @@
-=== pcos - random_forest ===
-Target:  relocated city
-Timestamp (UTC): 2026-01-07T17:01:08.824486Z
-Predictions CSV: C:\Users\Lenovo\Desktop\navaneetha\Major Project\She-Health\backend\model_selection_and_validation\models\outputs\pcos_rf_predictions.csv
-accuracy: 0.8024691358024691
+=== cervical - random_forest ===
+Target: Biopsy
+Timestamp (UTC): 2026-01-11T07:08:42.109492Z
+Predictions CSV: c:\Users\Lenovo\Desktop\navaneetha\Major Project\She-Health\backend\model_selection_and_validation\models\outputs\cervical_rf_predictions.csv
+accuracy: 0.9457364341085271
+precision: 0.6363636363636364
+recall: 0.4117647058823529
+f1: 0.5
+roc_auc: 0.9547229680253844
+
+=== cervical - xgboost ===
+Target: Biopsy
+Timestamp (UTC): 2026-01-11T07:08:42.238691Z
+Predictions CSV: c:\Users\Lenovo\Desktop\navaneetha\Major Project\She-Health\backend\model_selection_and_validation\models\outputs\cervical_xgboost_predictions.csv
+accuracy: 0.937984496124031
+precision: 0.5333333333333333
+recall: 0.47058823529411764
+f1: 0.5
+roc_auc: 0.9350744447156455
+
+=== cervical - lightgbm ===
+Target: Biopsy
+Timestamp (UTC): 2026-01-11T07:08:43.770325Z
+Predictions CSV: c:\Users\Lenovo\Desktop\navaneetha\Major Project\She-Health\backend\model_selection_and_validation\models\outputs\cervical_lightgbm_predictions.csv
+accuracy: 0.937984496124031
+precision: 0.5333333333333333
+recall: 0.47058823529411764
+f1: 0.5
+roc_auc: 0.9367830119599707
+
+=== cervical - catboost ===
+Target: Biopsy
+Timestamp (UTC): 2026-01-11T07:08:45.949946Z
+Predictions CSV: c:\Users\Lenovo\Desktop\navaneetha\Major Project\She-Health\backend\model_selection_and_validation\models\outputs\cervical_catboost_predictions.csv
+accuracy: 0.9496124031007752
+precision: 0.6
+recall: 0.7058823529411765
+f1: 0.6486486486486487
+roc_auc: 0.9201855015865267
+
+=== cervical - svm ===
+Target: Biopsy
+Timestamp (UTC): 2026-01-11T07:08:46.034104Z
+Predictions CSV: c:\Users\Lenovo\Desktop\navaneetha\Major Project\She-Health\backend\model_selection_and_validation\models\outputs\cervical_svm_predictions.csv
+accuracy: 0.9341085271317829
 precision: 0.0
 recall: 0.0
 f1: 0.0
-roc_auc: 0.6153846153846154
+roc_auc: 0.8310959238467172
+
+=== cervical - knn ===
+Target: Biopsy
+Timestamp (UTC): 2026-01-11T07:08:46.085905Z
+Predictions CSV: c:\Users\Lenovo\Desktop\navaneetha\Major Project\She-Health\backend\model_selection_and_validation\models\outputs\cervical_knn_predictions.csv
+accuracy: 0.9341085271317829
+precision: 0.0
+recall: 0.0
+f1: 0.0
+roc_auc: 0.49328777154015135
+
+=== cervical - nb ===
+Target: Biopsy
+Timestamp (UTC): 2026-01-11T07:08:46.131604Z
+Predictions CSV: c:\Users\Lenovo\Desktop\navaneetha\Major Project\She-Health\backend\model_selection_and_validation\models\outputs\cervical_nb_predictions.csv
+accuracy: 0.9069767441860465
+precision: 0.41025641025641024
+recall: 0.9411764705882353
+f1: 0.5714285714285714
+roc_auc: 0.9221381498657553
+
+=== pcos - random_forest ===
+Target: PCOS
+Timestamp (UTC): 2026-01-11T07:08:46.302499Z
+Predictions CSV: c:\Users\Lenovo\Desktop\navaneetha\Major Project\She-Health\backend\model_selection_and_validation\models\outputs\pcos_rf_predictions.csv
+accuracy: 0.8148148148148148
+precision: 0.6153846153846154
+recall: 0.4444444444444444
+f1: 0.5161290322580645
+roc_auc: 0.8844797178130511
 
 === pcos - xgboost ===
-Target:  relocated city
-Timestamp (UTC): 2026-01-07T17:01:08.993676Z
-Predictions CSV: C:\Users\Lenovo\Desktop\navaneetha\Major Project\She-Health\backend\model_selection_and_validation\models\outputs\pcos_xgboost_predictions.csv
-accuracy: 0.8024691358024691
-precision: 0.2
-recall: 0.07692307692307693
-f1: 0.1111111111111111
-roc_auc: 0.5633484162895928
+Target: PCOS
+Timestamp (UTC): 2026-01-11T07:08:46.395292Z
+Predictions CSV: c:\Users\Lenovo\Desktop\navaneetha\Major Project\She-Health\backend\model_selection_and_validation\models\outputs\pcos_xgboost_predictions.csv
+accuracy: 0.8395061728395061
+precision: 0.6470588235294118
+recall: 0.6111111111111112
+f1: 0.6285714285714286
+roc_auc: 0.9047619047619048
 
 === pcos - lightgbm ===
-Target:  relocated city
-Timestamp (UTC): 2026-01-07T17:01:10.713385Z
-Predictions CSV: C:\Users\Lenovo\Desktop\navaneetha\Major Project\She-Health\backend\model_selection_and_validation\models\outputs\pcos_lightgbm_predictions.csv
-accuracy: 0.8024691358024691
-precision: 0.2
-recall: 0.07692307692307693
-f1: 0.1111111111111111
-roc_auc: 0.502262443438914
+Target: PCOS
+Timestamp (UTC): 2026-01-11T07:08:46.477549Z
+Predictions CSV: c:\Users\Lenovo\Desktop\navaneetha\Major Project\She-Health\backend\model_selection_and_validation\models\outputs\pcos_lightgbm_predictions.csv
+accuracy: 0.8148148148148148
+precision: 0.5882352941176471
+recall: 0.5555555555555556
+f1: 0.5714285714285714
+roc_auc: 0.8871252204585538
 
 === pcos - catboost ===
-Target:  relocated city
-Timestamp (UTC): 2026-01-07T17:01:13.284154Z
-Predictions CSV: C:\Users\Lenovo\Desktop\navaneetha\Major Project\She-Health\backend\model_selection_and_validation\models\outputs\pcos_catboost_predictions.csv
-accuracy: 0.8271604938271605
-precision: 0.0
-recall: 0.0
-f1: 0.0
-roc_auc: 0.5972850678733032
+Target: PCOS
+Timestamp (UTC): 2026-01-11T07:08:49.033586Z
+Predictions CSV: c:\Users\Lenovo\Desktop\navaneetha\Major Project\She-Health\backend\model_selection_and_validation\models\outputs\pcos_catboost_predictions.csv
+accuracy: 0.8395061728395061
+precision: 0.6923076923076923
+recall: 0.5
+f1: 0.5806451612903226
+roc_auc: 0.8994708994708995
 
 === pcos - svm ===
-Target:  relocated city
-Timestamp (UTC): 2026-01-07T17:01:13.348868Z
-Predictions CSV: C:\Users\Lenovo\Desktop\navaneetha\Major Project\She-Health\backend\model_selection_and_validation\models\outputs\pcos_svm_predictions.csv
-accuracy: 0.8395061728395061
+Target: PCOS
+Timestamp (UTC): 2026-01-11T07:08:49.108010Z
+Predictions CSV: c:\Users\Lenovo\Desktop\navaneetha\Major Project\She-Health\backend\model_selection_and_validation\models\outputs\pcos_svm_predictions.csv
+accuracy: 0.7777777777777778
 precision: 0.0
 recall: 0.0
 f1: 0.0
-roc_auc: 0.5610859728506787
+roc_auc: 0.9047619047619048
 
 === pcos - knn ===
-Target:  relocated city
-Timestamp (UTC): 2026-01-07T17:01:13.428085Z
-Predictions CSV: C:\Users\Lenovo\Desktop\navaneetha\Major Project\She-Health\backend\model_selection_and_validation\models\outputs\pcos_knn_predictions.csv
-accuracy: 0.8271604938271605
-precision: 0.0
-recall: 0.0
-f1: 0.0
-roc_auc: 0.6329185520361991
+Target: PCOS
+Timestamp (UTC): 2026-01-11T07:08:49.167917Z
+Predictions CSV: c:\Users\Lenovo\Desktop\navaneetha\Major Project\She-Health\backend\model_selection_and_validation\models\outputs\pcos_knn_predictions.csv
+accuracy: 0.8518518518518519
+precision: 1.0
+recall: 0.3333333333333333
+f1: 0.5
+roc_auc: 0.8134920634920635
 
 === pcos - nb ===
-Target:  relocated city
-Timestamp (UTC): 2026-01-07T17:01:13.489333Z
-Predictions CSV: C:\Users\Lenovo\Desktop\navaneetha\Major Project\She-Health\backend\model_selection_and_validation\models\outputs\pcos_nb_predictions.csv
-accuracy: 0.7283950617283951
-precision: 0.2631578947368421
-recall: 0.38461538461538464
-f1: 0.3125
-roc_auc: 0.6504524886877828
+Target: PCOS
+Timestamp (UTC): 2026-01-11T07:08:49.222731Z
+Predictions CSV: c:\Users\Lenovo\Desktop\navaneetha\Major Project\She-Health\backend\model_selection_and_validation\models\outputs\pcos_nb_predictions.csv
+accuracy: 0.7160493827160493
+precision: 0.391304347826087
+recall: 0.5
+f1: 0.43902439024390244
+roc_auc: 0.763668430335097
+
+=== endometriosis - random_forest ===
+Target: label
+Timestamp (UTC): 2026-01-11T07:08:49.503097Z
+Predictions CSV: c:\Users\Lenovo\Desktop\navaneetha\Major Project\She-Health\backend\model_selection_and_validation\models\outputs\endometriosis_rf_predictions.csv
+accuracy: 0.9022556390977443
+precision: 0.9461538461538461
+recall: 0.8661971830985915
+f1: 0.9044117647058824
+roc_auc: 0.962857791912767
+
+=== endometriosis - xgboost ===
+Target: label
+Timestamp (UTC): 2026-01-11T07:08:49.704978Z
+Predictions CSV: c:\Users\Lenovo\Desktop\navaneetha\Major Project\She-Health\backend\model_selection_and_validation\models\outputs\endometriosis_xgboost_predictions.csv
+accuracy: 0.8909774436090225
+precision: 0.9124087591240876
+recall: 0.8802816901408451
+f1: 0.8960573476702509
+roc_auc: 0.9642776010904135
+
+=== endometriosis - lightgbm ===
+Target: label
+Timestamp (UTC): 2026-01-11T07:08:49.892532Z
+Predictions CSV: c:\Users\Lenovo\Desktop\navaneetha\Major Project\She-Health\backend\model_selection_and_validation\models\outputs\endometriosis_lightgbm_predictions.csv
+accuracy: 0.8872180451127819
+precision: 0.9
+recall: 0.8873239436619719
+f1: 0.8936170212765957
+roc_auc: 0.964447978191731
+
+=== endometriosis - catboost ===
+Target: label
+Timestamp (UTC): 2026-01-11T07:08:55.337445Z
+Predictions CSV: c:\Users\Lenovo\Desktop\navaneetha\Major Project\She-Health\backend\model_selection_and_validation\models\outputs\endometriosis_catboost_predictions.csv
+accuracy: 0.9022556390977443
+precision: 0.9393939393939394
+recall: 0.8732394366197183
+f1: 0.9051094890510949
+roc_auc: 0.972228532485234
+
+=== endometriosis - svm ===
+Target: label
+Timestamp (UTC): 2026-01-11T07:08:55.544914Z
+Predictions CSV: c:\Users\Lenovo\Desktop\navaneetha\Major Project\She-Health\backend\model_selection_and_validation\models\outputs\endometriosis_svm_predictions.csv
+accuracy: 0.8872180451127819
+precision: 0.9444444444444444
+recall: 0.8380281690140845
+f1: 0.8880597014925373
+roc_auc: 0.9716038164470695
+
+=== endometriosis - knn ===
+Target: label
+Timestamp (UTC): 2026-01-11T07:08:55.630712Z
+Predictions CSV: c:\Users\Lenovo\Desktop\navaneetha\Major Project\She-Health\backend\model_selection_and_validation\models\outputs\endometriosis_knn_predictions.csv
+accuracy: 0.8872180451127819
+precision: 0.9444444444444444
+recall: 0.8380281690140845
+f1: 0.8880597014925373
+roc_auc: 0.9447126306224443
+
+=== endometriosis - nb ===
+Target: label
+Timestamp (UTC): 2026-01-11T07:08:55.708492Z
+Predictions CSV: c:\Users\Lenovo\Desktop\navaneetha\Major Project\She-Health\backend\model_selection_and_validation\models\outputs\endometriosis_nb_predictions.csv
+accuracy: 0.8308270676691729
+precision: 0.8943089430894309
+recall: 0.7746478873239436
+f1: 0.8301886792452831
+roc_auc: 0.9015220354384371
 
