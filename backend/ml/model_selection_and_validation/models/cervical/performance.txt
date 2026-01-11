@@ -1,0 +1,360 @@
+Train positives: 38
+Validation positives: 9
+Test positives: 8
+
+--- LOGISTIC REGRESSION MODEL METRICS ---
+
+Confusion Matrix (Validation):
+[[114   6]
+ [  1   8]]
+
+Classification Report (Validation):
+              precision    recall  f1-score   support
+
+           0      0.991     0.950     0.970       120
+           1      0.571     0.889     0.696         9
+
+    accuracy                          0.946       129
+   macro avg      0.781     0.919     0.833       129
+weighted avg      0.962     0.946     0.951       129
+
+ROC-AUC (Validation): 0.964
+PR-AUC (Validation): 0.581
+Brier Score (Validation): 0.056
+
+Predicted cervical cancer risk (sample): 5.71%
+Actual (sample): 0
+
+--- CALIBRATED LOGISTIC REGRESSION MODEL METRICS ---
+
+Confusion Matrix (Validation - Calibrated):
+[[117   3]
+ [  6   3]]
+
+Classification Report (Validation - Calibrated):
+              precision    recall  f1-score   support
+
+           0      0.951     0.975     0.963       120
+           1      0.500     0.333     0.400         9
+
+    accuracy                          0.930       129
+   macro avg      0.726     0.654     0.681       129
+weighted avg      0.920     0.930     0.924       129
+
+ROC-AUC (Validation): 0.964
+PR-AUC (Validation): 0.581
+Brier Score (Validation): 0.046
+
+Calibrated cervical cancer risk (sample): 3.27%
+Predicted: 0.03, True: 0.01
+Predicted: 0.13, True: 1.00
+Predicted: 0.23, True: 0.50
+Predicted: 0.33, True: 0.67
+Predicted: 0.48, True: 0.00
+Predicted: 0.52, True: 0.00
+Predicted: 0.64, True: 0.50
+Predicted: 0.75, True: 1.00
+   Threshold    Recall  Precision        F1  False Positives  False Negatives
+0       0.05  1.000000   0.428571  0.600000               12                0
+1       0.10  0.888889   0.571429  0.695652                6                1
+2       0.15  0.666667   0.500000  0.571429                6                3
+3       0.20  0.666667   0.500000  0.571429                6                3
+4       0.25  0.555556   0.500000  0.526316                5                4
+5       0.30  0.555556   0.500000  0.526316                5                4
+6       0.35  0.333333   0.375000  0.352941                5                6
+7       0.40  0.333333   0.428571  0.375000                4                6
+8       0.45  0.333333   0.428571  0.375000                4                6
+9       0.50  0.333333   0.500000  0.400000                3                6
+
+--- TUNED CALIBRATED LOGISTIC REGRESSION MODEL METRICS ---
+Chosen Threshold: 0.05
+
+Confusion Matrix (Test):
+[[104  17]
+ [  2   6]]
+
+Classification Report (Test):
+              precision    recall  f1-score   support
+
+           0      0.981     0.860     0.916       121
+           1      0.261     0.750     0.387         8
+
+    accuracy                          0.853       129
+   macro avg      0.621     0.805     0.652       129
+weighted avg      0.936     0.853     0.883       129
+
+ROC-AUC (Test): 0.8698347107438017
+PR-AUC (Test): 0.5123826822085019
+Brier Score (Test): 0.03768477009227287
+
+Risk Categories (Test Samples):
+Sample 1: Probability=3.27%, Category=Very Low Risk
+Sample 2: Probability=3.92%, Category=Very Low Risk
+Sample 3: Probability=3.50%, Category=Very Low Risk
+Sample 4: Probability=1.47%, Category=Very Low Risk
+Sample 5: Probability=3.84%, Category=Very Low Risk
+Sample 6: Probability=1.14%, Category=Very Low Risk
+Sample 7: Probability=1.70%, Category=Very Low Risk
+Sample 8: Probability=2.70%, Category=Very Low Risk
+Sample 9: Probability=3.44%, Category=Very Low Risk
+Sample 10: Probability=2.28%, Category=Very Low Risk
+
+--- RANDOM FOREST TUNING ---
+Best params: {'model__max_depth': 10, 'model__min_samples_leaf': 2, 'model__min_samples_split': 5, 'model__n_estimators': 100}
+Best CV ROC-AUC: 0.9516513906447533
+
+--- CALIBRATED RANDOM FOREST METRICS (Validation) ---
+
+Confusion Matrix (Validation - Calibrated):
+[[117   3]
+ [  4   5]]
+
+Classification Report (Validation - Calibrated):
+              precision    recall  f1-score   support
+
+           0      0.967     0.975     0.971       120
+           1      0.625     0.556     0.588         9
+
+    accuracy                          0.946       129
+   macro avg      0.796     0.765     0.780       129
+weighted avg      0.943     0.946     0.944       129
+
+ROC-AUC (Validation): 0.973
+PR-AUC (Validation): 0.635
+Brier Score (Validation): 0.037
+
+Calibration bins (pred, true):
+Predicted: 0.02, True: 0.01
+Predicted: 0.18, True: 0.33
+Predicted: 0.24, True: 1.00
+Predicted: 0.36, True: 1.00
+Predicted: 0.45, True: 0.00
+Predicted: 0.56, True: 1.00
+Predicted: 0.67, True: 0.67
+Predicted: 0.73, True: 0.00
+
+Threshold tuning results (validation):
+   Threshold    Recall  Precision        F1  False Positives  False Negatives
+0       0.05  0.888889   0.444444  0.592593               10                1
+1       0.10  0.888889   0.571429  0.695652                6                1
+2       0.15  0.888889   0.615385  0.727273                5                1
+3       0.20  0.777778   0.636364  0.700000                4                2
+4       0.25  0.666667   0.600000  0.631579                4                3
+5       0.30  0.666667   0.600000  0.631579                4                3
+6       0.35  0.666667   0.600000  0.631579                4                3
+7       0.40  0.555556   0.555556  0.555556                4                4
+8       0.45  0.555556   0.625000  0.588235                3                4
+9       0.50  0.555556   0.625000  0.588235                3                4
+
+--- TUNED CALIBRATED RANDOM FOREST METRICS ---
+Chosen Threshold: 0.5
+
+Confusion Matrix (Test):
+[[120   1]
+ [  4   4]]
+
+Classification Report (Test):
+              precision    recall  f1-score   support
+
+           0      0.968     0.992     0.980       121
+           1      0.800     0.500     0.615         8
+
+    accuracy                          0.961       129
+   macro avg      0.884     0.746     0.797       129
+weighted avg      0.957     0.961     0.957       129
+
+ROC-AUC (Test): 0.8543388429752066
+PR-AUC (Test): 0.5443061294765841
+Brier Score (Test): 0.03469121117563596
+
+Risk Categories (Test Samples):
+Sample 1: Probability=1.71%, Category=Very Low Risk
+Sample 2: Probability=1.57%, Category=Very Low Risk
+Sample 3: Probability=1.46%, Category=Very Low Risk
+Sample 4: Probability=1.68%, Category=Very Low Risk
+Sample 5: Probability=3.24%, Category=Very Low Risk
+Sample 6: Probability=1.41%, Category=Very Low Risk
+Sample 7: Probability=1.44%, Category=Very Low Risk
+Sample 8: Probability=1.94%, Category=Very Low Risk
+Sample 9: Probability=2.09%, Category=Very Low Risk
+Sample 10: Probability=1.49%, Category=Very Low Risk
+
+--- XGBOOST TUNING ---
+Best params: {'model__learning_rate': 0.01, 'model__max_depth': 3, 'model__n_estimators': 200, 'model__subsample': 0.8}
+Best CV ROC-AUC: 0.927711164664981
+
+--- CALIBRATED XGBOOST METRICS (Validation) ---
+
+Confusion Matrix (Validation - Calibrated):
+[[117   3]
+ [  5   4]]
+
+Classification Report (Validation - Calibrated):
+              precision    recall  f1-score   support
+
+           0      0.959     0.975     0.967       120
+           1      0.571     0.444     0.500         9
+
+    accuracy                          0.938       129
+   macro avg      0.765     0.710     0.733       129
+weighted avg      0.932     0.938     0.934       129
+
+ROC-AUC (Validation): 0.958
+PR-AUC (Validation): 0.549
+Brier Score (Validation): 0.040
+
+Calibration bins (pred, true):
+Predicted: 0.02, True: 0.01
+Predicted: 0.16, True: 1.00
+Predicted: 0.38, True: 0.67
+Predicted: 0.48, True: 1.00
+Predicted: 0.56, True: 0.75
+Predicted: 0.76, True: 0.50
+Predicted: 0.83, True: 0.00
+
+Threshold tuning results (validation):
+   Threshold    Recall  Precision        F1  False Positives  False Negatives
+0       0.05  0.888889   0.666667  0.761905                4                1
+1       0.10  0.888889   0.666667  0.761905                4                1
+2       0.15  0.888889   0.666667  0.761905                4                1
+3       0.20  0.777778   0.636364  0.700000                4                2
+4       0.25  0.777778   0.636364  0.700000                4                2
+5       0.30  0.777778   0.636364  0.700000                4                2
+6       0.35  0.777778   0.636364  0.700000                4                2
+7       0.40  0.555556   0.625000  0.588235                3                4
+8       0.45  0.555556   0.625000  0.588235                3                4
+9       0.50  0.444444   0.571429  0.500000                3                5
+
+--- TUNED CALIBRATED XGBOOST METRICS ---
+Chosen Threshold: 0.5
+
+Confusion Matrix (Test):
+[[117   4]
+ [  4   4]]
+
+Classification Report (Test):
+              precision    recall  f1-score   support
+
+           0      0.967     0.967     0.967       121
+           1      0.500     0.500     0.500         8
+
+    accuracy                          0.938       129
+   macro avg      0.733     0.733     0.733       129
+weighted avg      0.938     0.938     0.938       129
+
+ROC-AUC (Test): 0.9493801652892562
+PR-AUC (Test): 0.5485758476102279
+Brier Score (Test): 0.03860499832212498
+
+Risk Categories (Test Samples):
+Sample 1: Probability=2.29%, Category=Very Low Risk
+Sample 2: Probability=2.29%, Category=Very Low Risk
+Sample 3: Probability=2.40%, Category=Very Low Risk
+Sample 4: Probability=2.31%, Category=Very Low Risk
+Sample 5: Probability=2.50%, Category=Very Low Risk
+Sample 6: Probability=2.47%, Category=Very Low Risk
+Sample 7: Probability=2.32%, Category=Very Low Risk
+Sample 8: Probability=2.31%, Category=Very Low Risk
+Sample 9: Probability=2.40%, Category=Very Low Risk
+Sample 10: Probability=2.32%, Category=Very Low Risk
+
+--- LIGHTGBM TUNING ---
+Best params: {'model__learning_rate': 0.01, 'model__max_depth': 6, 'model__n_estimators': 200, 'model__num_leaves': 31, 'model__subsample': 0.8}
+Best CV ROC-AUC: 0.9595438922250314
+
+--- CALIBRATED LIGHTGBM METRICS (Validation) ---
+
+Confusion Matrix (Validation - Calibrated):
+[[116   4]
+ [  3   6]]
+
+Classification Report (Validation - Calibrated):
+              precision    recall  f1-score   support
+
+           0      0.975     0.967     0.971       120
+           1      0.600     0.667     0.632         9
+
+    accuracy                          0.946       129
+   macro avg      0.787     0.817     0.801       129
+weighted avg      0.949     0.946     0.947       129
+
+ROC-AUC (Validation): 0.916
+PR-AUC (Validation): 0.479
+Brier Score (Validation): 0.037
+
+Calibration bins (pred, true):
+Predicted: 0.02, True: 0.01
+Predicted: 0.27, True: 1.00
+Predicted: 0.44, True: 0.33
+Predicted: 0.55, True: 0.60
+
+Threshold tuning results (validation):
+   Threshold    Recall  Precision        F1  False Positives  False Negatives
+0       0.05  0.888889   0.500000  0.640000                8                1
+1       0.10  0.888889   0.571429  0.695652                6                1
+2       0.15  0.888889   0.571429  0.695652                6                1
+3       0.20  0.888889   0.571429  0.695652                6                1
+4       0.25  0.888889   0.571429  0.695652                6                1
+5       0.30  0.777778   0.538462  0.636364                6                2
+6       0.35  0.777778   0.538462  0.636364                6                2
+7       0.40  0.777778   0.538462  0.636364                6                2
+8       0.45  0.777778   0.636364  0.700000                4                2
+9       0.50  0.666667   0.600000  0.631579                4                3
+
+--- TUNED CALIBRATED LIGHTGBM METRICS ---
+Chosen Threshold: 0.5
+
+Confusion Matrix (Test):
+[[118   3]
+ [  3   5]]
+
+Classification Report (Test):
+              precision    recall  f1-score   support
+
+           0      0.975     0.975     0.975       121
+           1      0.625     0.625     0.625         8
+
+    accuracy                          0.953       129
+   macro avg      0.800     0.800     0.800       129
+weighted avg      0.953     0.953     0.953       129
+
+ROC-AUC (Test): 0.8522727272727273
+PR-AUC (Test): 0.5969494047619047
+Brier Score (Test): 0.037571657335338404
+
+Risk Categories (Test Samples):
+Sample 1: Probability=1.64%, Category=Very Low Risk
+Sample 2: Probability=1.64%, Category=Very Low Risk
+Sample 3: Probability=1.64%, Category=Very Low Risk
+Sample 4: Probability=1.64%, Category=Very Low Risk
+Sample 5: Probability=1.64%, Category=Very Low Risk
+Sample 6: Probability=1.64%, Category=Very Low Risk
+Sample 7: Probability=1.64%, Category=Very Low Risk
+Sample 8: Probability=1.64%, Category=Very Low Risk
+Sample 9: Probability=1.64%, Category=Very Low Risk
+
+Risk Categories (Test Samples):
+Sample 1: Probability=1.64%, Category=Very Low Risk
+Sample 2: Probability=1.64%, Category=Very Low Risk
+Sample 3: Probability=1.64%, Category=Very Low Risk
+Sample 4: Probability=1.64%, Category=Very Low Risk
+Sample 5: Probability=1.64%, Category=Very Low Risk
+Sample 6: Probability=1.64%, Category=Very Low Risk
+Sample 7: Probability=1.64%, Category=Very Low Risk
+Sample 8: Probability=1.64%, Category=Very Low Risk
+Sample 9: Probability=1.64%, Category=Very Low Risk
+Sample 3: Probability=1.64%, Category=Very Low Risk
+Sample 4: Probability=1.64%, Category=Very Low Risk
+Sample 5: Probability=1.64%, Category=Very Low Risk
+Sample 6: Probability=1.64%, Category=Very Low Risk
+Sample 7: Probability=1.64%, Category=Very Low Risk
+Sample 8: Probability=1.64%, Category=Very Low Risk
+Sample 9: Probability=1.64%, Category=Very Low Risk
+Sample 6: Probability=1.64%, Category=Very Low Risk
+Sample 7: Probability=1.64%, Category=Very Low Risk
+Sample 8: Probability=1.64%, Category=Very Low Risk
+Sample 9: Probability=1.64%, Category=Very Low Risk
+Sample 8: Probability=1.64%, Category=Very Low Risk
+Sample 9: Probability=1.64%, Category=Very Low Risk
+Sample 9: Probability=1.64%, Category=Very Low Risk
+Sample 10: Probability=1.64%, Category=Very Low Risk
