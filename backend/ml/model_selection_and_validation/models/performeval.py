@@ -47,9 +47,9 @@ from sklearn.naive_bayes import GaussianNB
 # Keep them near the top so it's easy to swap or parameterize later.
 
 # thyroid = pd.read_csv('C:/Users/Lenovo/Desktop/navaneetha/Major Project/She-Health/backend/data/set_1/cleaned_dataset_Thyroid1.csv')
-cervical = pd.read_csv('C:/Users/Lenovo/Desktop/navaneetha/Major Project/She-Health/backend/data/final_dataset/cervical_cancer.csv')
-pcos = pd.read_csv('C:/Users/Lenovo/Desktop/navaneetha/Major Project/She-Health/backend/data/final_dataset/pcos.csv')
-endometriosis = pd.read_csv('C:/Users/Lenovo/Desktop/navaneetha/Major Project/She-Health/backend/data/set_2/endometriosis/cleaned1.csv')
+cervical = pd.read_csv('C:\\Users\\user\\SreelakshmiK\\personal\\Projects\\She-Health\\backend\\dataset\\final_dataset\\cervical_cancer.csv')
+pcos = pd.read_csv('C:\\Users\\user\\SreelakshmiK\\personal\\Projects\\She-Health\\backend\\dataset\\final_dataset\\pcos.csv')
+endometriosis = pd.read_csv('C:\\Users\\user\\SreelakshmiK\\personal\\Projects\\She-Health\\backend\\dataset\\final_dataset\\endometriosis.csv')
 
 # Strip column names to remove leading/trailing spaces
 cervical.columns = cervical.columns.str.strip()
