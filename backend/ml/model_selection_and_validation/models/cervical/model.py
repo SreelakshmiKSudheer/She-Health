@@ -35,7 +35,7 @@ for col in cervical.columns:
 
 # ---------------- PROBABILITY TO RISK CATEGORY ----------------
 def risk_category(prob):
-    if prob >= 0.80:
+    if prob >= 0.70:
         return "Very High Risk"
     elif prob >= 0.50:
         return "High Risk"
@@ -602,3 +602,7 @@ calibrated_lgbm, lgbm_grid = lightgbm_with_tuning_and_calibration(
     method="sigmoid"
 )
 
+# FINAL MODEL SELECTION CAN BE DONE BASED ON THE METRICS PRINTED ABOVE
+'''
+Among all evaluated models, the tuned calibrated logistic regression was selected as the final model due to its superior sensitivity and lower false-negative rate on the test set. While ensemble and boosting models demonstrated competitive discrimination performance, they exhibited reduced recall, making them less suitable for screening-oriented cervical cancer risk prediction.
+'''
