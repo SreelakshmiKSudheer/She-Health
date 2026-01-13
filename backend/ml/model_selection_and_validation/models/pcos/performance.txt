@@ -1,0 +1,225 @@
+Train positives: 36
+Validation positives: 12
+Test positives: 12
+
+--- PCOS LOGISTIC REGRESSION METRICS ---
+[[35  6]
+ [ 2 10]]
+              precision    recall  f1-score   support
+
+           0      0.946     0.854     0.897        41
+           1      0.625     0.833     0.714        12
+
+    accuracy                          0.849        53
+   macro avg      0.785     0.843     0.806        53
+weighted avg      0.873     0.849     0.856        53
+
+ROC-AUC: 0.9247967479674798
+PR-AUC: 0.8479311359277627
+Brier Score: 0.11147875954339793
+
+Predicted PCOS risk (sample): 1.41%
+Actual (sample): 0
+
+--- CALIBRATED PCOS LOGISTIC REGRESSION METRICS ---
+[[39  2]
+ [ 4  8]]
+              precision    recall  f1-score   support
+
+           0      0.907     0.951     0.929        41
+           1      0.800     0.667     0.727        12
+
+    accuracy                          0.887        53
+   macro avg      0.853     0.809     0.828        53
+weighted avg      0.883     0.887     0.883        53
+
+ROC-AUC: 0.9247967479674798
+PR-AUC: 0.8479311359277627
+Brier Score: 0.08263858450125046
+   Threshold    Recall  Precision        F1  False Positives  False Negatives
+0       0.05  1.000000   0.352941  0.521739               22                0
+1       0.10  0.916667   0.423077  0.578947               15                1
+2       0.15  0.833333   0.476190  0.606061               11                2
+3       0.20  0.833333   0.555556  0.666667                8                2
+4       0.25  0.833333   0.625000  0.714286                6                2
+5       0.30  0.833333   0.666667  0.740741                5                2
+6       0.35  0.833333   0.714286  0.769231                4                2
+7       0.40  0.750000   0.750000  0.750000                3                3
+8       0.45  0.750000   0.750000  0.750000                3                3
+9       0.50  0.666667   0.800000  0.727273                2                4
+
+--- TUNED CALIBRATED PCOS MODEL METRICS ---
+Chosen Threshold: 0.05
+[[15 27]
+ [ 1 11]]
+              precision    recall  f1-score   support
+
+           0      0.938     0.357     0.517        42
+           1      0.289     0.917     0.440        12
+
+    accuracy                          0.481        54
+   macro avg      0.613     0.637     0.479        54
+weighted avg      0.793     0.481     0.500        54
+
+ROC-AUC: 0.8095238095238095
+PR-AUC: 0.5256556569996419
+Brier Score: 0.14425908718434
+Sample 1: Probability=1.05%, Category=Very Low Risk
+Sample 2: Probability=1.64%, Category=Very Low Risk
+Sample 3: Probability=90.89%, Category=Very High Risk
+Sample 4: Probability=36.20%, Category=Moderate Risk
+Sample 5: Probability=1.15%, Category=Very Low Risk
+Sample 6: Probability=20.68%, Category=Moderate Risk
+Sample 7: Probability=1.25%, Category=Very Low Risk
+Sample 8: Probability=3.22%, Category=Very Low Risk
+Sample 9: Probability=75.87%, Category=Very High Risk
+Sample 10: Probability=4.61%, Category=Very Low Risk
+
+--- PCOS RANDOM FOREST TUNING ---
+Best params: {'model__max_depth': None, 'model__min_samples_leaf': 1, 'model__min_samples_split': 2, 'model__n_estimators': 100}
+Best CV ROC-AUC: 0.8559910714285713
+
+--- CALIBRATED PCOS RANDOM FOREST (Validation) ---
+[[39  2]
+ [ 3  9]]
+              precision    recall  f1-score   support
+
+           0      0.929     0.951     0.940        41
+           1      0.818     0.750     0.783        12
+
+    accuracy                          0.906        53
+   macro avg      0.873     0.851     0.861        53
+weighted avg      0.904     0.906     0.904        53
+
+ROC-AUC: 0.9278455284552846
+PR-AUC: 0.802090760546643
+Brier Score: 0.080004538052737
+
+Chosen Threshold: 0.05
+
+Confusion Matrix (Test):
+[[14 28]
+ [ 1 11]]
+              precision    recall  f1-score   support
+
+           0      0.933     0.333     0.491        42
+           1      0.282     0.917     0.431        12
+
+    accuracy                          0.463        54
+   macro avg      0.608     0.625     0.461        54
+weighted avg      0.789     0.463     0.478        54
+
+ROC-AUC (Test): 0.8025793650793651
+PR-AUC (Test): 0.5878960908372673
+Brier Score (Test): 0.13650906531914428
+
+PCOS Risk Categories (Samples):
+Sample 1: Probability=2.87%, Category=Very Low Risk
+Sample 2: Probability=2.87%, Category=Very Low Risk
+Sample 3: Probability=69.56%, Category=High Risk
+Sample 4: Probability=54.24%, Category=High Risk
+Sample 5: Probability=2.87%, Category=Very Low Risk
+Sample 6: Probability=14.19%, Category=Low Risk
+Sample 7: Probability=2.87%, Category=Very Low Risk
+Sample 8: Probability=8.51%, Category=Very Low Risk
+Sample 9: Probability=91.57%, Category=Very High Risk
+Sample 10: Probability=5.82%, Category=Very Low Risk
+
+--- PCOS XGBOOST TUNING ---
+Best params: {'model__colsample_bytree': 0.8, 'model__learning_rate': 0.01, 'model__max_depth': 6, 'model__n_estimators': 100, 'model__subsample': 0.8}
+Best CV ROC-AUC: 0.8508333333333333
+
+--- CALIBRATED PCOS XGBOOST (Validation) ---
+[[40  1]
+ [ 2 10]]
+              precision    recall  f1-score   support
+
+           0      0.952     0.976     0.964        41
+           1      0.909     0.833     0.870        12
+
+    accuracy                          0.943        53
+   macro avg      0.931     0.904     0.917        53
+weighted avg      0.943     0.943     0.943        53
+
+ROC-AUC: 0.9410569105691057
+PR-AUC: 0.9019149831649832
+Brier Score: 0.0629220459621866
+
+Chosen Threshold: 0.05
+
+Confusion Matrix (Test):
+[[21 21]
+ [ 2 10]]
+              precision    recall  f1-score   support
+
+           0      0.913     0.500     0.646        42
+           1      0.323     0.833     0.465        12
+
+    accuracy                          0.574        54
+   macro avg      0.618     0.667     0.556        54
+weighted avg      0.782     0.574     0.606        54
+
+ROC-AUC (Test): 0.7857142857142857
+PR-AUC (Test): 0.4878852929549524
+Brier Score (Test): 0.1608322997509496
+
+PCOS Risk Categories (Samples):
+Sample 1: Probability=1.63%, Category=Very Low Risk
+Sample 2: Probability=1.66%, Category=Very Low Risk
+Sample 3: Probability=90.65%, Category=Very High Risk
+Sample 4: Probability=66.69%, Category=High Risk
+Sample 5: Probability=1.63%, Category=Very Low Risk
+Sample 6: Probability=9.69%, Category=Very Low Risk
+Sample 7: Probability=1.91%, Category=Very Low Risk
+Sample 8: Probability=7.81%, Category=Very Low Risk
+Sample 9: Probability=87.34%, Category=Very High Risk
+Sample 10: Probability=2.61%, Category=Very Low Risk
+
+--- LIGHTGBM PCOS TUNING ---
+Best params: {'model__learning_rate': 0.01, 'model__max_depth': -1, 'model__n_estimators': 200, 'model__num_leaves': 31, 'model__subsample': 0.8}
+Best CV ROC-AUC: 0.8251547619047619
+
+--- CALIBRATED LIGHTGBM PCOS (Validation) ---
+[[37  4]
+ [ 5  7]]
+              precision    recall  f1-score   support
+
+           0      0.881     0.902     0.892        41
+           1      0.636     0.583     0.609        12
+
+    accuracy                          0.830        53
+   macro avg      0.759     0.743     0.750        53
+weighted avg      0.826     0.830     0.828        53
+
+ROC-AUC: 0.8719512195121951
+PR-AUC: 0.7949860596919421
+Brier Score: 0.09666227533611692
+Chosen Threshold: 0.05
+
+Confusion Matrix (Test):
+[[13 29]
+ [ 0 12]]
+              precision    recall  f1-score   support
+
+           0      1.000     0.310     0.473        42
+           1      0.293     1.000     0.453        12
+
+    accuracy                          0.463        54
+   macro avg      0.646     0.655     0.463        54
+weighted avg      0.843     0.463     0.468        54
+
+ROC-AUC (Test): 0.748015873015873
+PR-AUC (Test): 0.3901896358440012
+Brier Score (Test): 0.17536431398331206
+
+PCOS Risk Categories:
+Sample 1: Probability=4.66%, Risk=Very Low Risk
+Sample 2: Probability=4.64%, Risk=Very Low Risk
+Sample 3: Probability=81.36%, Risk=Very High Risk
+Sample 4: Probability=53.81%, Risk=High Risk
+Sample 5: Probability=4.64%, Risk=Very Low Risk
+Sample 6: Probability=5.84%, Risk=Very Low Risk
+Sample 7: Probability=4.66%, Risk=Very Low Risk
+Sample 8: Probability=5.70%, Risk=Very Low Risk
+Sample 9: Probability=71.27%, Risk=Very High Risk
+Sample 10: Probability=5.52%, Risk=Very Low Risk
