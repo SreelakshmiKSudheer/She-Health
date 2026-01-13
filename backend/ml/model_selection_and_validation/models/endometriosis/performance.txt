@@ -1,0 +1,231 @@
+Train positives: 332
+Validation positives: 71
+Test positives: 71
+
+--- PCOS LOGISTIC REGRESSION METRICS ---
+[[58  4]
+ [ 6 65]]
+              precision    recall  f1-score   support
+
+           0      0.906     0.935     0.921        62
+           1      0.942     0.915     0.929        71
+
+    accuracy                          0.925       133
+   macro avg      0.924     0.925     0.925       133
+weighted avg      0.925     0.925     0.925       133
+
+ROC-AUC: 0.9845524761472058
+PR-AUC: 0.98722431147517
+Brier Score: 0.05221032905739913
+
+Predicted PCOS risk (sample): 99.93%
+Actual (sample): 1
+
+--- CALIBRATED PCOS LOGISTIC REGRESSION METRICS ---
+[[58  4]
+ [ 6 65]]
+              precision    recall  f1-score   support
+
+           0      0.906     0.935     0.921        62
+           1      0.942     0.915     0.929        71
+
+    accuracy                          0.925       133
+   macro avg      0.924     0.925     0.925       133
+weighted avg      0.925     0.925     0.925       133
+
+ROC-AUC: 0.9845524761472058
+PR-AUC: 0.98722431147517
+Brier Score: 0.052179149421091676
+   Threshold    Recall  Precision        F1  False Positives  False Negatives
+0       0.05  1.000000   0.696078  0.820809               31                0
+1       0.10  1.000000   0.797753  0.887500               18                0
+2       0.15  1.000000   0.845238  0.916129               13                0
+3       0.20  0.985915   0.843373  0.909091               13                1
+4       0.25  0.971831   0.862500  0.913907               11                2
+5       0.30  0.957746   0.883117  0.918919                9                3
+6       0.35  0.957746   0.883117  0.918919                9                3
+7       0.40  0.957746   0.906667  0.931507                7                3
+8       0.45  0.943662   0.930556  0.937063                5                4
+9       0.50  0.915493   0.942029  0.928571                4                6
+
+--- TUNED CALIBRATED ENDOMETRIOSIS MODEL METRICS ---
+Chosen Threshold: 0.05
+[[31 31]
+ [ 0 71]]
+              precision    recall  f1-score   support
+
+           0      1.000     0.500     0.667        62
+           1      0.696     1.000     0.821        71
+
+    accuracy                          0.767       133
+   macro avg      0.848     0.750     0.744       133
+weighted avg      0.838     0.767     0.749       133
+
+ROC-AUC: 0.9613811903680146
+PR-AUC: 0.9694388148884925
+Brier Score: 0.08309595194149923
+Sample 1: Probability=99.92%, Category=Very High Risk
+Sample 2: Probability=1.56%, Category=Very Low Risk
+Sample 3: Probability=17.01%, Category=Low Risk
+Sample 4: Probability=2.07%, Category=Very Low Risk
+Sample 5: Probability=21.54%, Category=Moderate Risk
+Sample 6: Probability=98.73%, Category=Very High Risk
+Sample 7: Probability=99.98%, Category=Very High Risk
+Sample 8: Probability=4.44%, Category=Very Low Risk
+Sample 9: Probability=99.97%, Category=Very High Risk
+Sample 10: Probability=39.58%, Category=Moderate Risk
+
+--- ENDOMETRIOSIS RANDOM FOREST TUNING ---
+Best params: {'model__max_depth': None, 'model__min_samples_leaf': 2, 'model__min_samples_split': 5, 'model__n_estimators': 100}
+Best CV ROC-AUC: 0.9817028534936274
+
+--- CALIBRATED ENDOMETRIOSIS RANDOM FOREST (Validation) ---
+[[56  6]
+ [ 8 63]]
+              precision    recall  f1-score   support
+
+           0      0.875     0.903     0.889        62
+           1      0.913     0.887     0.900        71
+
+    accuracy                          0.895       133
+   macro avg      0.894     0.895     0.894       133
+weighted avg      0.895     0.895     0.895       133
+
+ROC-AUC: 0.9709223080417992
+PR-AUC: 0.9784573518242469
+Brier Score: 0.06474896486543895
+
+Chosen Threshold: 0.05
+
+Confusion Matrix (Test):
+[[32 30]
+ [ 0 71]]
+              precision    recall  f1-score   support
+
+           0      1.000     0.516     0.681        62
+           1      0.703     1.000     0.826        71
+
+    accuracy                          0.774       133
+   macro avg      0.851     0.758     0.753       133
+weighted avg      0.841     0.774     0.758       133
+
+ROC-AUC (Test): 0.9438891412994094
+PR-AUC (Test): 0.9582997865972023
+Brier Score (Test): 0.09998583115178708
+
+Endometriosis Risk Categories (Samples):
+Sample 1: Probability=98.24%, Category=Very High Risk
+Sample 2: Probability=4.64%, Category=Very Low Risk
+Sample 3: Probability=21.54%, Category=Moderate Risk
+Sample 4: Probability=2.22%, Category=Very Low Risk
+Sample 5: Probability=59.43%, Category=High Risk
+Sample 6: Probability=98.34%, Category=Very High Risk
+Sample 7: Probability=98.76%, Category=Very High Risk
+Sample 8: Probability=10.87%, Category=Low Risk
+Sample 9: Probability=98.84%, Category=Very High Risk
+Sample 10: Probability=26.31%, Category=Moderate Risk
+
+--- ENDOMETRIOSIS XGBOOST TUNING ---
+Best params: {'model__colsample_bytree': 0.8, 'model__learning_rate': 0.1, 'model__max_depth': 6, 'model__n_estimators': 100, 'model__subsample': 1.0}
+Best CV ROC-AUC: 0.9834282226879134
+
+--- CALIBRATED ENDOMETRIOSIS XGBOOST (Validation) ---
+[[55  7]
+ [ 6 65]]
+              precision    recall  f1-score   support
+
+           0      0.902     0.887     0.894        62
+           1      0.903     0.915     0.909        71
+
+    accuracy                          0.902       133
+   macro avg      0.902     0.901     0.902       133
+weighted avg      0.902     0.902     0.902       133
+
+ROC-AUC: 0.983643798273512
+PR-AUC: 0.986841571537262
+Brier Score: 0.060383747664487196
+
+Chosen Threshold: 0.05
+
+Confusion Matrix (Test):
+[[27 35]
+ [ 0 71]]
+              precision    recall  f1-score   support
+
+           0      1.000     0.435     0.607        62
+           1      0.670     1.000     0.802        71
+
+    accuracy                          0.737       133
+   macro avg      0.835     0.718     0.705       133
+weighted avg      0.824     0.737     0.711       133
+
+ROC-AUC (Test): 0.9534302589731941
+PR-AUC (Test): 0.9615780971958078
+Brier Score (Test): 0.1070207638279041
+
+Endometriosis Risk Categories (Samples):
+Sample 1: Probability=96.53%, Category=Very High Risk
+Sample 2: Probability=4.76%, Category=Very Low Risk
+Sample 3: Probability=6.29%, Category=Very Low Risk
+Sample 4: Probability=4.73%, Category=Very Low Risk
+Sample 5: Probability=18.04%, Category=Low Risk
+Sample 6: Probability=96.30%, Category=Very High Risk
+Sample 7: Probability=96.52%, Category=Very High Risk
+Sample 8: Probability=5.41%, Category=Very Low Risk
+Sample 9: Probability=96.52%, Category=Very High Risk
+Sample 10: Probability=8.64%, Category=Very Low Risk
+
+--- LIGHTGBM ENDOMETRIOSIS TUNING ---
+Best params: {'model__learning_rate': 0.1, 'model__max_depth': 6, 'model__n_estimators': 100, 'model__num_leaves': 64, 'model__subsample': 0.8}
+Best CV ROC-AUC: 0.9835865631420525
+
+--- CALIBRATED LIGHTGBM ENDOMETRIOSIS (Validation) ---
+[[57  5]
+ [ 6 65]]
+              precision    recall  f1-score   support
+
+           0      0.905     0.919     0.912        62
+           1      0.929     0.915     0.922        71
+
+    accuracy                          0.917       133
+   macro avg      0.917     0.917     0.917       133
+weighted avg      0.917     0.917     0.917       133
+
+ROC-AUC: 0.9850068150840526
+PR-AUC: 0.9879790767256436
+Brier Score: 0.06378967972690724
+Chosen Threshold: 0.05
+
+Confusion Matrix (Test):
+[[ 0 62]
+ [ 0 71]]
+c:\ProgramData\anaconda3\Lib\site-packages\sklearn\metrics\_classification.py:1344: UndefinedMetricWarning: Precision and F-score are ill-defined and being set to 0.0 in labels with no predicted samples. Use `zero_division` parameter to control this behavior.
+  _warn_prf(average, modifier, msg_start, len(result))
+c:\ProgramData\anaconda3\Lib\site-packages\sklearn\metrics\_classification.py:1344: UndefinedMetricWarning: Precision and F-score are ill-defined and being set to 0.0 in labels with no predicted samples. Use `zero_division` parameter to control this behavior.
+  _warn_prf(average, modifier, msg_start, len(result))
+c:\ProgramData\anaconda3\Lib\site-packages\sklearn\metrics\_classification.py:1344: UndefinedMetricWarning: Precision and F-score are ill-defined and being set to 0.0 in labels with no predicted samples. Use `zero_division` parameter to control this behavior.
+  _warn_prf(average, modifier, msg_start, len(result))
+              precision    recall  f1-score   support
+
+           0      0.000     0.000     0.000        62
+           1      0.534     1.000     0.696        71
+
+    accuracy                          0.534       133
+   macro avg      0.267     0.500     0.348       133
+weighted avg      0.285     0.534     0.372       133
+
+ROC-AUC (Test): 0.9504770558836892
+PR-AUC (Test): 0.9602651279385898
+Brier Score (Test): 0.11070921998774988
+
+Endometriosis Risk Categories (Samples):
+Sample 1: Probability=94.82%, Risk=Very High Risk
+Sample 2: Probability=6.95%, Risk=Very Low Risk
+Sample 3: Probability=7.89%, Risk=Very Low Risk
+Sample 4: Probability=6.98%, Risk=Very Low Risk
+Sample 5: Probability=25.70%, Risk=Moderate Risk
+Sample 6: Probability=94.81%, Risk=Very High Risk
+Sample 7: Probability=94.82%, Risk=Very High Risk
+Sample 8: Probability=7.31%, Risk=Very Low Risk
+Sample 9: Probability=94.83%, Risk=Very High Risk
+Sample 10: Probability=9.80%, Risk=Very Low Risk
