@@ -173,8 +173,7 @@ def endometriosis_random_forest_with_tuning_and_calibration(
     x_train, y_train,
     x_valid, y_valid,
     x_test, y_test,
-    method="sigmoid"
-):
+    method="sigmoid"):
     """
     Trains a Random Forest for Endometriosis risk prediction,
     performs hyperparameter tuning, calibrates probabilities,
@@ -251,7 +250,7 @@ def endometriosis_random_forest_with_tuning_and_calibration(
 
     # Threshold tuning (recall ≥ 80%)
     threshold_results = tune_threshold_for_recall(calibrated, x_valid, y_valid)
-
+    print("\nThreshold Tuning Results:\n", threshold_results)
     chosen_threshold = 0.5
     try:
         chosen_threshold = threshold_results[
@@ -289,8 +288,7 @@ def endometriosis_xgboost_with_tuning_and_calibration(
     x_train, y_train,
     x_valid, y_valid,
     x_test, y_test,
-    method="sigmoid"
-):
+    method="sigmoid"):
 
     # Handle class imbalance
     scale_pos_weight = (y_train == 0).sum() / (y_train == 1).sum()
@@ -371,6 +369,7 @@ def endometriosis_xgboost_with_tuning_and_calibration(
     threshold_results = tune_threshold_for_recall(
         calibrated, x_valid, y_valid
     )
+    print("\nThreshold Tuning Results:\n", threshold_results)
 
     chosen_threshold = 0.5
     try:
@@ -489,6 +488,7 @@ def lightgbm_endometriosis_with_tuning_and_calibration(
     threshold_results = tune_threshold_for_recall(
         calibrated, x_valid, y_valid
     )
+    print("\nThreshold Tuning Results:\n", threshold_results)
 
     chosen_threshold = 0.5
     try:
@@ -555,7 +555,7 @@ threshold_results = tune_threshold_for_recall(
     x_valid,
     y_valid
 )
-print(threshold_results)
+print("\nThreshold Tuning Results:\n", threshold_results)
 optimal_threshold = threshold_results[
     threshold_results["Recall"] >= 0.90
 ].iloc[0]["Threshold"]
