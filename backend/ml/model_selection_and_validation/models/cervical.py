@@ -35,17 +35,16 @@ for col in cervical.columns:
 
 # ---------------- PROBABILITY TO RISK CATEGORY ----------------
 def risk_category(prob):
-    if prob >= 0.50:
-        return "Very High Risk: Immediate clinical screening advised."
-    elif prob >= 0.25:
-        return "High Risk: Professional consultation recommended."
+    if prob >= 0.70:
+        return "Very High Risk"
+    elif prob >= 0.50:
+        return "High Risk"
+    elif prob >= 0.30:
+        return "Moderate Risk"
     elif prob >= 0.10:
-        # Matches your 0.750 Recall threshold
-        return "Moderate Risk: Elevated indicators; scheduling a Pap smear is advised."
-    elif prob >= 0.05:
-        return "Low Risk: Minor risk factors detected; maintain regular checkups."
+        return "Low Risk"
     else:
-        return "No Risk: No significant indicators found."
+        return "Very Low Risk"
 
 # ---------------- PRINT POSITIVE COUNTS ----------------
 def print_positive_counts(y_train, y_valid, y_test):
@@ -283,19 +282,19 @@ def random_forest_with_tuning_and_calibration(
     # Threshold tuning for recall
     threshold_results = tune_threshold_for_recall(calibrated, x_valid, y_valid)
     print('\nThreshold tuning results (validation):')
-    print(threshold_results)
+    # print(threshold_results)
 
     # Choose threshold achieving >=90% recall if available, otherwise default 0.5
-    chosen_threshold = 0.5
+    chosen_threshold = 0.15
     try:
         optimal_row = threshold_results[threshold_results["Recall"] >= 0.90].iloc[0]
         chosen_threshold = optimal_row["Threshold"]
     except Exception:
         # fallback keep 0.5
         pass
-    chosen_threshold = 0.15
 
     print('\n--- TUNED CALIBRATED RANDOM FOREST METRICS ---')
+    chosen_threshold = 0.15
     print('Chosen Threshold:', chosen_threshold)
 
     test_probs = calibrated.predict_proba(x_test)[:, 1]
@@ -310,106 +309,6 @@ def random_forest_with_tuning_and_calibration(
     print('Brier Score (Test):', brier_score_loss(y_test, test_probs))
 
     # Print sample risk categories
-    risk_labels = [risk_category(p) for p in test_probs]
-    print('\nRisk Categories (Test Samples):')
-    for i in range(min(10, len(test_probs))):
-        print(f"Sample {i+1}: Probability={test_probs[i]:.2%}, Category={risk_labels[i]}")
-
-    return calibrated, grid
-
-
-# ---------------- XGBOOST MODEL WITH TUNING & CALIBRATION ----------------
-def xgboost_with_tuning_and_calibration(
-    x_train, y_train,
-    x_valid, y_valid,
-    x_test, y_test,
-    method="sigmoid"
-):
-
-    base_pipeline = Pipeline([
-        ("imputer", SimpleImputer(strategy="median")),
-        ("scaler", StandardScaler()),
-        ("model", XGBClassifier(use_label_encoder=False, random_state=42, n_jobs=-1, verbosity=0))
-    ])
-
-    param_grid = {
-        'model__n_estimators': [100, 200],
-        'model__max_depth': [3, 6, 10],
-        'model__learning_rate': [0.01, 0.1],
-        'model__subsample': [0.8, 1.0]
-    }
-
-    cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
-
-    grid = GridSearchCV(
-        estimator=base_pipeline,
-        param_grid=param_grid,
-        scoring='roc_auc',
-        cv=cv,
-        n_jobs=-1,
-        verbose=0
-    )
-
-    grid.fit(x_train, y_train)
-
-    best_pipeline = grid.best_estimator_
-    print('\n--- XGBOOST TUNING ---')
-    print('Best params:', grid.best_params_)
-    print('Best CV ROC-AUC:', grid.best_score_)
-
-    calibrated = CalibratedClassifierCV(estimator=best_pipeline, method=method, cv='prefit')
-    calibrated.fit(x_valid, y_valid)
-
-    # Validation metrics
-    y_valid_prob = calibrated.predict_proba(x_valid)[:, 1]
-    y_valid_pred = (y_valid_prob >= 0.5).astype(int)
-
-    print("\n--- CALIBRATED XGBOOST METRICS (Validation) ---")
-    print("\nConfusion Matrix (Validation - Calibrated):")
-    print(confusion_matrix(y_valid, y_valid_pred))
-
-    print("\nClassification Report (Validation - Calibrated):")
-    print(classification_report(y_valid, y_valid_pred, digits=3))
-
-    roc_auc = roc_auc_score(y_valid, y_valid_prob)
-    pr_auc = average_precision_score(y_valid, y_valid_prob)
-    brier = brier_score_loss(y_valid, y_valid_prob)
-
-    print(f"ROC-AUC (Validation): {roc_auc:.3f}")
-    print(f"PR-AUC (Validation): {pr_auc:.3f}")
-    print(f"Brier Score (Validation): {brier:.3f}")
-
-    prob_true, prob_pred = calibration_curve(y_valid, y_valid_prob, n_bins=10)
-    print('\nCalibration bins (pred, true):')
-    for p_pred, p_true in zip(prob_pred, prob_true):
-        print(f"Predicted: {p_pred:.2f}, True: {p_true:.2f}")
-
-    threshold_results = tune_threshold_for_recall(calibrated, x_valid, y_valid)
-    print('\nThreshold tuning results (validation):')
-    print(threshold_results)
-
-    chosen_threshold = 0.5
-    try:
-        optimal_row = threshold_results[threshold_results["Recall"] >= 0.90].iloc[0]
-        chosen_threshold = optimal_row["Threshold"]
-    except Exception:
-        pass
-
-    chosen_threshold = 0.10
-    print('\n--- TUNED CALIBRATED XGBOOST METRICS ---')
-    print('Chosen Threshold:', chosen_threshold)
-
-    test_probs = calibrated.predict_proba(x_test)[:, 1]
-    test_preds = (test_probs >= chosen_threshold).astype(int)
-
-    print('\nConfusion Matrix (Test):')
-    print(confusion_matrix(y_test, test_preds))
-    print('\nClassification Report (Test):')
-    print(classification_report(y_test, test_preds, digits=3))
-    print('ROC-AUC (Test):', roc_auc_score(y_test, test_probs))
-    print('PR-AUC (Test):', average_precision_score(y_test, test_probs))
-    print('Brier Score (Test):', brier_score_loss(y_test, test_probs))
-
     risk_labels = [risk_category(p) for p in test_probs]
     print('\nRisk Categories (Test Samples):')
     for i in range(min(10, len(test_probs))):
@@ -495,16 +394,17 @@ def lightgbm_with_tuning_and_calibration(
 
     threshold_results = tune_threshold_for_recall(calibrated, x_valid, y_valid)
     print('\nThreshold tuning results (validation):')
-    print(threshold_results)
+    # print(threshold_results)
 
-    chosen_threshold = 0.5
+    chosen_threshold = 0.25
     try:
         optimal_row = threshold_results[threshold_results["Recall"] >= 0.90].iloc[0]
         chosen_threshold = optimal_row["Threshold"]
     except Exception:
         pass
-    chosen_threshold = 0.20
+
     print('\n--- TUNED CALIBRATED LIGHTGBM METRICS ---')
+    chosen_threshold = 0.25
     print('Chosen Threshold:', chosen_threshold)
 
     test_probs = calibrated.predict_proba(x_test)[:, 1]
@@ -554,10 +454,11 @@ threshold_results = tune_threshold_for_recall(
     x_valid,
     y_valid
 )
-print(threshold_results)
+# print(threshold_results)
 optimal_row = threshold_results[threshold_results["Recall"] >= 0.90].iloc[0]
 optimal_threshold = optimal_row["Threshold"]
 optimal_threshold = 0.10
+
 print("\n--- TUNED CALIBRATED LOGISTIC REGRESSION MODEL METRICS ---")
 print("Chosen Threshold:", optimal_threshold)
 
@@ -587,14 +488,6 @@ calibrated_rf, rf_grid = random_forest_with_tuning_and_calibration(
     method="sigmoid"
 )
 
-
-# ----------------RUN XGBOOST WITH TUNING & CALIBRATION ----------------
-calibrated_xgb, xgb_grid = xgboost_with_tuning_and_calibration(
-    x_train, y_train,
-    x_valid, y_valid,
-    x_test, y_test,
-    method="sigmoid"
-)
 
 
 # ----------------RUN LIGHTGBM WITH TUNING & CALIBRATION ----------------
