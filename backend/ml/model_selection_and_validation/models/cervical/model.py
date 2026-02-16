@@ -35,16 +35,17 @@ for col in cervical.columns:
 
 # ---------------- PROBABILITY TO RISK CATEGORY ----------------
 def risk_category(prob):
-    if prob >= 0.70:
-        return "Very High Risk"
-    elif prob >= 0.50:
-        return "High Risk"
-    elif prob >= 0.30:
-        return "Moderate Risk"
+    if prob >= 0.50:
+        return "Very High Risk: Immediate clinical screening advised."
+    elif prob >= 0.25:
+        return "High Risk: Professional consultation recommended."
     elif prob >= 0.10:
-        return "Low Risk"
+        # Matches your 0.750 Recall threshold
+        return "Moderate Risk: Elevated indicators; scheduling a Pap smear is advised."
+    elif prob >= 0.05:
+        return "Low Risk: Minor risk factors detected; maintain regular checkups."
     else:
-        return "Very Low Risk"
+        return "No Risk: No significant indicators found."
 
 # ---------------- PRINT POSITIVE COUNTS ----------------
 def print_positive_counts(y_train, y_valid, y_test):
@@ -292,6 +293,7 @@ def random_forest_with_tuning_and_calibration(
     except Exception:
         # fallback keep 0.5
         pass
+    chosen_threshold = 0.15
 
     print('\n--- TUNED CALIBRATED RANDOM FOREST METRICS ---')
     print('Chosen Threshold:', chosen_threshold)
@@ -393,6 +395,7 @@ def xgboost_with_tuning_and_calibration(
     except Exception:
         pass
 
+    chosen_threshold = 0.10
     print('\n--- TUNED CALIBRATED XGBOOST METRICS ---')
     print('Chosen Threshold:', chosen_threshold)
 
@@ -500,7 +503,7 @@ def lightgbm_with_tuning_and_calibration(
         chosen_threshold = optimal_row["Threshold"]
     except Exception:
         pass
-
+    chosen_threshold = 0.20
     print('\n--- TUNED CALIBRATED LIGHTGBM METRICS ---')
     print('Chosen Threshold:', chosen_threshold)
 
@@ -554,7 +557,7 @@ threshold_results = tune_threshold_for_recall(
 print(threshold_results)
 optimal_row = threshold_results[threshold_results["Recall"] >= 0.90].iloc[0]
 optimal_threshold = optimal_row["Threshold"]
-
+optimal_threshold = 0.10
 print("\n--- TUNED CALIBRATED LOGISTIC REGRESSION MODEL METRICS ---")
 print("Chosen Threshold:", optimal_threshold)
 
