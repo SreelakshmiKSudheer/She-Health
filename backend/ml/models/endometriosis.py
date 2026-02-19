@@ -283,3 +283,20 @@ calibrated_ada, ada_grid = endometriosis_adaboost_with_tuning_and_calibration(
     method="sigmoid"
 )
 
+# ---------------- SAVE FINAL MODEL ----------------
+import os
+import joblib
+
+MODEL_DIR = r"C:\Users\user\SreelakshmiK\personal\Projects\She-Health\backend\app\ml\models"
+os.makedirs(MODEL_DIR, exist_ok=True)
+
+model_path = os.path.join(MODEL_DIR, "endometriosis_model.pkl")
+
+# Save model
+joblib.dump({
+    "model": calibrated_ada,
+    "features": x_train_ada.columns.tolist(),
+    "threshold": 0.10  # your chosen threshold
+}, model_path)
+
+print(f"\nModel saved successfully at: {model_path}")
