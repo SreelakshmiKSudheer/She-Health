@@ -3,3 +3,6 @@
 ./backend/ml/Kaggle dataset trials/Models trained on Kaggle Dataset/outputs
 ./backend/ml/model_selection_and_validation/outputs
 .env
+.vscode
+.venv/
+__pycache__/
