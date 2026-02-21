@@ -1,3 +1,5 @@
 ./ml/model_selection_and_validation/models/outputs
 ./ml/Kaggle dataset trials/Models trained on Kaggle Dataset/outputs
 ./ml/model_selection_and_validation/outputs
+.venv/
+__pycache__/
