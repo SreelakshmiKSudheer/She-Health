@@ -1,19 +1,20 @@
 from fastapi import FastAPI
-from app.config.database import connect_to_mongo, close_mongo_connection
-# from app.routers import test_router
+from contextlib import asynccontextmanager
+from app.db.database import MongoDB, init_db # Ensure this line is correct
+from app.routes import user_router, questionnaire_router, response_router, prediction_router
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # 1. Startup: Connect to MongoDB
+    await MongoDB.connect_to_mongo()
+    # 2. Startup: Initialize SQLite Tables
+    init_db()
+    yield
+    # 3. Shutdown
+    await MongoDB.close_mongo_connection()
 
-@app.on_event("startup")
-async def startup():
-    await connect_to_mongo()
-
-@app.on_event("shutdown")
-async def shutdown():
-    await close_mongo_connection()
-
-# app.include_router(test_router.router)
-
-@app.get("/")
-async def root():
-    return "Hello world"
+app = FastAPI(lifespan=lifespan)
+app.include_router(user_router.router)
+app.include_router(questionnaire_router.router)
+app.include_router(response_router.router)
+app.include_router(prediction_router.router)
