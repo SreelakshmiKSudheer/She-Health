@@ -1,17 +1,14 @@
-from app.config.database import get_database
+from pydantic import BaseModel, Field
 from datetime import datetime
-import uuid
+from typing import Dict, Any
 
+class DiseaseRisk(BaseModel):
+    probability: float      # e.g., 76.5
+    risk_level: int         # 1-5 (as returned by your model logic)
+    # We can also store the raw category name if your model provides it
+    category_name: str      
 
-async def save_risk_result(result_data: dict):
-    db = get_database()
-    result_data["result_id"] = str(uuid.uuid4())
-    result_data["prediction_date"] = datetime.utcnow()
-
-    await db.risk_results.insert_one(result_data)
-    return result_data
-
-
-async def get_user_results(user_id: str):
-    db = get_database()
-    return await db.risk_results.find({"user_id": user_id}).to_list(100)
+class PredictionRecord(BaseModel):
+    user_id: str
+    predictions: Dict[str, DiseaseRisk]
+    created_at: datetime = Field(default_factory=datetime.utcnow)

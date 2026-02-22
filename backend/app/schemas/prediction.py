@@ -1,11 +1,13 @@
 from pydantic import BaseModel
 from datetime import datetime
+from typing import Dict
 
-
-class RiskResult(BaseModel):
-    result_id: str
-    user_id: str
-    disease_id: str
+class RiskDetail(BaseModel):
     probability: float
     risk_level: int
-    prediction_date: datetime
+    label: str
+
+class PredictionResponse(BaseModel):
+    user_id: str
+    results: Dict[str, RiskDetail]
+    timestamp: datetime
