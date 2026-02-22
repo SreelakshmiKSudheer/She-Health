@@ -1,31 +1,64 @@
-from app.config.database import get_database
-import uuid
+from sqlalchemy import Column, String, Integer, Boolean, Float, ForeignKey, DateTime
+from sqlalchemy.orm import relationship
+from app.db.base import Base # This should be your SQLAlchemy declarative_base
 from datetime import datetime
 
+class Question(Base):
+    __tablename__ = "questions"
 
-# Create Question
-async def create_question(question_data: dict):
-    db = get_database()
-    question_data["question_id"] = str(uuid.uuid4())
+    id = Column(String, primary_key=True, index=True) # e.g., "Q_SYMPTOMS_01"
+    text = Column(String, nullable=False)
+    category = Column(String)             # e.g., "PCOS", "General", "Thyroid"
+    q_type = Column(String, nullable=False) # "yes_no", "single_select", "multi_select", "input"
+    is_initial = Column(Boolean, default=True)
+    priority = Column(Integer, default=0)
 
-    await db.questions.insert_one(question_data)
-    return question_data
-
-
-# Create Answer Option
-async def create_option(option_data: dict):
-    db = get_database()
-    option_data["option_id"] = str(uuid.uuid4())
-
-    await db.answer_options.insert_one(option_data)
-    return option_data
+    # Relationship to AnswerOptions with Cascade Delete
+    options = relationship(
+        "AnswerOption", 
+        back_populates="question", 
+        cascade="all, delete-orphan",
+        passive_deletes=True
+    )
 
 
-# Save User Response
-async def save_user_response(response_data: dict):
-    db = get_database()
-    response_data["response_id"] = str(uuid.uuid4())
-    response_data["timestamp"] = datetime.utcnow()
+class AnswerOption(Base):
+    __tablename__ = "answer_options"
 
-    await db.user_responses.insert_one(response_data)
-    return response_data
+    id = Column(String, primary_key=True, index=True)
+    question_id = Column(String, ForeignKey("questions.id", ondelete="CASCADE"))
+    text = Column(String, nullable=False) # The label user sees (e.g., "Yes", "Irregular periods")
+
+    question = relationship("Question", back_populates="options")
+    
+    # Relationship to Feature Maps with Cascade Delete
+    feature_mappings = relationship(
+        "OptionFeatureMap", 
+        back_populates="option", 
+        cascade="all, delete-orphan",
+        passive_deletes=True
+    )
+
+
+class OptionFeatureMap(Base):
+    """
+    The 'Intelligence Layer' that maps a single UI choice 
+    to one or more of the 125 ML features.
+    """
+    __tablename__ = "option_feature_maps"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    option_id = Column(String, ForeignKey("answer_options.id", ondelete="CASCADE"))
+    feature_name = Column(String, nullable=False) # e.g., "pcos_acne_binary"
+    feature_value = Column(Float, default=1.0)    # The value fed to the ML model
+
+    option = relationship("AnswerOption", back_populates="feature_mappings")
+
+class UserResponse(Base):
+    __tablename__ = "user_responses"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(String, index=True) # The UUID from Flutter/Mongo
+    question_id = Column(String, ForeignKey("questions.id"))
+    option_id = Column(String, ForeignKey("answer_options.id"))
+    created_at = Column(DateTime, default=datetime.utcnow)
