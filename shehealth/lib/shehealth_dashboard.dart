@@ -48,13 +48,17 @@ class _DashboardPageState extends State<DashboardPage> {
       // Navigate to Health Report Page
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => const HealthReportPage()),
+        MaterialPageRoute(
+  builder: (context) => HealthReportPage(
+    reportText: "No report available.",
+  ),
+),
       );
     } else if (index == 2) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Opening Calendar...')),
-      );
-    } else if (index == 3) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(content: Text('Opening Calendar...')),
+  );
+} else if (index == 3) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Opening Surveys...')),
       );
@@ -179,7 +183,11 @@ class _DashboardPageState extends State<DashboardPage> {
                       // Navigate to Health Report Page
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const HealthReportPage()),
+                        MaterialPageRoute(
+  builder: (context) => HealthReportPage(
+    reportText: "No report available.",
+  ),
+),
                       );
                     },
                     style: OutlinedButton.styleFrom(
@@ -823,7 +831,11 @@ class _DashboardPageState extends State<DashboardPage> {
                   // Navigate to Health Report Page for full assessment
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const HealthReportPage()),
+                    MaterialPageRoute(
+  builder: (context) => HealthReportPage(
+    reportText: "No report available.",
+  ),
+),
                   );
                 },
                 style: ElevatedButton.styleFrom(
