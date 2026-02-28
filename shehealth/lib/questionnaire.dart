@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'shehealth_dashboard.dart'; // Make sure this import is correct
+import 'shehealth_dashboard.dart'; 
+import 'services/groq_service.dart';
+import 'report.dart';
 
 class SymptomQuestionnaire extends StatefulWidget {
   const SymptomQuestionnaire({super.key});
@@ -58,12 +60,49 @@ class _SymptomQuestionnaireState extends State<SymptomQuestionnaire>
     });
   }
 
-  void _completeAssessment() {
-    setState(() => _isProcessing = true);
-    Future.delayed(const Duration(seconds: 2), () {
-      setState(() => _isProcessing = false);
-    });
-  }
+  Future<void> _completeAssessment() async {
+  setState(() => _isProcessing = true);
+
+  // Convert answers into readable format
+  String formattedAnswers = answers.entries
+      .map((e) => "Q${e.key}: ${e.value}")
+      .join("\n");
+
+  // Call Groq service
+  final groqService = GroqService();
+
+  String aiReport = await groqService.sendMessage(
+    """
+You are a women's health AI specialist.
+
+Based on the following questionnaire responses, generate a structured health report.
+
+Responses:
+$formattedAnswers
+
+Generate report in this structure:
+1. Patient Summary
+2. Symptom Analysis
+3. Risk Evaluation
+4. Recommendations
+5. Lifestyle Advice
+6. Medical Disclaimer
+
+Keep it professional and easy to understand.
+""",
+    [],
+  );
+
+  setState(() => _isProcessing = false);
+
+  // Navigate to report page
+  Navigator.pushReplacement(
+    context,
+    MaterialPageRoute(
+      builder: (_) => HealthReportPage(reportText: aiReport),
+    ),
+  );
+}
 
   void _goToDashboard() {
     Navigator.pushReplacement(
