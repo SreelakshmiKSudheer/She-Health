@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "895935152452",
+    "project_id": "shehealth-f67a5",
+    "storage_bucket": "shehealth-f67a5.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:895935152452:android:74df3828e34a2d9a1b5711",
+        "android_client_info": {
+          "package_name": "com.example.shehealth"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCQU5f6FJl7xbQ1BuyQFushsEkRZ5ncjLU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
