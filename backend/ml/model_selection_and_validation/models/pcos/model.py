@@ -26,6 +26,8 @@ from xgboost import XGBClassifier
 # Load cleaned data
 pcos = pd.read_csv(r'C:\Users\user\SreelakshmiK\personal\Projects\She-Health\backend\dataset\final_dataset\pcos.csv')
 pcos.columns = pcos.columns.str.strip()
+# Drop specified columns
+pcos = pcos.drop(columns=["City", 'loss weight gain / weight loss', 'more Mood Swings'], errors="ignore")
 
 '''
 # Initial data inspection
@@ -268,6 +270,7 @@ def pcos_random_forest_with_tuning_and_calibration(
     threshold_results = tune_threshold_for_recall(
         calibrated, x_valid, y_valid
     )
+    print("\nThreshold Tuning Results:\n", threshold_results)
 
     chosen_threshold = 0.5
     try:
@@ -390,6 +393,7 @@ def pcos_xgboost_with_tuning_and_calibration(
     threshold_results = tune_threshold_for_recall(
         calibrated, x_valid, y_valid
     )
+    print("\nThreshold Tuning Results:\n", threshold_results)
 
     chosen_threshold = 0.5
     try:
@@ -509,6 +513,7 @@ def lightgbm_pcos_with_tuning_and_calibration(
     threshold_results = tune_threshold_for_recall(
         calibrated, x_valid, y_valid
     )
+    print("\nThreshold Tuning Results:\n", threshold_results)
 
     chosen_threshold = 0.5
     try:
