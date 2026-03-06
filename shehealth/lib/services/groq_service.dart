@@ -36,7 +36,7 @@ Provide accurate, empathetic, and helpful information. Always remind users to co
           'Authorization': 'Bearer $apiKey',
         },
         body: jsonEncode({
-          'model': 'llama-3.3-70b-versatile', // Fast and capable model
+          'model': 'llama-3.3-70b-versatile',
           'messages': messages,
           'temperature': 0.7,
           'max_tokens': 500,
@@ -52,6 +52,59 @@ Provide accurate, empathetic, and helpful information. Always remind users to co
       }
     } catch (e) {
       return 'I apologize, but I\'m having trouble connecting right now. Please try again in a moment. If the issue persists, you can ask me about common topics like PCOS, menstrual health, or fertility.';
+    }
+  }
+
+  // ✅ NEW FUNCTION (correct position)
+  Future<String> generateDietPlan(String condition) async {
+    try {
+
+      final response = await http.post(
+        Uri.parse(baseUrl),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $apiKey',
+        },
+        body: jsonEncode({
+          'model': 'llama-3.3-70b-versatile',
+          'messages': [
+            {
+              "role": "system",
+              "content": """You are a certified women's health nutrition assistant.
+
+Create a healthy and balanced daily diet plan specifically for women based on their health condition.
+
+The response should include:
+Breakfast
+Mid-Morning Snack
+Lunch
+Evening Snack
+Dinner
+
+Keep the food simple, nutritious, and commonly available."""
+            },
+            {
+              "role": "user",
+              "content": "Generate a daily diet plan for a woman with $condition."
+            }
+          ],
+          'temperature': 0.7,
+          'max_tokens': 400,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+
+        final data = jsonDecode(response.body);
+
+        return data['choices'][0]['message']['content'];
+
+      } else {
+        throw Exception('Failed to generate diet plan: ${response.statusCode}');
+      }
+
+    } catch (e) {
+      return "Unable to generate diet plan right now. Please try again later.";
     }
   }
 }
