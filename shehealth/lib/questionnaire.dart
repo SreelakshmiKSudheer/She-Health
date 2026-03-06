@@ -72,26 +72,51 @@ class _SymptomQuestionnaireState extends State<SymptomQuestionnaire>
   final groqService = GroqService();
 
   String aiReport = await groqService.sendMessage(
-    """
+"""
 You are a women's health AI specialist.
 
-Based on the following questionnaire responses, generate a structured health report.
+Analyze the questionnaire responses and estimate the overall health risk.
 
 Responses:
 $formattedAnswers
 
-Generate report in this structure:
-1. Patient Summary
-2. Symptom Analysis
-3. Risk Evaluation
-4. Recommendations
-5. Lifestyle Advice
-6. Medical Disclaimer
+Generate the report in the following format.
 
-Keep it professional and easy to understand.
+IMPORTANT:
+At the VERY TOP show:
+
+Overall Risk Probability: value between 0 and 1  
+Risk Category: No Risk / Low Risk / Moderate Risk / High Risk / Very High Risk
+
+Then continue with the report sections.
+
+Full structure:
+
+Overall Risk Probability: 0.xx  
+Risk Category: (No / Low / Moderate / High / Very High)
+
+1. Patient Summary
+Short summary of symptoms.
+
+2. Symptom Analysis
+Explain patterns in symptoms.
+
+3. Possible Conditions
+Mention possible women's health conditions if symptoms suggest them.
+
+4. Recommendations
+Medical or lifestyle recommendations.
+
+5. Lifestyle Advice
+Diet, sleep, and stress suggestions.
+
+6. Medical Disclaimer
+Mention that this is not a medical diagnosis.
+
+Keep the report clear and professional.
 """,
-    [],
-  );
+[],
+);
 
   setState(() => _isProcessing = false);
 
