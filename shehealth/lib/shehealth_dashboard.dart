@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'report.dart'; // Import the health report page
 import 'questionnaire.dart'; // Add this import for the questionnaire page
 import 'chatbot.dart'; // Add this import for the chatbot page
+import 'calendar.dart';
+import 'dietplan.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -54,9 +56,12 @@ class _DashboardPageState extends State<DashboardPage> {
   ),
 ),
       );
-    } else if (index == 2) {
-  ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(content: Text('Opening Calendar...')),
+    }else if (index == 2) {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => const PeriodCalendarWidget(),
+    ),
   );
 } else if (index == 3) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -65,6 +70,14 @@ class _DashboardPageState extends State<DashboardPage> {
     }
   }
 
+  void _openDietPlan() {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => const DietPlanPage(),
+    ),
+  );
+}
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -120,108 +133,140 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  // ... [All other existing widget methods remain the same until _buildWelcomeSection]
-
-  Widget _buildWelcomeSection() {
-    return Stack(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFFC85A7A), Color(0xFFE59393), Color.fromARGB(255, 255, 225, 225)],
-            ),
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFFE59393).withOpacity(0.3),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
-              ),
+ Widget _buildWelcomeSection() {
+  return Stack(
+    children: [
+      Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [
+              Color(0xFFC85A7A),
+              Color(0xFFE59393),
+              Color.fromARGB(255, 255, 225, 225)
             ],
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Welcome back, Sarah! 💗',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFFE59393).withOpacity(0.3),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Welcome back, Sarah! 💗',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 26,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Here\'s your health overview for today',
+              style: TextStyle(color: Colors.white70, fontSize: 14),
+            ),
+            const SizedBox(height: 20),
+
+            Row(
+              children: [
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const SymptomQuestionnaire(),
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: const Color(0xFFE59393),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                  ),
+                  child: const Text(
+                    'Log Symptoms',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Here\'s your health overview for today',
-                style: TextStyle(color: Colors.white70, fontSize: 14),
-              ),
-              const SizedBox(height: 20),
-              Row(
-                children: [
-                  ElevatedButton(
-                    onPressed: () {
-                      // Navigate to Symptom Questionnaire Page
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const SymptomQuestionnaire()),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: const Color(0xFFE59393),
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                    ),
-                    child: const Text('Log Symptoms', style: TextStyle(fontWeight: FontWeight.bold)),
-                  ),
-                  const SizedBox(width: 12),
-                  OutlinedButton(
-                    onPressed: () {
-                      // Navigate to Health Report Page
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-  builder: (context) => HealthReportPage(
-    reportText: "No report available.",
-  ),
-),
-                      );
-                    },
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      side: const BorderSide(color: Colors.white30),
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                    ),
-                    child: const Text('View Report'),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-        Positioned(
-          top: 0,
-          right: -30,
-          child: Container(
-            width: 100,
-            height: 100,
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
 
-  // ... [All other widget methods remain exactly the same]
+                const SizedBox(width: 12),
+
+                OutlinedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => HealthReportPage(
+                          reportText: "No report available.",
+                        ),
+                      ),
+                    );
+                  },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    side: const BorderSide(color: Colors.white30),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                  ),
+                  child: const Text('View Report'),
+                ),
+
+                const SizedBox(width: 12),
+
+                OutlinedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const DietPlanPage(),
+                      ),
+                    );
+                  },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    side: const BorderSide(color: Colors.white30),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                  ),
+                  child: const Text('View Diet Plan'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+
+      Positioned(
+        top: 0,
+        right: -30,
+        child: Container(
+          width: 100,
+          height: 100,
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.1),
+            shape: BoxShape.circle,
+          ),
+        ),
+      ),
+    ],
+  );
+}
   
   Widget _buildBottomNavigationBar() {
     return Container(
