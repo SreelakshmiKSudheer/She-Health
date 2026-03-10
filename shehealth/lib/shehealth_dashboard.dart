@@ -15,7 +15,7 @@ class DashboardPage extends StatefulWidget {
 class _DashboardPageState extends State<DashboardPage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final ScrollController _scrollController = ScrollController();
-
+  
   int _selectedIndex = 0;
 
   // Keys for sections to scroll to
@@ -26,9 +26,6 @@ class _DashboardPageState extends State<DashboardPage> {
 
   // Track which section is expanded (null means none)
   String? _expandedSection;
-
-  // Track selected trend tab
-  String _selectedTrendTab = 'Week';
 
   void _scrollToSection(GlobalKey key) {
     final context = key.currentContext;
@@ -54,19 +51,19 @@ class _DashboardPageState extends State<DashboardPage> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => HealthReportPage(
-            reportText: "No report available.",
-          ),
-        ),
+  builder: (context) => HealthReportPage(
+    reportText: "No report available.",
+  ),
+),
       );
-    } else if (index == 2) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const PeriodCalendarWidget(),
-        ),
-      );
-    } else if (index == 3) {
+    }else if (index == 2) {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => const PeriodCalendarWidget(),
+    ),
+  );
+} else if (index == 3) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Opening Surveys...')),
       );
@@ -74,14 +71,13 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   void _openDietPlan() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const DietPlanPage(),
-      ),
-    );
-  }
-
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => const DietPlanPage(),
+    ),
+  );
+}
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -123,14 +119,12 @@ class _DashboardPageState extends State<DashboardPage> {
                 // Navigate to Health Chatbot Page
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                      builder: (context) => const HealthChatbotPage()),
+                  MaterialPageRoute(builder: (context) => const HealthChatbotPage()),
                 );
               },
               backgroundColor: const Color(0xFFC85A7A),
               elevation: 8,
-              child:
-                  const Icon(Icons.chat_bubble, color: Colors.white, size: 28),
+              child: const Icon(Icons.chat_bubble, color: Colors.white, size: 28),
             ),
           ),
         ],
@@ -139,135 +133,141 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildWelcomeSection() {
-    return Stack(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [
-                Color(0xFFC85A7A),
-                Color(0xFFE59393),
-                Color.fromARGB(255, 255, 225, 225)
+ Widget _buildWelcomeSection() {
+  return Stack(
+    children: [
+      Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [
+              Color(0xFFC85A7A),
+              Color(0xFFE59393),
+              Color.fromARGB(255, 255, 225, 225)
+            ],
+          ),
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFFE59393).withOpacity(0.3),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Welcome back, Sarah! 💗',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 26,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Here\'s your health overview for today',
+              style: TextStyle(color: Colors.white70, fontSize: 14),
+            ),
+            const SizedBox(height: 20),
+
+            Row(
+              children: [
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const SymptomQuestionnaire(),
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: const Color(0xFFE59393),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                  ),
+                  child: const Text(
+                    'Log Symptoms',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+
+                const SizedBox(width: 12),
+
+                OutlinedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => HealthReportPage(
+                          reportText: "No report available.",
+                        ),
+                      ),
+                    );
+                  },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    side: const BorderSide(color: Colors.white30),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                  ),
+                  child: const Text('View Report'),
+                ),
+
+                const SizedBox(width: 12),
+
+                OutlinedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const DietPlanPage(),
+                      ),
+                    );
+                  },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    side: const BorderSide(color: Colors.white30),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                  ),
+                  child: const Text('View Diet Plan'),
+                ),
               ],
             ),
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFFE59393).withOpacity(0.3),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Welcome back, Sarah! 💗',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Here\'s your health overview for today',
-                style: TextStyle(color: Colors.white70, fontSize: 14),
-              ),
-              const SizedBox(height: 20),
-              Row(
-                children: [
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const SymptomQuestionnaire(),
-                        ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: const Color(0xFFE59393),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 24, vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                    ),
-                    child: const Text(
-                      'Log Symptoms',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  OutlinedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => HealthReportPage(
-                            reportText: "No report available.",
-                          ),
-                        ),
-                      );
-                    },
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      side: const BorderSide(color: Colors.white30),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 24, vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                    ),
-                    child: const Text('View Report'),
-                  ),
-                  const SizedBox(width: 12),
-                  OutlinedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const DietPlanPage(),
-                        ),
-                      );
-                    },
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      side: const BorderSide(color: Colors.white30),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 24, vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                    ),
-                    child: const Text('View Diet Plan'),
-                  ),
-                ],
-              ),
-            ],
-          ),
+          ],
         ),
-        Positioned(
-          top: 0,
-          right: -30,
-          child: Container(
-            width: 100,
-            height: 100,
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
+      ),
 
+      Positioned(
+        top: 0,
+        right: -30,
+        child: Container(
+          width: 100,
+          height: 100,
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.1),
+            shape: BoxShape.circle,
+          ),
+        ),
+      ),
+    ],
+  );
+}
+  
   Widget _buildBottomNavigationBar() {
     return Container(
       decoration: BoxDecoration(
@@ -340,8 +340,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       ),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(Icons.favorite,
-                        color: Colors.white, size: 24),
+                    child: const Icon(Icons.favorite, color: Colors.white, size: 24),
                   ),
                   const SizedBox(width: 12),
                   const Column(
@@ -349,8 +348,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     children: [
                       Text(
                         'Menu',
-                        style: TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold),
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                       ),
                       Text(
                         'Quick Navigation',
@@ -362,14 +360,10 @@ class _DashboardPageState extends State<DashboardPage> {
               ),
             ),
             const Divider(),
-            _buildDrawerItem(
-                Icons.calendar_today, 'Next Period', _nextPeriodKey),
-            _buildDrawerItem(
-                Icons.trending_up, 'Health Trends', _healthTrendsKey),
-            _buildDrawerItem(
-                Icons.monitor_heart, 'Risk Assessment', _riskAssessmentKey),
-            _buildDrawerItem(
-                Icons.notifications, 'Today\'s Reminders', _remindersKey),
+            _buildDrawerItem(Icons.calendar_today, 'Next Period', _nextPeriodKey),
+            _buildDrawerItem(Icons.trending_up, 'Health Trends', _healthTrendsKey),
+            _buildDrawerItem(Icons.monitor_heart, 'Risk Assessment', _riskAssessmentKey),
+            _buildDrawerItem(Icons.notifications, 'Today\'s Reminders', _remindersKey),
           ],
         ),
       ),
@@ -394,11 +388,7 @@ class _DashboardPageState extends State<DashboardPage> {
           padding: const EdgeInsets.fromLTRB(16, 50, 16, 20),
           decoration: const BoxDecoration(
             gradient: LinearGradient(
-              colors: [
-                Color(0xFFC85A7A),
-                Color(0xFFE59393),
-                Color.fromARGB(255, 255, 225, 225)
-              ],
+              colors: [Color(0xFFC85A7A), Color(0xFFE59393), Color.fromARGB(255, 255, 225, 225)],
               begin: Alignment.centerLeft,
               end: Alignment.centerRight,
             ),
@@ -423,8 +413,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           ),
                         ],
                       ),
-                      child: const Icon(Icons.favorite,
-                          color: Color(0xFFE59393), size: 28),
+                      child: const Icon(Icons.favorite, color: Color(0xFFE59393), size: 28),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -453,8 +442,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   Stack(
                     children: [
                       IconButton(
-                        icon: const Icon(Icons.notifications,
-                            color: Colors.white),
+                        icon: const Icon(Icons.notifications, color: Colors.white),
                         onPressed: () {},
                       ),
                       Positioned(
@@ -472,8 +460,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     ],
                   ),
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(20),
@@ -506,8 +493,7 @@ class _DashboardPageState extends State<DashboardPage> {
                             ),
                             Text(
                               'ID: SH2024001',
-                              style: TextStyle(
-                                  color: Colors.white70, fontSize: 10),
+                              style: TextStyle(color: Colors.white70, fontSize: 10),
                             ),
                           ],
                         ),
@@ -580,12 +566,10 @@ class _DashboardPageState extends State<DashboardPage> {
                             color: Colors.green.shade50,
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.check_circle,
-                              color: Colors.green, size: 24),
+                          child: const Icon(Icons.check_circle, color: Colors.green, size: 24),
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
                             color: Colors.green.shade100,
                             borderRadius: BorderRadius.circular(20),
@@ -630,11 +614,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [
-                      Color(0xFFC85A7A),
-                      Color(0xFFE59393),
-                      Color.fromARGB(255, 255, 225, 225)
-                    ],
+                    colors: [Color(0xFFC85A7A), Color(0xFFE59393), Color.fromARGB(255, 255, 225, 225)],
                   ),
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
@@ -657,12 +637,10 @@ class _DashboardPageState extends State<DashboardPage> {
                             color: Colors.white.withOpacity(0.2),
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.calendar_today,
-                              color: Colors.white, size: 24),
+                          child: const Icon(Icons.calendar_today, color: Colors.white, size: 24),
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
                             color: Colors.white.withOpacity(0.2),
                             borderRadius: BorderRadius.circular(20),
@@ -713,19 +691,14 @@ class _DashboardPageState extends State<DashboardPage> {
       children: [
         Row(
           children: [
-            Expanded(
-                child: _buildSectionIcon(
-                    'health_trends', Icons.trending_up, 'Health Trends')),
+            Expanded(child: _buildSectionIcon('health_trends', Icons.trending_up, 'Health Trends')),
             const SizedBox(width: 12),
-            Expanded(
-                child: _buildSectionIcon(
-                    'risk_assessment', Icons.monitor_heart, 'Risk Assessment')),
+            Expanded(child: _buildSectionIcon('risk_assessment', Icons.monitor_heart, 'Risk Assessment')),
             const SizedBox(width: 12),
-            Expanded(
-                child: _buildSectionIcon(
-                    'reminders', Icons.notifications, 'Today\'s Reminders')),
+            Expanded(child: _buildSectionIcon('reminders', Icons.notifications, 'Today\'s Reminders')),
           ],
         ),
+        
         if (_expandedSection != null) ...[
           const SizedBox(height: 16),
           Container(
@@ -745,7 +718,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Widget _buildSectionIcon(String section, IconData icon, String label) {
     final isActive = _expandedSection == section;
-
+    
     return InkWell(
       onTap: () {
         setState(() {
@@ -761,24 +734,20 @@ class _DashboardPageState extends State<DashboardPage> {
             color: isActive ? const Color(0xFFE59393) : const Color(0xFFFCE7F3),
             width: 2,
           ),
-          boxShadow: isActive
-              ? [
-                  BoxShadow(
-                    color: const Color(0xFFE59393).withOpacity(0.3),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ]
-              : null,
+          boxShadow: isActive ? [
+            BoxShadow(
+              color: const Color(0xFFE59393).withOpacity(0.3),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ] : null,
         ),
         child: Column(
           children: [
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: isActive
-                    ? Colors.white.withOpacity(0.2)
-                    : const Color(0xFFFCE7F3),
+                color: isActive ? Colors.white.withOpacity(0.2) : const Color(0xFFFCE7F3),
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -816,94 +785,7 @@ class _DashboardPageState extends State<DashboardPage> {
     }
   }
 
-  // Returns data based on the selected trend tab
-  Map<String, Map<String, dynamic>> _getTrendData() {
-    switch (_selectedTrendTab) {
-      case 'Month':
-        return {
-          'Symptom Severity': {
-            'label': 'Moderate',
-            'value': 0.5,
-            'color': Colors.orange
-          },
-          'Stress Level': {'label': 'High', 'value': 0.72, 'color': Colors.red},
-          'Energy Level': {
-            'label': 'Moderate',
-            'value': 0.6,
-            'color': Colors.green
-          },
-          'Mood Score': {'label': 'Fair', 'value': 0.55, 'color': Colors.blue},
-          'Weight Changes': {
-            'label': '+1.2 kg',
-            'value': 0.55,
-            'color': Colors.purple
-          },
-        };
-      case 'Year':
-        return {
-          'Symptom Severity': {
-            'label': 'Variable',
-            'value': 0.45,
-            'color': Colors.deepOrange
-          },
-          'Stress Level': {
-            'label': 'Low',
-            'value': 0.3,
-            'color': Colors.orange
-          },
-          'Energy Level': {
-            'label': 'Good',
-            'value': 0.75,
-            'color': Colors.green
-          },
-          'Mood Score': {'label': 'Great', 'value': 0.85, 'color': Colors.blue},
-          'Weight Changes': {
-            'label': 'Stable',
-            'value': 0.5,
-            'color': Colors.purple
-          },
-        };
-      default: // Week
-        return {
-          'Symptom Severity': {
-            'label': 'Low',
-            'value': 0.3,
-            'color': Colors.pink
-          },
-          'Stress Level': {
-            'label': 'Moderate',
-            'value': 0.55,
-            'color': Colors.orange
-          },
-          'Energy Level': {
-            'label': 'High',
-            'value': 0.8,
-            'color': Colors.green
-          },
-          'Mood Score': {'label': 'Good', 'value': 0.7, 'color': Colors.blue},
-          'Weight Changes': {
-            'label': 'Stable',
-            'value': 0.5,
-            'color': Colors.purple
-          },
-        };
-    }
-  }
-
-  String _getTrendInsight() {
-    switch (_selectedTrendTab) {
-      case 'Month':
-        return 'Stress levels were elevated mid-month. Consider relaxation techniques to manage better next month.';
-      case 'Year':
-        return 'Your overall health improved significantly over the year. Mood and energy scores are at an all-time high!';
-      default:
-        return 'Your symptom severity has decreased by 15% this week. Keep up the healthy habits!';
-    }
-  }
-
   Widget _buildHealthTrendsContent() {
-    final trendData = _getTrendData();
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -916,22 +798,21 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
             Row(
               children: [
-                _buildTabButton('Week'),
+                _buildTabButton('Week', true),
                 const SizedBox(width: 8),
-                _buildTabButton('Month'),
+                _buildTabButton('Month', false),
                 const SizedBox(width: 8),
-                _buildTabButton('Year'),
+                _buildTabButton('Year', false),
               ],
             ),
           ],
         ),
         const SizedBox(height: 20),
-        ...trendData.entries.map((entry) => _buildProgressBar(
-              entry.key,
-              entry.value['label'] as String,
-              entry.value['value'] as double,
-              entry.value['color'] as Color,
-            )),
+        _buildProgressBar('Symptom Severity', 'Low', 0.3, Colors.pink),
+        _buildProgressBar('Stress Level', 'Moderate', 0.55, Colors.orange),
+        _buildProgressBar('Energy Level', 'High', 0.8, Colors.green),
+        _buildProgressBar('Mood Score', 'Good', 0.7, Colors.blue),
+        _buildProgressBar('Weight Changes', 'Stable', 0.5, Colors.purple),
         const SizedBox(height: 16),
         Container(
           padding: const EdgeInsets.all(16),
@@ -948,20 +829,16 @@ class _DashboardPageState extends State<DashboardPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      _selectedTrendTab == 'Week'
-                          ? 'Positive Trend'
-                          : _selectedTrendTab == 'Month'
-                              ? 'Monthly Summary'
-                              : 'Yearly Overview',
-                      style: const TextStyle(
+                    const Text(
+                      'Positive Trend',
+                      style: TextStyle(
                         fontWeight: FontWeight.bold,
                         color: Color(0xFFC85A7A),
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      _getTrendInsight(),
+                      'Your symptom severity has decreased by 15% this week. Keep up the healthy habits!',
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.grey.shade700,
@@ -989,8 +866,7 @@ class _DashboardPageState extends State<DashboardPage> {
         _buildRiskItem('PCOD/PCOS', '3 days ago', 'Low', Colors.green),
         _buildRiskItem('Thyroid', '1 week ago', 'No Risk', Colors.green),
         _buildRiskItem('Endometriosis', '5 days ago', 'Monitor', Colors.orange),
-        _buildRiskItem(
-            'Cervical Cancer', '2 weeks ago', 'No Risk', Colors.green),
+        _buildRiskItem('Cervical Cancer', '2 weeks ago', 'No Risk', Colors.green),
         const SizedBox(height: 16),
         Row(
           children: [
@@ -1001,10 +877,10 @@ class _DashboardPageState extends State<DashboardPage> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => HealthReportPage(
-                        reportText: "No report available.",
-                      ),
-                    ),
+  builder: (context) => HealthReportPage(
+    reportText: "No report available.",
+  ),
+),
                   );
                 },
                 style: ElevatedButton.styleFrom(
@@ -1058,53 +934,38 @@ class _DashboardPageState extends State<DashboardPage> {
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 20),
-        _buildReminderItem(
-            Icons.apple, 'Take Vitamin D', 'After breakfast', Colors.pink),
-        _buildReminderItem(Icons.water_drop, 'Drink Water - 2L',
-            'Stay hydrated throughout the day', Colors.blue),
-        _buildReminderItem(Icons.directions_walk, 'Evening Walk',
-            '30 minutes recommended', Colors.purple),
-        _buildReminderItem(Icons.calendar_today, 'Pap Smear Due',
-            'Schedule in 2 weeks', Colors.pink),
+        _buildReminderItem(Icons.apple, 'Take Vitamin D', 'After breakfast', Colors.pink),
+        _buildReminderItem(Icons.water_drop, 'Drink Water - 2L', 'Stay hydrated throughout the day', Colors.blue),
+        _buildReminderItem(Icons.directions_walk, 'Evening Walk', '30 minutes recommended', Colors.purple),
+        _buildReminderItem(Icons.calendar_today, 'Pap Smear Due', 'Schedule in 2 weeks', Colors.pink),
       ],
     );
   }
 
-  // Updated: tappable tab button that updates _selectedTrendTab
-  Widget _buildTabButton(String label) {
-    final bool active = _selectedTrendTab == label;
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _selectedTrendTab = label;
-        });
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          gradient: active
-              ? const LinearGradient(
-                  colors: [Color(0xFFC85A7A), Color(0xFFE59393)],
-                )
-              : null,
-          color: active ? null : Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: active ? Colors.white : Colors.grey.shade600,
-            fontWeight: FontWeight.w600,
-            fontSize: 12,
-          ),
+  Widget _buildTabButton(String label, bool active) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        gradient: active
+            ? const LinearGradient(
+                colors: [Color(0xFFC85A7A), Color(0xFFE59393)],
+              )
+            : null,
+        color: active ? null : Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: active ? Colors.white : Colors.grey.shade600,
+          fontWeight: FontWeight.w600,
+          fontSize: 12,
         ),
       ),
     );
   }
 
-  Widget _buildProgressBar(
-      String label, String value, double progress, Color color) {
+  Widget _buildProgressBar(String label, String value, double progress, Color color) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Column(
@@ -1112,8 +973,7 @@ class _DashboardPageState extends State<DashboardPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(label,
-                  style: const TextStyle(color: Colors.grey, fontSize: 14)),
+              Text(label, style: const TextStyle(color: Colors.grey, fontSize: 14)),
               Text(
                 value,
                 style: TextStyle(
@@ -1154,8 +1014,7 @@ class _DashboardPageState extends State<DashboardPage> {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold, fontSize: 14),
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -1185,8 +1044,7 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildReminderItem(
-      IconData icon, String title, String subtitle, Color color) {
+  Widget _buildReminderItem(IconData icon, String title, String subtitle, Color color) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
@@ -1211,8 +1069,7 @@ class _DashboardPageState extends State<DashboardPage> {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold, fontSize: 14),
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -1253,8 +1110,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   color: Colors.white.withOpacity(0.2),
                   shape: BoxShape.circle,
                 ),
-                child:
-                    const Icon(Icons.favorite, color: Colors.white, size: 32),
+                child: const Icon(Icons.favorite, color: Colors.white, size: 32),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -1283,8 +1139,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
                   foregroundColor: const Color(0xFFE59393),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
@@ -1304,7 +1159,8 @@ class _DashboardPageState extends State<DashboardPage> {
             width: 100,
             height: 100,
             decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.1), shape: BoxShape.circle),
+              color: Colors.white.withOpacity(0.1),
+              shape: BoxShape.circle),
           ),
         ),
       ],
