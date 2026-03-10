@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+<<<<<<< Updated upstream
 import 'services/groq_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+=======
+>>>>>>> Stashed changes
 
 class HealthChatbotPage extends StatefulWidget {
   const HealthChatbotPage({Key? key}) : super(key: key);
@@ -14,6 +17,7 @@ class _HealthChatbotPageState extends State<HealthChatbotPage>
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   late AnimationController _pulseController;
+<<<<<<< Updated upstream
   late GroqService _groqService;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
@@ -70,13 +74,98 @@ class _HealthChatbotPageState extends State<HealthChatbotPage>
     'Healthy diet for women',
     'Exercise for hormonal balance',
     'Thyroid and women\'s health',
+=======
+  List<Map<String, dynamic>> chatMessages = [];
+  bool _isTyping = false;
+
+  // Predefined responses for common women's health queries
+  final Map<String, String> healthResponses = {
+    // Menstrual Health
+    'period':
+        'A normal menstrual cycle ranges from 21-35 days. If you experience irregularities, severe pain, or heavy bleeding, it\'s best to consult a gynecologist.',
+    'cramps':
+        'Menstrual cramps are common. Try heat therapy, light exercise, staying hydrated, and over-the-counter pain relievers. If pain is severe, consult your doctor.',
+    'irregular cycle':
+        'Irregular periods can be caused by stress, weight changes, PCOS, thyroid issues, or other factors. Track your cycle and consult a healthcare provider if it persists.',
+    'heavy bleeding':
+        'Heavy menstrual bleeding (menorrhagia) can indicate hormonal imbalances, fibroids, or other conditions. Please consult a gynecologist for proper evaluation.',
+
+    // PCOS/PCOD
+    'pcos':
+        'PCOS (Polycystic Ovary Syndrome) is a hormonal disorder. Common symptoms include irregular periods, excess hair growth, acne, and weight gain. Lifestyle changes and medication can help manage it.',
+    'pcod':
+        'PCOD (Polycystic Ovarian Disease) affects hormone levels. Symptoms include irregular periods, weight gain, and acne. A balanced diet, exercise, and medical consultation can help.',
+
+    // Pregnancy & Fertility
+    'pregnancy':
+        'If you suspect pregnancy, take a home pregnancy test and consult your doctor. Early prenatal care is important for a healthy pregnancy.',
+    'fertility':
+        'Fertility can be affected by age, lifestyle, health conditions, and other factors. Maintain a healthy weight, avoid smoking/alcohol, and consult a fertility specialist if trying to conceive.',
+    'ovulation':
+        'Ovulation typically occurs around day 14 of a 28-day cycle. You can track ovulation using apps, temperature monitoring, or ovulation prediction kits.',
+
+    // General Health
+    'diet':
+        'A balanced diet rich in iron, calcium, folate, and omega-3 is important for women\'s health. Include fruits, vegetables, whole grains, lean proteins, and healthy fats.',
+    'exercise':
+        'Regular exercise (150 minutes/week) helps maintain hormonal balance, reduces stress, and improves overall health. Try yoga, walking, swimming, or strength training.',
+    'stress':
+        'Chronic stress can affect menstrual cycles and overall health. Practice stress management through meditation, yoga, deep breathing, adequate sleep, and seeking support.',
+
+    // Thyroid
+    'thyroid':
+        'Thyroid disorders can affect menstruation, weight, energy, and mood. Symptoms include fatigue, weight changes, and hair loss. Get thyroid function tests done regularly.',
+
+    // Screening & Prevention
+    'pap smear':
+        'Pap smears screen for cervical cancer. Women should start at age 21 and continue every 3 years (or as advised by doctor). It\'s a quick, important preventive test.',
+    'breast exam':
+        'Perform monthly breast self-exams and get clinical exams annually. Mammograms are recommended starting at age 40-50 (or earlier if at high risk).',
+    'checkup':
+        'Annual gynecological checkups are important for preventive care. They include pelvic exams, breast exams, and discussions about reproductive health.',
+
+    // Lifestyle
+    'sleep':
+        'Aim for 7-9 hours of quality sleep. Good sleep regulates hormones, reduces stress, and supports overall health. Maintain a consistent sleep schedule.',
+    'water':
+        'Drink 8-10 glasses of water daily. Proper hydration helps reduce bloating, supports metabolism, and maintains healthy skin.',
+    'vitamins':
+        'Important vitamins for women include Vitamin D, B12, Iron, Calcium, and Folic Acid. Consult your doctor before starting any supplements.',
+
+    // Pain Management
+    'pain':
+        'For menstrual pain, try heat therapy, gentle exercise, and OTC pain relievers. If pain is severe or interferes with daily activities, consult a doctor.',
+    'endometriosis':
+        'Endometriosis causes severe pelvic pain and heavy periods. It requires proper diagnosis and treatment. Consult a gynecologist if you suspect this condition.',
+
+    // Mental Health
+    'mood':
+        'Hormonal fluctuations can affect mood. PMS, PMDD, or hormonal imbalances may cause mood swings. Track your symptoms and discuss with your doctor if severe.',
+    'depression':
+        'If you\'re experiencing persistent sadness, anxiety, or depression, please seek help from a mental health professional. Your mental health is just as important as physical health.',
+  };
+
+  // Quick suggestion chips
+  final List<String> quickSuggestions = [
+    'Period irregularities',
+    'PCOS symptoms',
+    'Fertility tips',
+    'Healthy diet',
+    'Exercise routine',
+    'Stress management',
+    'Thyroid issues',
+    'Screening tests',
+>>>>>>> Stashed changes
   ];
 
   @override
   void initState() {
     super.initState();
+<<<<<<< Updated upstream
     _groqService = GroqService();
     _loadMessagesFromFirestore();
+=======
+>>>>>>> Stashed changes
     _pulseController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 2),
@@ -85,6 +174,7 @@ class _HealthChatbotPageState extends State<HealthChatbotPage>
     // Add welcome message
     Future.delayed(const Duration(milliseconds: 500), () {
       _addBotMessage(
+<<<<<<< Updated upstream
         'Hello! 👋 I\'m your AI-powered women\'s health assistant. I can help answer questions about:\n\n'
         '• PCOS/PCOD and hormonal health\n'
         '• Endometriosis\n'
@@ -95,6 +185,16 @@ class _HealthChatbotPageState extends State<HealthChatbotPage>
         'How can I help you today?',
         addToHistory: false,
       );
+=======
+          'Hello! 👋 I\'m your women\'s health assistant. I\'m here to answer your questions about:\n\n'
+          '• Menstrual health & cycles\n'
+          '• PCOS/PCOD\n'
+          '• Pregnancy & fertility\n'
+          '• Diet & lifestyle\n'
+          '• Thyroid health\n'
+          '• Preventive screenings\n\n'
+          'How can I help you today?');
+>>>>>>> Stashed changes
     });
   }
 
@@ -106,6 +206,7 @@ class _HealthChatbotPageState extends State<HealthChatbotPage>
     super.dispose();
   }
 
+<<<<<<< Updated upstream
   Future<void> _addBotMessage(String message,
       {bool addToHistory = true}) async {
     if (chatId == null) return;
@@ -170,6 +271,27 @@ class _HealthChatbotPageState extends State<HealthChatbotPage>
       'timestamp': FieldValue.serverTimestamp(),
     });
 
+=======
+  void _addBotMessage(String message) {
+    setState(() {
+      chatMessages.add({
+        'type': 'bot',
+        'message': message,
+        'timestamp': DateTime.now(),
+      });
+    });
+    _scrollToBottom();
+  }
+
+  void _addUserMessage(String message) {
+    setState(() {
+      chatMessages.add({
+        'type': 'user',
+        'message': message,
+        'timestamp': DateTime.now(),
+      });
+    });
+>>>>>>> Stashed changes
     _scrollToBottom();
   }
 
@@ -185,6 +307,7 @@ class _HealthChatbotPageState extends State<HealthChatbotPage>
     });
   }
 
+<<<<<<< Updated upstream
   Future<void> _handleSendMessage(String message) async {
     if (message.trim().isEmpty) return;
 
@@ -200,10 +323,58 @@ class _HealthChatbotPageState extends State<HealthChatbotPage>
     await _addUserMessage(message);
     _messageController.clear();
 
+=======
+  String _getBotResponse(String userMessage) {
+    String message = userMessage.toLowerCase().trim();
+
+    // Check for greetings
+    if (message.contains('hello') ||
+        message.contains('hi') ||
+        message.contains('hey')) {
+      return 'Hello! How can I assist you with your women\'s health questions today? 😊';
+    }
+
+    if (message.contains('thank') || message.contains('thanks')) {
+      return 'You\'re welcome! Feel free to ask if you have any other questions about your health. Take care! 💗';
+    }
+
+    if (message.contains('bye') || message.contains('goodbye')) {
+      return 'Take care! Remember to prioritize your health and consult healthcare professionals for personalized advice. Stay healthy! 💖';
+    }
+
+    // Search for matching health topics
+    for (var entry in healthResponses.entries) {
+      if (message.contains(entry.key)) {
+        return entry.value;
+      }
+    }
+
+    // Default response if no match found
+    return 'I understand you have a question about women\'s health. While I can provide general information, I recommend consulting with a healthcare professional for personalized advice.\n\n'
+        'You can ask me about:\n'
+        '• Menstrual health\n'
+        '• PCOS/PCOD\n'
+        '• Pregnancy & fertility\n'
+        '• Diet & exercise\n'
+        '• Thyroid health\n'
+        '• Preventive care\n\n'
+        'Please rephrase your question or choose from the suggestions below.';
+  }
+
+  void _handleSendMessage(String message) {
+    if (message.trim().isEmpty) return;
+
+    // Add user message
+    _addUserMessage(message);
+    _messageController.clear();
+
+    // Show typing indicator
+>>>>>>> Stashed changes
     setState(() {
       _isTyping = true;
     });
 
+<<<<<<< Updated upstream
     try {
       // FIX: Convert List<Map<String, dynamic>> → List<Map<String, String>>
       final List<Map<String, String>> historyForGroq = conversationHistory
@@ -230,12 +401,23 @@ class _HealthChatbotPageState extends State<HealthChatbotPage>
         addToHistory: false,
       );
     }
+=======
+    // Simulate bot thinking and response
+    Future.delayed(const Duration(milliseconds: 1500), () {
+      setState(() {
+        _isTyping = false;
+      });
+      String response = _getBotResponse(message);
+      _addBotMessage(response);
+    });
+>>>>>>> Stashed changes
   }
 
   void _handleQuickSuggestion(String suggestion) {
     _handleSendMessage(suggestion);
   }
 
+<<<<<<< Updated upstream
   void _clearConversation() {
     showDialog(
       context: context,
@@ -283,10 +465,16 @@ class _HealthChatbotPageState extends State<HealthChatbotPage>
   Widget build(BuildContext context) {
     return Scaffold(
       drawer: _buildChatDrawer(),
+=======
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+>>>>>>> Stashed changes
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: [
+<<<<<<< Updated upstream
             _buildHeader(),
             Expanded(
               child: chatMessages.isEmpty
@@ -304,6 +492,30 @@ class _HealthChatbotPageState extends State<HealthChatbotPage>
                     ),
             ),
             if (chatMessages.length <= 1) _buildQuickSuggestions(),
+=======
+            // Header
+            _buildHeader(),
+
+            // Chat Messages
+            Expanded(
+              child: ListView.builder(
+                controller: _scrollController,
+                padding: const EdgeInsets.all(20),
+                itemCount: chatMessages.length + (_isTyping ? 1 : 0),
+                itemBuilder: (context, index) {
+                  if (_isTyping && index == chatMessages.length) {
+                    return _buildTypingIndicator();
+                  }
+                  return _buildChatBubble(chatMessages[index]);
+                },
+              ),
+            ),
+
+            // Quick Suggestions
+            if (chatMessages.length <= 1) _buildQuickSuggestions(),
+
+            // Message Input
+>>>>>>> Stashed changes
             _buildMessageInput(),
           ],
         ),
@@ -312,6 +524,7 @@ class _HealthChatbotPageState extends State<HealthChatbotPage>
   }
 
   Widget _buildHeader() {
+<<<<<<< Updated upstream
   return Container(
     decoration: const BoxDecoration(
       gradient: LinearGradient(
@@ -660,6 +873,113 @@ Future<void> _deleteChat(String deleteChatId) async {
                 color: Colors.grey[600],
                 height: 1.5,
               ),
+=======
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFFC85A7A), Color(0xFFE59393)],
+        ),
+      ),
+      child: Stack(
+        children: [
+          // Decorative Circles
+          Positioned(
+            top: -30,
+            right: -30,
+            child: Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: -20,
+            left: -20,
+            child: Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Row(
+              children: [
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.arrow_back,
+                      color: Colors.white, size: 28),
+                ),
+                const SizedBox(width: 8),
+                ScaleTransition(
+                  scale: Tween<double>(begin: 1.0, end: 1.05).animate(
+                    CurvedAnimation(
+                      parent: _pulseController,
+                      curve: Curves.easeInOut,
+                    ),
+                  ),
+                  child: Container(
+                    width: 50,
+                    height: 50,
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.chat_bubble,
+                      color: Color(0xFFC85A7A),
+                      size: 24,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Health Assistant',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Container(
+                            width: 8,
+                            height: 8,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF4CAF50),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Online • Always here to help',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.9),
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+>>>>>>> Stashed changes
             ),
           ),
         ],
@@ -667,6 +987,7 @@ Future<void> _deleteChat(String deleteChatId) async {
     );
   }
 
+<<<<<<< Updated upstream
   Widget _buildFormattedMessage(String text, bool isBot) {
     if (!isBot) {
       return Text(
@@ -735,6 +1056,11 @@ Future<void> _deleteChat(String deleteChatId) async {
       timestamp = DateTime.now();
     }
 
+=======
+  Widget _buildChatBubble(Map<String, dynamic> message) {
+    bool isBot = message['type'] == 'bot';
+
+>>>>>>> Stashed changes
     return Align(
       alignment: isBot ? Alignment.centerLeft : Alignment.centerRight,
       child: Container(
@@ -771,10 +1097,25 @@ Future<void> _deleteChat(String deleteChatId) async {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+<<<<<<< Updated upstream
             _buildFormattedMessage(message['message'] as String, isBot),
             const SizedBox(height: 4),
             Text(
               _formatTime(timestamp),
+=======
+            Text(
+              message['message'],
+              style: TextStyle(
+                color: isBot ? const Color(0xFF333333) : Colors.white,
+                fontSize: 15,
+                fontWeight: isBot ? FontWeight.w500 : FontWeight.w600,
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              _formatTime(message['timestamp']),
+>>>>>>> Stashed changes
               style: TextStyle(
                 color: isBot
                     ? const Color(0xFF999999)
@@ -824,7 +1165,11 @@ Future<void> _deleteChat(String deleteChatId) async {
 
   Widget _buildTypingDot(int delay) {
     return TweenAnimationBuilder<double>(
+<<<<<<< Updated upstream
       tween: Tween<double>(begin: 0.0, end: 1.0),
+=======
+      tween: Tween(begin: 0.0, end: 1.0),
+>>>>>>> Stashed changes
       duration: const Duration(milliseconds: 600),
       builder: (context, value, child) {
         return Container(
@@ -908,9 +1253,20 @@ Future<void> _deleteChat(String deleteChatId) async {
 
   Widget _buildMessageInput() {
     return Container(
+<<<<<<< Updated upstream
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
       decoration: BoxDecoration(
         color: Colors.white,
+=======
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          top: BorderSide(
+            color: const Color(0xFFE5C4C4).withOpacity(0.5),
+          ),
+        ),
+>>>>>>> Stashed changes
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
@@ -922,6 +1278,7 @@ Future<void> _deleteChat(String deleteChatId) async {
       child: Row(
         children: [
           Expanded(
+<<<<<<< Updated upstream
             child: TextField(
               controller: _messageController,
               maxLines: 4,
@@ -971,6 +1328,58 @@ Future<void> _deleteChat(String deleteChatId) async {
             child: IconButton(
               icon: const Icon(Icons.send, color: Colors.white),
               onPressed: () => _handleSendMessage(_messageController.text),
+=======
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF5F8),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: const Color(0xFFE5C4C4),
+                  width: 1.5,
+                ),
+              ),
+              child: TextField(
+                controller: _messageController,
+                decoration: const InputDecoration(
+                  hintText: 'Ask me anything about women\'s health...',
+                  hintStyle: TextStyle(
+                    color: Color(0xFF999999),
+                    fontSize: 14,
+                  ),
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.symmetric(vertical: 12),
+                ),
+                maxLines: null,
+                textInputAction: TextInputAction.send,
+                onSubmitted: _handleSendMessage,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          InkWell(
+            onTap: () => _handleSendMessage(_messageController.text),
+            child: Container(
+              padding: const EdgeInsets.all(14),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFFC85A7A), Color(0xFFE59393)],
+                ),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Color(0xFFC85A7A),
+                    blurRadius: 8,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Icons.send,
+                color: Colors.white,
+                size: 22,
+              ),
+>>>>>>> Stashed changes
             ),
           ),
         ],
@@ -978,13 +1387,17 @@ Future<void> _deleteChat(String deleteChatId) async {
     );
   }
 
+<<<<<<< Updated upstream
   // FIX 6: Accept DateTime directly (callers now always pass DateTime)
+=======
+>>>>>>> Stashed changes
   String _formatTime(DateTime timestamp) {
     final hour = timestamp.hour.toString().padLeft(2, '0');
     final minute = timestamp.minute.toString().padLeft(2, '0');
     return '$hour:$minute';
   }
 }
+<<<<<<< Updated upstream
 String _formatDrawerTime(DateTime dt) {
   final now = DateTime.now();
   final diff = now.difference(dt);
@@ -994,3 +1407,5 @@ String _formatDrawerTime(DateTime dt) {
   if (diff.inDays < 7) return '${diff.inDays} days ago';
   return '${dt.day}/${dt.month}/${dt.year}';
 }
+=======
+>>>>>>> Stashed changes

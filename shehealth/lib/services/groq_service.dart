@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+<<<<<<< Updated upstream
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class GroqService {
@@ -90,10 +91,39 @@ Keep the food simple, nutritious, and commonly available."""
           ],
           'temperature': 0.7,
           'max_tokens': 400,
+=======
+
+class GroqService {
+  static const String _apiKey = "YOUR_GROQ_API_KEY_HERE";
+
+  static const String _url = "https://api.groq.com/openai/v1/chat/completions";
+
+  static Future<String> sendMessage(String message) async {
+    try {
+      final response = await http.post(
+        Uri.parse(_url),
+        headers: {
+          "Authorization": "Bearer $_apiKey",
+          "Content-Type": "application/json",
+        },
+        body: jsonEncode({
+          "model": "llama3-8b-8192",
+          "messages": [
+            {
+              "role": "system",
+              "content":
+                  "You are a women’s health assistant. Provide safe, empathetic, medically responsible advice. Never give diagnosis. Encourage consulting doctors."
+            },
+            {"role": "user", "content": message}
+          ],
+          "temperature": 0.5,
+          "max_tokens": 400
+>>>>>>> Stashed changes
         }),
       );
 
       if (response.statusCode == 200) {
+<<<<<<< Updated upstream
 
         final data = jsonDecode(response.body);
 
@@ -108,3 +138,15 @@ Keep the food simple, nutritious, and commonly available."""
     }
   }
 }
+=======
+        final data = jsonDecode(response.body);
+        return data["choices"][0]["message"]["content"];
+      } else {
+        return "Sorry, I couldn’t process that right now.";
+      }
+    } catch (e) {
+      return "Network error. Please check your internet connection.";
+    }
+  }
+}
+>>>>>>> Stashed changes
