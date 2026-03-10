@@ -8,11 +8,7 @@ class FirestoreService {
     required String role,
     required String content,
   }) async {
-    await _db
-        .collection('chats')
-        .doc(chatId)
-        .collection('messages')
-        .add({
+    await _db.collection('chats').doc(chatId).collection('messages').add({
       'role': role,
       'content': content,
       'timestamp': FieldValue.serverTimestamp(),
