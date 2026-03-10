@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'report.dart'; // Import the health report page
-import 'questionnaire.dart'; // Add this import for the questionnaire page
-import 'chatbot.dart'; // Add this import for the chatbot page
+import 'report.dart';
+import 'questionnaire.dart';
+import 'chatbot.dart';
 import 'calendar.dart';
 import 'dietplan.dart';
 
@@ -24,7 +24,6 @@ class _DashboardPageState extends State<DashboardPage> {
   final GlobalKey _riskAssessmentKey = GlobalKey();
   final GlobalKey _remindersKey = GlobalKey();
 
-  // Track which section is expanded (null means none)
   String? _expandedSection;
 
   // Track selected trend tab
