@@ -4,6 +4,7 @@ import 'questionnaire.dart';
 import 'chatbot.dart';
 import 'calendar.dart';
 import 'dietplan.dart';
+import 'survey.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -41,36 +42,47 @@ class _DashboardPageState extends State<DashboardPage> {
     }
   }
 
-  void _onBottomNavTap(int index) {
+  void _onBottomNavTap(int index) async {
+  if (index == 0) {
     setState(() {
-      _selectedIndex = index;
+      _selectedIndex = 0;
     });
-    // Handle navigation to different pages based on index
-    if (index == 0) {
-      // Home - already here
-    } else if (index == 1) {
-      // Navigate to Health Report Page
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => HealthReportPage(
-            reportText: "No report available.",
-          ),
-        ),
-      );
-    } else if (index == 2) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const PeriodCalendarWidget(),
-        ),
-      );
-    } else if (index == 3) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Opening Surveys...')),
-      );
-    }
   }
+
+  if (index == 1) {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => HealthReportPage(
+          reportText: "No report available.",
+        ),
+      ),
+    );
+  }
+
+  if (index == 2) {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const PeriodCalendarWidget(),
+      ),
+    );
+  }
+
+  if (index == 3) {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const SurveyPage(),
+      ),
+    );
+  }
+
+  // Reset to home when returning
+  setState(() {
+    _selectedIndex = 0;
+  });
+}
 
   void _openDietPlan() {
     Navigator.push(
@@ -991,59 +1003,35 @@ class _DashboardPageState extends State<DashboardPage> {
         _buildRiskItem(
             'Cervical Cancer', '2 weeks ago', 'No Risk', Colors.green),
         const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: ElevatedButton(
-                onPressed: () {
-                  // Navigate to Health Report Page for full assessment
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => HealthReportPage(
-                        reportText: "No report available.",
-                      ),
-                    ),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFC85A7A),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                ),
-                child: const Text(
-                  'Full Assessment',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: ElevatedButton(
-                onPressed: () {},
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF4CAF50),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                ),
-                child: const Text(
-                  'Get Diet Plan',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-          ],
+        SizedBox(
+  width: double.infinity,
+  child: ElevatedButton(
+    onPressed: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => HealthReportPage(
+            reportText: "No report available.",
+          ),
         ),
+      );
+    },
+    style: ElevatedButton.styleFrom(
+      backgroundColor: const Color(0xFFC85A7A),
+      padding: const EdgeInsets.symmetric(vertical: 14),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+      ),
+    ),
+    child: const Text(
+      'Full Assessment',
+      style: TextStyle(
+        color: Colors.white,
+        fontWeight: FontWeight.bold,
+      ),
+    ),
+  ),
+)
       ],
     );
   }
