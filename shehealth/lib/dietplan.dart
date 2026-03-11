@@ -58,7 +58,7 @@ class DiseaseDietPlan {
 }
 
 // ─────────────────────────────────────────────
-//  DIET DATA  (Thyroid Disorders removed)
+//  DIET DATA
 // ─────────────────────────────────────────────
 
 final List<DiseaseDietPlan> dietPlans = [
@@ -301,6 +301,125 @@ final List<DiseaseDietPlan> dietPlans = [
   ),
 
   DiseaseDietPlan(
+    disease: 'Thyroid Disorders',
+    subtitle: 'Hypothyroidism & Hashimoto\'s',
+    description:
+        'A thyroid-supporting diet rich in iodine, selenium and zinc helps optimize thyroid hormone production.',
+    icon: Icons.self_improvement,
+    primaryColor: const Color(0xFF2E86AB),
+    accentColor: const Color(0xFFE0F4FF),
+    keyNutrients: [
+      'Iodine',
+      'Selenium',
+      'Zinc',
+      'Vitamin D',
+      'Iron',
+      'B12',
+    ],
+    foodsToAvoid: [
+      'Raw cruciferous veggies (large amounts)',
+      'Soy products',
+      'Gluten (Hashimoto\'s)',
+      'Highly processed foods',
+      'Excess sugar',
+      'Fluoride-heavy water',
+    ],
+    superfoods: [
+      '🐟 Seaweed & kelp',
+      '🥚 Eggs',
+      '🫘 Brazil nuts (selenium)',
+      '🍗 Lean chicken',
+      '🫐 Berries',
+      '🍠 Sweet potato',
+      '🌱 Ashwagandha',
+      '🧅 Cooked cruciferous veg',
+    ],
+    weeklyPlan: [
+      DayPlan(
+        day: 'Monday',
+        breakfast: Meal(
+          name: 'Thyroid Power Eggs',
+          description: 'Selenium & iodine breakfast',
+          calories: '310 kcal',
+          items: ['2 eggs (scrambled)', '1 nori sheet (crumbled on top)', 'Sautéed mushrooms', '1 slice GF toast', '3 Brazil nuts', 'Black coffee or herbal tea'],
+        ),
+        lunch: Meal(
+          name: 'Chicken & Sweet Potato',
+          description: 'Energy-boosting balanced lunch',
+          calories: '470 kcal',
+          items: ['150g grilled chicken', '1 medium baked sweet potato', 'Steamed cooked broccoli', 'Olive oil & rosemary', 'Mixed greens salad'],
+        ),
+        dinner: Meal(
+          name: 'Miso Soup & Rice',
+          description: 'Iodine-rich Japanese dinner',
+          calories: '440 kcal',
+          items: ['1 bowl miso soup (seaweed, tofu, scallion)', '½ cup brown rice', '100g steamed fish', 'Pickled ginger', 'Edamame (small portion)'],
+        ),
+        snack: Meal(
+          name: 'Energy Snack',
+          description: 'Thyroid-boosting snack',
+          calories: '170 kcal',
+          items: ['1 boiled egg', '1 small orange', '3 Brazil nuts'],
+        ),
+      ),
+      DayPlan(
+        day: 'Tuesday',
+        breakfast: Meal(
+          name: 'Berry Protein Smoothie',
+          description: 'Antioxidant morning smoothie',
+          calories: '300 kcal',
+          items: ['1 cup blueberries', '1 banana', '1 scoop vanilla protein', '1 tbsp flaxseeds', 'Almond milk', '1 tsp ashwagandha powder'],
+        ),
+        lunch: Meal(
+          name: 'Tuna & Quinoa Bowl',
+          description: 'Selenium-rich lunch bowl',
+          calories: '480 kcal',
+          items: ['1 can tuna (in water)', '½ cup quinoa', 'Cherry tomatoes & cucumber', 'Capers & lemon juice', '1 tbsp olive oil'],
+        ),
+        dinner: Meal(
+          name: 'Lamb & Roasted Veg',
+          description: 'Zinc-rich dinner',
+          calories: '510 kcal',
+          items: ['150g lean lamb', 'Roasted zucchini & bell peppers', '½ cup millet', 'Garlic & thyme', 'Side salad'],
+        ),
+        snack: Meal(
+          name: 'Iodine Boost Snack',
+          description: 'Sea-vegetable snack',
+          calories: '100 kcal',
+          items: ['1 pack roasted seaweed snacks', '5 almonds', 'Herbal tea'],
+        ),
+      ),
+      DayPlan(
+        day: 'Wednesday',
+        breakfast: Meal(
+          name: 'Oat & Seed Bowl',
+          description: 'Iron-boosting breakfast',
+          calories: '320 kcal',
+          items: ['½ cup oats', '1 tbsp pumpkin seeds', '1 tbsp hemp seeds', 'Sliced banana', 'Fortified almond milk', 'Cinnamon'],
+        ),
+        lunch: Meal(
+          name: 'Salmon & Lentil Salad',
+          description: 'Complete thyroid-support meal',
+          calories: '490 kcal',
+          items: ['130g baked salmon', '½ cup puy lentils', 'Roasted beets', 'Arugula', 'Balsamic dressing'],
+        ),
+        dinner: Meal(
+          name: 'Turkey & Veggie Stir-Fry',
+          description: 'B12-rich lean protein dinner',
+          calories: '460 kcal',
+          items: ['150g ground turkey', 'Bok choy, snap peas, carrots', 'Tamari sauce (low sodium)', '½ cup rice noodles', 'Sesame seeds'],
+        ),
+        snack: Meal(
+          name: 'Vitamin D Snack',
+          description: 'Bone & thyroid support',
+          calories: '150 kcal',
+          items: ['1 cup fortified coconut yogurt', '1 tbsp sunflower seeds', 'Honey drizzle'],
+        ),
+      ),
+    ],
+  ),
+
+  DiseaseDietPlan(
     disease: 'Diabetes',
     subtitle: 'Type 2 & Insulin Resistance',
     description:
@@ -430,7 +549,7 @@ class DietPlanPage extends StatefulWidget {
 
 class _DietPlanPageState extends State<DietPlanPage>
     with TickerProviderStateMixin {
-  String dietPlan = "";
+      String dietPlan = "";
   bool isLoading = true;
   int _selectedDiseaseIndex = 0;
   int _selectedDayIndex = 0;
@@ -439,8 +558,7 @@ class _DietPlanPageState extends State<DietPlanPage>
   @override
   void initState() {
     super.initState();
-    // length is now 3 (PCOS, Endometriosis, Diabetes)
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
     _tabController.addListener(() {
       if (!_tabController.indexIsChanging) {
         setState(() {
@@ -451,20 +569,21 @@ class _DietPlanPageState extends State<DietPlanPage>
     });
     fetchDietPlan();
   }
-
   Future<void> fetchDietPlan() async {
-    setState(() {
-      isLoading = true;
-    });
 
-    String result = await GroqService().generateDietPlan(
-        "irregular periods, hormonal imbalance");
+  setState(() {
+    isLoading = true;
+  });
 
-    setState(() {
-      dietPlan = result;
-      isLoading = false;
-    });
-  }
+  String result = await GroqService().generateDietPlan(
+  "irregular periods, hormonal imbalance");
+
+  setState(() {
+    dietPlan = result;
+    isLoading = false;
+  });
+
+}
 
   @override
   void dispose() {
@@ -474,6 +593,8 @@ class _DietPlanPageState extends State<DietPlanPage>
 
   DiseaseDietPlan get _currentPlan => dietPlans[_selectedDiseaseIndex];
   DayPlan get _currentDay => _currentPlan.weeklyPlan[_selectedDayIndex];
+
+  
 
   @override
   Widget build(BuildContext context) {
