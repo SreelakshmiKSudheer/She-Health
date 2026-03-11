@@ -12,6 +12,8 @@ class _HealthReportPageState extends State<HealthReportPage>
     with SingleTickerProviderStateMixin {
   final Color pinkStart = const Color(0xFFC85A7A);
   final Color pinkEnd   = const Color(0xFFE59393);
+  double aiProbability = 0.0;
+  String aiCategory = "No Risk";
 
   late AnimationController _animController;
   late Animation<double>   _barAnimation;
@@ -106,15 +108,37 @@ class _HealthReportPageState extends State<HealthReportPage>
 
   // Overall risk = highest probability among all conditions
   double get _overallProbability {
-    final risks = reportData['riskAssessment'] as List;
-    return risks
-        .map((r) => (r['probability'] as num).toDouble())
-        .reduce((a, b) => a > b ? a : b);
+  return aiProbability;
+}
+
+
+  void parseAIReport() {
+
+  if (widget.reportText == null) return;
+
+  final text = widget.reportText!;
+
+  final probMatch = RegExp(
+    r'Overall Risk Probability:\s*(0?\.\d+)'
+  ).firstMatch(text);
+
+  final categoryMatch = RegExp(
+    r'Risk Category:\s*(.*)'
+  ).firstMatch(text);
+
+  if (probMatch != null) {
+    aiProbability = double.tryParse(probMatch.group(1)!) ?? 0.0;
   }
 
+  if (categoryMatch != null) {
+    aiCategory = categoryMatch.group(1)!.trim();
+  }
+
+}
   @override
   void initState() {
     super.initState();
+    parseAIReport();
     _animController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1400),
@@ -282,7 +306,7 @@ class _HealthReportPageState extends State<HealthReportPage>
     final Color barColor   = cfg['color']  as Color;
     final Color bgColor    = cfg['bg']     as Color;
     final Color borderColor= cfg['border'] as Color;
-    final String label     = cfg['label']  as String;
+    final String label = aiCategory;
     final IconData icon    = cfg['icon']   as IconData;
 
     final segments  = ['No Risk', 'Low', 'Moderate', 'High', 'Very High'];
@@ -688,7 +712,7 @@ class _HealthReportPageState extends State<HealthReportPage>
     final color  = cfg['color']  as Color;
     final bg     = cfg['bg']     as Color;
     final border = cfg['border'] as Color;
-    final label  = cfg['label']  as String;
+    final String label = aiCategory;
     final icon   = cfg['icon']   as IconData;
 
     return Container(
@@ -741,74 +765,7 @@ class _HealthReportPageState extends State<HealthReportPage>
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              const Text('0.0',
-                  style: TextStyle(fontSize: 10, color: Colors.grey)),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Stack(
-                  children: [
-                    // Track
-                    Container(
-                      height: 10,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: border),
-                      ),
-                    ),
-                    // Filled — semantic gradient
-                    FractionallySizedBox(
-                      widthFactor: probability.clamp(0.0, 1.0),
-                      child: Container(
-                        height: 10,
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [
-                              Color(0xFF4ADE80), // light green
-                              Color(0xFF16A34A), // dark green
-                              Color(0xFFEAB308), // yellow
-                              Color(0xFFF97316), // orange
-                              Color(0xFFDC2626), // red
-                            ],
-                            stops: [0.0, 0.25, 0.5, 0.75, 1.0],
-                          ),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                    ),
-                    // Thumb dot — semantic color
-                    FractionallySizedBox(
-                      widthFactor: probability.clamp(0.0, 1.0),
-                      child: Align(
-                        alignment: Alignment.centerRight,
-                        child: Container(
-                          width: 14,
-                          height: 14,
-                          decoration: BoxDecoration(
-                            color: color,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 2),
-                            boxShadow: [
-                              BoxShadow(
-                                  color: color.withOpacity(0.4),
-                                  blurRadius: 4)
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 6),
-              const Text('1.0',
-                  style: TextStyle(fontSize: 10, color: Colors.grey)),
-            ],
-          ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 10),
           Align(
             alignment: Alignment.centerRight,
             child: Text(
