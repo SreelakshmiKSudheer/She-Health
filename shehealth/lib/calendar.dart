@@ -13,10 +13,16 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
   DateTime selectedDate = DateTime.now();
   int selectedTab = 0;
 
-  // Period tracking data
   List<int> periodDays = [1, 2, 3, 4, 5];
   List<int> fertileDays = [13];
   int? selectedDay;
+
+  // Notification state
+  bool _notifPeriodReminder = true;
+  bool _notifFertileWindow = true;
+  bool _notifMedReminder = false;
+  bool _notifCycleInsights = true;
+  bool _hasUnread = true;
 
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
@@ -41,22 +47,14 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
 
   void _changeMonth(int months) {
     setState(() {
-      selectedDate = DateTime(
-        selectedDate.year,
-        selectedDate.month + months,
-        1,
-      );
+      selectedDate = DateTime(selectedDate.year, selectedDate.month + months, 1);
       selectedDay = null;
     });
   }
 
   void _changeYear(int years) {
     setState(() {
-      selectedDate = DateTime(
-        selectedDate.year + years,
-        selectedDate.month,
-        1,
-      );
+      selectedDate = DateTime(selectedDate.year + years, selectedDate.month, 1);
       selectedDay = null;
     });
   }
@@ -67,38 +65,12 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
   }
 
   String _getMonthName(int month) {
-    const months = [
-      'January',
-      'February',
-      'March',
-      'April',
-      'May',
-      'June',
-      'July',
-      'August',
-      'September',
-      'October',
-      'November',
-      'December'
-    ];
+    const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
     return months[month - 1];
   }
 
   String _getShortMonthName(int month) {
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec'
-    ];
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     return months[month - 1];
   }
 
@@ -107,7 +79,6 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
     return days[date.weekday - 1];
   }
 
-  // Show the full-month calendar modal
   void _showCalendarModal() {
     showModalBottomSheet(
       context: context,
@@ -145,6 +116,342 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
     );
   }
 
+  // ── Notification Panel ────────────────────────────────────────────────────
+
+  void _showNotificationPanel() {
+    setState(() => _hasUnread = false);
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) {
+          final List<Map<String, dynamic>> upcoming = [
+            {
+              'icon': Icons.water_drop_rounded,
+              'color': const Color(0xFFC85A7A),
+              'title': 'Period expected soon',
+              'subtitle': 'Based on your 28-day cycle — around day 28',
+              'time': 'In ~3 days',
+            },
+            {
+              'icon': Icons.favorite_rounded,
+              'color': const Color(0xFF9B84D4),
+              'title': 'Fertile window approaching',
+              'subtitle': 'Days 12–16 are your fertile window this cycle',
+              'time': 'In ~9 days',
+            },
+            {
+              'icon': Icons.monitor_heart_rounded,
+              'color': const Color(0xFF6DBFB0),
+              'title': 'Monthly health check-in',
+              'subtitle': 'Time to log your symptoms & take the survey',
+              'time': 'Tomorrow',
+            },
+          ];
+
+          Widget notifToggle(
+            String label,
+            String sub,
+            IconData icon,
+            Color color,
+            bool value,
+            Function(bool) onChanged,
+          ) {
+            return Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              decoration: BoxDecoration(
+                color: value ? color.withOpacity(0.06) : Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: value ? color.withOpacity(0.25) : const Color(0xFFFCE7F3),
+                  width: 1.5,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(9),
+                    decoration: BoxDecoration(
+                      color: color.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(icon, color: color, size: 18),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(label,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: value ? const Color(0xFF2D1B2E) : Colors.grey.shade500,
+                              decoration: TextDecoration.none,
+                            )),
+                        const SizedBox(height: 2),
+                        Text(sub,
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey.shade400,
+                              decoration: TextDecoration.none,
+                            )),
+                      ],
+                    ),
+                  ),
+                  Switch(
+                    value: value,
+                    onChanged: (v) {
+                      onChanged(v);
+                      setModalState(() {});
+                    },
+                    activeColor: color,
+                    activeTrackColor: color.withOpacity(0.25),
+                    inactiveThumbColor: Colors.grey.shade300,
+                    inactiveTrackColor: Colors.grey.shade100,
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                ],
+              ),
+            );
+          }
+
+          return Container(
+            decoration: const BoxDecoration(
+              color: Color(0xFFFFF5F8),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+            ),
+            padding: EdgeInsets.fromLTRB(20, 0, 20, MediaQuery.of(context).padding.bottom + 24),
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Drag handle
+                  Center(
+                    child: Container(
+                      margin: const EdgeInsets.only(top: 12, bottom: 16),
+                      width: 44,
+                      height: 5,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE0C8D8),
+                        borderRadius: BorderRadius.circular(3),
+                      ),
+                    ),
+                  ),
+
+                  // Header row
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFFE87DAB), Color(0xFFC85A7A)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFFC85A7A).withOpacity(0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(Icons.notifications_rounded, color: Colors.white, size: 20),
+                      ),
+                      const SizedBox(width: 12),
+                      const Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Notifications',
+                              style: TextStyle(
+                                color: Color(0xFF2D1B2E),
+                                fontSize: 18,
+                                fontWeight: FontWeight.w800,
+                                decoration: TextDecoration.none,
+                              )),
+                          Text('Reminders & alerts',
+                              style: TextStyle(
+                                color: Color(0xFFBBAACE),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                decoration: TextDecoration.none,
+                              )),
+                        ],
+                      ),
+                      const Spacer(),
+                      GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF5EEF5),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(Icons.close_rounded, color: Color(0xFFBB8FAE), size: 18),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // ── Upcoming reminders ──────────────────────────────
+                  const Text('Upcoming Reminders',
+                      style: TextStyle(
+                        color: Color(0xFF2D1B2E),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        decoration: TextDecoration.none,
+                      )),
+                  const SizedBox(height: 12),
+
+                  ...upcoming.map((item) => Container(
+                        margin: const EdgeInsets.only(bottom: 10),
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFFFCE7F3), width: 1.5),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFFC85A7A).withOpacity(0.05),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(9),
+                              decoration: BoxDecoration(
+                                color: (item['color'] as Color).withOpacity(0.12),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Icon(item['icon'] as IconData, color: item['color'] as Color, size: 18),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(item['title'] as String,
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w700,
+                                        color: Color(0xFF2D1B2E),
+                                        decoration: TextDecoration.none,
+                                      )),
+                                  const SizedBox(height: 2),
+                                  Text(item['subtitle'] as String,
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: Colors.grey.shade500,
+                                        decoration: TextDecoration.none,
+                                      )),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: (item['color'] as Color).withOpacity(0.10),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                item['time'] as String,
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  color: item['color'] as Color,
+                                  decoration: TextDecoration.none,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )),
+
+                  const SizedBox(height: 24),
+
+                  // ── Notification settings ───────────────────────────
+                  const Text('Notification Settings',
+                      style: TextStyle(
+                        color: Color(0xFF2D1B2E),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        decoration: TextDecoration.none,
+                      )),
+                  const SizedBox(height: 12),
+
+                  notifToggle('Period Reminder', 'Alert 2 days before expected period',
+                      Icons.water_drop_rounded, const Color(0xFFC85A7A),
+                      _notifPeriodReminder, (v) => setState(() => _notifPeriodReminder = v)),
+
+                  notifToggle('Fertile Window Alert', 'Notify when fertile days are approaching',
+                      Icons.favorite_rounded, const Color(0xFF9B84D4),
+                      _notifFertileWindow, (v) => setState(() => _notifFertileWindow = v)),
+
+                  notifToggle('Medicine Reminder', 'Daily reminder to take supplements/pills',
+                      Icons.medication_rounded, const Color(0xFF6DBFB0),
+                      _notifMedReminder, (v) => setState(() => _notifMedReminder = v)),
+
+                  notifToggle('Cycle Insights', 'Weekly summary of your cycle health',
+                      Icons.insights_rounded, const Color(0xFFE8A838),
+                      _notifCycleInsights, (v) => setState(() => _notifCycleInsights = v)),
+
+                  const SizedBox(height: 8),
+
+                  // Done button
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFE87DAB), Color(0xFFC85A7A)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(18),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFC85A7A).withOpacity(0.35),
+                            blurRadius: 14,
+                            offset: const Offset(0, 5),
+                          ),
+                        ],
+                      ),
+                      child: const Center(
+                        child: Text(
+                          'Save & Close',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.5,
+                            decoration: TextDecoration.none,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -152,12 +459,7 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            Color(0xFFFFF0F7),
-            Color(0xFFFDE8F5),
-            Color(0xFFF5E6FF),
-            Color(0xFFFFFFFF),
-          ],
+          colors: [Color(0xFFFFF0F7), Color(0xFFFDE8F5), Color(0xFFF5E6FF), Color(0xFFFFFFFF)],
           stops: [0.0, 0.3, 0.6, 1.0],
         ),
       ),
@@ -173,13 +475,14 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
     );
   }
 
+  // ── Header ────────────────────────────────────────────────────────────────
+
   Widget _buildHeader() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Left: Title
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -190,6 +493,7 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
                   fontSize: 22,
                   fontWeight: FontWeight.w800,
                   letterSpacing: -0.5,
+                  decoration: TextDecoration.none, // ✅
                 ),
               ),
               Text(
@@ -199,24 +503,35 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
                   letterSpacing: 1.2,
+                  decoration: TextDecoration.none, // ✅
                 ),
               ),
             ],
           ),
-
-          // Right: Icons
           Row(
             children: [
-              _buildIconButton(
-                Icons.notifications_none_rounded,
-                onTap: () {},
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  _buildIconButton(Icons.notifications_none_rounded, onTap: _showNotificationPanel),
+                  if (_hasUnread)
+                    Positioned(
+                      top: -2,
+                      right: -2,
+                      child: Container(
+                        width: 10,
+                        height: 10,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFC85A7A),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 1.5),
+                        ),
+                      ),
+                    ),
+                ],
               ),
               const SizedBox(width: 10),
-              _buildIconButton(
-                Icons.calendar_month_rounded,
-                onTap: _showCalendarModal,
-                isHighlighted: true,
-              ),
+              _buildIconButton(Icons.calendar_month_rounded, onTap: _showCalendarModal, isHighlighted: true),
             ],
           ),
         ],
@@ -224,8 +539,7 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
     );
   }
 
-  Widget _buildIconButton(IconData icon,
-      {required VoidCallback onTap, bool isHighlighted = false}) {
+  Widget _buildIconButton(IconData icon, {required VoidCallback onTap, bool isHighlighted = false}) {
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
@@ -237,22 +551,18 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
           borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
-              color: isHighlighted
-                  ? const Color(0xFFC85A7A).withOpacity(0.35)
-                  : Colors.black.withOpacity(0.08),
+              color: isHighlighted ? const Color(0xFFC85A7A).withOpacity(0.35) : Colors.black.withOpacity(0.08),
               blurRadius: isHighlighted ? 12 : 8,
               offset: const Offset(0, 3),
             ),
           ],
         ),
-        child: Icon(
-          icon,
-          color: isHighlighted ? Colors.white : const Color(0xFFC85A7A),
-          size: 22,
-        ),
+        child: Icon(icon, color: isHighlighted ? Colors.white : const Color(0xFFC85A7A), size: 22),
       ),
     );
   }
+
+  // ── Circular Calendar ─────────────────────────────────────────────────────
 
   Widget _buildCircularCalendar() {
     final int totalDays = _getDaysInMonth();
@@ -263,22 +573,16 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
       child: Stack(
         alignment: Alignment.center,
         children: [
-          // Subtle glow behind center
           Container(
             width: 160,
             height: 160,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: RadialGradient(
-                colors: [
-                  const Color(0xFFFFD6E8).withOpacity(0.6),
-                  Colors.transparent,
-                ],
+                colors: [const Color(0xFFFFD6E8).withOpacity(0.6), Colors.transparent],
               ),
             ),
           ),
-
-          // Circular day markers
           ...List.generate(totalDays, (index) {
             final angle = (2 * math.pi / totalDays) * index - math.pi / 2;
             final x = radius * math.cos(angle);
@@ -302,58 +606,23 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
                   height: isSelected ? 42 : 36,
                   decoration: BoxDecoration(
                     gradient: isPeriod
-                        ? const LinearGradient(
-                            colors: [
-                              Color(0xFFE87DAB),
-                              Color(0xFFC85A7A),
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          )
+                        ? const LinearGradient(colors: [Color(0xFFE87DAB), Color(0xFFC85A7A)], begin: Alignment.topLeft, end: Alignment.bottomRight)
                         : isFertile
-                            ? const LinearGradient(
-                                colors: [
-                                  Color(0xFFB5A4E0),
-                                  Color(0xFF9B84D4),
-                                ],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              )
+                            ? const LinearGradient(colors: [Color(0xFFB5A4E0), Color(0xFF9B84D4)], begin: Alignment.topLeft, end: Alignment.bottomRight)
                             : null,
                     color: !isPeriod && !isFertile
-                        ? isToday
-                            ? const Color(0xFFFFD6E8)
-                            : const Color(0xFFF5E6F5).withOpacity(0.6)
+                        ? isToday ? const Color(0xFFFFD6E8) : const Color(0xFFF5E6F5).withOpacity(0.6)
                         : null,
                     shape: BoxShape.circle,
                     border: isSelected
-                        ? Border.all(
-                            color: const Color(0xFFC85A7A),
-                            width: 2.5,
-                          )
+                        ? Border.all(color: const Color(0xFFC85A7A), width: 2.5)
                         : isToday && !isPeriod
-                            ? Border.all(
-                                color: const Color(0xFFE87DAB).withOpacity(0.5),
-                                width: 1.5,
-                              )
+                            ? Border.all(color: const Color(0xFFE87DAB).withOpacity(0.5), width: 1.5)
                             : null,
                     boxShadow: isPeriod
-                        ? [
-                            BoxShadow(
-                              color: const Color(0xFFC85A7A).withOpacity(0.35),
-                              blurRadius: 6,
-                              offset: const Offset(0, 2),
-                            )
-                          ]
+                        ? [BoxShadow(color: const Color(0xFFC85A7A).withOpacity(0.35), blurRadius: 6, offset: const Offset(0, 2))]
                         : isFertile
-                            ? [
-                                BoxShadow(
-                                  color:
-                                      const Color(0xFF9B84D4).withOpacity(0.35),
-                                  blurRadius: 6,
-                                  offset: const Offset(0, 2),
-                                )
-                              ]
+                            ? [BoxShadow(color: const Color(0xFF9B84D4).withOpacity(0.35), blurRadius: 6, offset: const Offset(0, 2))]
                             : null,
                   ),
                   child: Center(
@@ -362,13 +631,10 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
                       style: TextStyle(
                         color: isPeriod || isFertile
                             ? Colors.white
-                            : isToday
-                                ? const Color(0xFFC85A7A)
-                                : const Color(0xFFCCA8C0),
+                            : isToday ? const Color(0xFFC85A7A) : const Color(0xFFCCA8C0),
                         fontSize: 11,
-                        fontWeight: isPeriod || isFertile || isToday
-                            ? FontWeight.w700
-                            : FontWeight.w500,
+                        fontWeight: isPeriod || isFertile || isToday ? FontWeight.w700 : FontWeight.w500,
+                        decoration: TextDecoration.none, // ✅
                       ),
                     ),
                   ),
@@ -376,8 +642,6 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
               ),
             );
           }),
-
-          // Center content
           _buildCenterDisplay(),
         ],
       ),
@@ -395,6 +659,7 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
             fontSize: 12,
             fontWeight: FontWeight.w600,
             letterSpacing: 2,
+            decoration: TextDecoration.none, // ✅
           ),
         ),
         const SizedBox(height: 6),
@@ -415,6 +680,7 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
                       fontWeight: FontWeight.w900,
                       height: 1,
                       letterSpacing: -2,
+                      decoration: TextDecoration.none, // ✅
                     ),
                   ),
                 ),
@@ -425,6 +691,7 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                     letterSpacing: 0.5,
+                    decoration: TextDecoration.none, // ✅
                   ),
                 ),
               ],
@@ -433,18 +700,13 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
             _buildNavArrow(Icons.chevron_right_rounded, () => _changeMonth(1)),
           ],
         ),
-
         const SizedBox(height: 10),
-
-        // Status badges
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _buildBadge(
-                '${periodDays.length}d period', const Color(0xFFC85A7A)),
+            _buildBadge('${periodDays.length}d period', const Color(0xFFC85A7A)),
             const SizedBox(width: 8),
-            _buildBadge('day ${selectedDay ?? selectedDate.day}',
-                const Color(0xFF9B84D4)),
+            _buildBadge('day ${selectedDay ?? selectedDate.day}', const Color(0xFF9B84D4)),
           ],
         ),
       ],
@@ -466,6 +728,7 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
           fontSize: 11,
           fontWeight: FontWeight.w600,
           letterSpacing: 0.3,
+          decoration: TextDecoration.none, // ✅
         ),
       ),
     );
@@ -480,15 +743,14 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
         decoration: BoxDecoration(
           color: const Color(0xFFFFF0F7),
           shape: BoxShape.circle,
-          border: Border.all(
-            color: const Color(0xFFEEC4D6),
-            width: 1,
-          ),
+          border: Border.all(color: const Color(0xFFEEC4D6), width: 1),
         ),
         child: Icon(icon, color: const Color(0xFFC85A7A), size: 20),
       ),
     );
   }
+
+  // ── Navigation buttons + legend ───────────────────────────────────────────
 
   Widget _buildNavigationButtons() {
     return Padding(
@@ -496,9 +758,7 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          _buildYearNavButton(Icons.keyboard_double_arrow_left_rounded,
-              'Prev year', () => _changeYear(-1)),
-          // Legend row
+          _buildYearNavButton(Icons.keyboard_double_arrow_left_rounded, 'Prev year', () => _changeYear(-1)),
           Row(
             children: [
               _buildLegendDot(const Color(0xFFC85A7A), 'Period'),
@@ -506,15 +766,13 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
               _buildLegendDot(const Color(0xFF9B84D4), 'Fertile'),
             ],
           ),
-          _buildYearNavButton(Icons.keyboard_double_arrow_right_rounded,
-              'Next year', () => _changeYear(1)),
+          _buildYearNavButton(Icons.keyboard_double_arrow_right_rounded, 'Next year', () => _changeYear(1)),
         ],
       ),
     );
   }
 
-  Widget _buildYearNavButton(
-      IconData icon, String tooltip, VoidCallback onTap) {
+  Widget _buildYearNavButton(IconData icon, String tooltip, VoidCallback onTap) {
     return Tooltip(
       message: tooltip,
       child: GestureDetector(
@@ -524,13 +782,7 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(10),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.06),
-                blurRadius: 6,
-                offset: const Offset(0, 2),
-              )
-            ],
+            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 6, offset: const Offset(0, 2))],
           ),
           child: Icon(icon, color: const Color(0xFFC85A7A), size: 20),
         ),
@@ -547,12 +799,7 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
           decoration: BoxDecoration(
             color: color,
             shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: color.withOpacity(0.4),
-                blurRadius: 4,
-              )
-            ],
+            boxShadow: [BoxShadow(color: color.withOpacity(0.4), blurRadius: 4)],
           ),
         ),
         const SizedBox(width: 5),
@@ -562,11 +809,14 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
             color: color,
             fontSize: 11,
             fontWeight: FontWeight.w600,
+            decoration: TextDecoration.none, // ✅
           ),
         ),
       ],
     );
   }
+
+  // ── Tabs ──────────────────────────────────────────────────────────────────
 
   Widget _buildTabs() {
     return Container(
@@ -597,34 +847,21 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
             color: isSelected ? Colors.white : Colors.transparent,
             borderRadius: BorderRadius.circular(13),
             boxShadow: isSelected
-                ? [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.08),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    )
-                  ]
+                ? [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 8, offset: const Offset(0, 2))]
                 : null,
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                icon,
-                color: isSelected
-                    ? const Color(0xFFC85A7A)
-                    : const Color(0xFFBBAACE),
-                size: 18,
-              ),
+              Icon(icon, color: isSelected ? const Color(0xFFC85A7A) : const Color(0xFFBBAACE), size: 18),
               const SizedBox(width: 6),
               Text(
                 label,
                 style: TextStyle(
-                  color: isSelected
-                      ? const Color(0xFFC85A7A)
-                      : const Color(0xFFBBAACE),
+                  color: isSelected ? const Color(0xFFC85A7A) : const Color(0xFFBBAACE),
                   fontSize: 14,
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  decoration: TextDecoration.none, // ✅
                 ),
               ),
             ],
@@ -634,6 +871,8 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
     );
   }
 
+  // ── Content ───────────────────────────────────────────────────────────────
+
   Widget _buildContent() {
     return Expanded(
       child: Container(
@@ -642,16 +881,9 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFFC85A7A).withOpacity(0.06),
-              blurRadius: 20,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          boxShadow: [BoxShadow(color: const Color(0xFFC85A7A).withOpacity(0.06), blurRadius: 20, offset: const Offset(0, 4))],
         ),
-        child:
-            selectedTab == 0 ? _buildLogDayContent() : _buildHistoryContent(),
+        child: selectedTab == 0 ? _buildLogDayContent() : _buildHistoryContent(),
       ),
     );
   }
@@ -668,15 +900,8 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
             children: [
               Container(
                 padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFEEF5),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(
-                  Icons.water_drop_rounded,
-                  color: Color(0xFFC85A7A),
-                  size: 18,
-                ),
+                decoration: BoxDecoration(color: const Color(0xFFFFEEF5), borderRadius: BorderRadius.circular(10)),
+                child: const Icon(Icons.water_drop_rounded, color: Color(0xFFC85A7A), size: 18),
               ),
               const SizedBox(width: 10),
               Column(
@@ -688,34 +913,27 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
                       color: Color(0xFF2D1B2E),
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
+                      decoration: TextDecoration.none, // ✅
                     ),
                   ),
                   Text(
                     isPeriodDay ? 'Period day tracked ✓' : 'No period logged',
                     style: TextStyle(
-                      color: isPeriodDay
-                          ? const Color(0xFFC85A7A)
-                          : const Color(0xFFBBAABB),
+                      color: isPeriodDay ? const Color(0xFFC85A7A) : const Color(0xFFBBAABB),
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
+                      decoration: TextDecoration.none, // ✅
                     ),
                   ),
                 ],
               ),
             ],
           ),
-
           const SizedBox(height: 20),
-
-          // Toggle Period Button
           GestureDetector(
             onTap: () {
               setState(() {
-                if (isPeriodDay) {
-                  periodDays.remove(day);
-                } else {
-                  periodDays.add(day);
-                }
+                if (isPeriodDay) { periodDays.remove(day); } else { periodDays.add(day); }
               });
             },
             child: AnimatedContainer(
@@ -724,40 +942,19 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
               padding: const EdgeInsets.symmetric(vertical: 16),
               decoration: BoxDecoration(
                 gradient: isPeriodDay
-                    ? const LinearGradient(
-                        colors: [Color(0xFFE87DAB), Color(0xFFC85A7A)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      )
-                    : const LinearGradient(
-                        colors: [Color(0xFFFFF0F7), Color(0xFFFDE8F0)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
+                    ? const LinearGradient(colors: [Color(0xFFE87DAB), Color(0xFFC85A7A)], begin: Alignment.topLeft, end: Alignment.bottomRight)
+                    : const LinearGradient(colors: [Color(0xFFFFF0F7), Color(0xFFFDE8F0)], begin: Alignment.topLeft, end: Alignment.bottomRight),
                 borderRadius: BorderRadius.circular(18),
-                border: isPeriodDay
-                    ? null
-                    : Border.all(
-                        color: const Color(0xFFEEC4D6),
-                        width: 1.5,
-                      ),
+                border: isPeriodDay ? null : Border.all(color: const Color(0xFFEEC4D6), width: 1.5),
                 boxShadow: isPeriodDay
-                    ? [
-                        BoxShadow(
-                          color: const Color(0xFFC85A7A).withOpacity(0.3),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        )
-                      ]
+                    ? [BoxShadow(color: const Color(0xFFC85A7A).withOpacity(0.3), blurRadius: 12, offset: const Offset(0, 4))]
                     : null,
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(
-                    isPeriodDay
-                        ? Icons.check_circle_rounded
-                        : Icons.water_drop_outlined,
+                    isPeriodDay ? Icons.check_circle_rounded : Icons.water_drop_outlined,
                     color: isPeriodDay ? Colors.white : const Color(0xFFC85A7A),
                     size: 22,
                   ),
@@ -765,37 +962,27 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
                   Text(
                     isPeriodDay ? 'Period tracked!' : 'Mark as period day',
                     style: TextStyle(
-                      color:
-                          isPeriodDay ? Colors.white : const Color(0xFFC85A7A),
+                      color: isPeriodDay ? Colors.white : const Color(0xFFC85A7A),
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
+                      decoration: TextDecoration.none, // ✅
                     ),
                   ),
                 ],
               ),
             ),
           ),
-
           const SizedBox(height: 16),
-
-          // Info card
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
               color: const Color(0xFFF9F0FD),
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: const Color(0xFFE5D4F0),
-                width: 1,
-              ),
+              border: Border.all(color: const Color(0xFFE5D4F0), width: 1),
             ),
             child: Row(
               children: [
-                const Icon(
-                  Icons.lightbulb_outline_rounded,
-                  color: Color(0xFF9B84D4),
-                  size: 18,
-                ),
+                const Icon(Icons.lightbulb_outline_rounded, color: Color(0xFF9B84D4), size: 18),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
@@ -804,35 +991,19 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
                       color: Colors.grey[600],
                       fontSize: 12,
                       height: 1.4,
+                      decoration: TextDecoration.none, // ✅
                     ),
                   ),
                 ),
               ],
             ),
           ),
-
           const SizedBox(height: 16),
-
-          // Quick stats
           Row(
             children: [
-              Expanded(
-                child: _buildStatCard(
-                  '${periodDays.length}',
-                  'Days this month',
-                  const Color(0xFFC85A7A),
-                  Icons.calendar_today_rounded,
-                ),
-              ),
+              Expanded(child: _buildStatCard('${periodDays.length}', 'Days this month', const Color(0xFFC85A7A), Icons.calendar_today_rounded)),
               const SizedBox(width: 12),
-              Expanded(
-                child: _buildStatCard(
-                  '${fertileDays.length}',
-                  'Fertile days',
-                  const Color(0xFF9B84D4),
-                  Icons.favorite_rounded,
-                ),
-              ),
+              Expanded(child: _buildStatCard('${fertileDays.length}', 'Fertile days', const Color(0xFF9B84D4), Icons.favorite_rounded)),
             ],
           ),
         ],
@@ -840,8 +1011,7 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
     );
   }
 
-  Widget _buildStatCard(
-      String value, String label, Color color, IconData icon) {
+  Widget _buildStatCard(String value, String label, Color color, IconData icon) {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -860,6 +1030,7 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
               color: color,
               fontSize: 22,
               fontWeight: FontWeight.w800,
+              decoration: TextDecoration.none, // ✅
             ),
           ),
           Text(
@@ -868,6 +1039,7 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
               color: color.withOpacity(0.7),
               fontSize: 11,
               fontWeight: FontWeight.w500,
+              decoration: TextDecoration.none, // ✅
             ),
           ),
         ],
@@ -877,24 +1049,9 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
 
   Widget _buildHistoryContent() {
     final history = [
-      {
-        'month': 'January 2026',
-        'days': 'Days: 1, 2, 3, 4, 5',
-        'duration': '5 days',
-        'cycle': '28d cycle'
-      },
-      {
-        'month': 'December 2025',
-        'days': 'Days: 3, 4, 5, 6',
-        'duration': '4 days',
-        'cycle': '27d cycle'
-      },
-      {
-        'month': 'November 2025',
-        'days': 'Days: 5, 6, 7, 8, 9',
-        'duration': '5 days',
-        'cycle': '29d cycle'
-      },
+      {'month': 'January 2026', 'days': 'Days: 1, 2, 3, 4, 5', 'duration': '5 days', 'cycle': '28d cycle'},
+      {'month': 'December 2025', 'days': 'Days: 3, 4, 5, 6', 'duration': '4 days', 'cycle': '27d cycle'},
+      {'month': 'November 2025', 'days': 'Days: 5, 6, 7, 8, 9', 'duration': '5 days', 'cycle': '29d cycle'},
     ];
 
     return Column(
@@ -909,20 +1066,19 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
                 color: Color(0xFF2D1B2E),
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
+                decoration: TextDecoration.none, // ✅
               ),
             ),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFEEF5),
-                borderRadius: BorderRadius.circular(20),
-              ),
+              decoration: BoxDecoration(color: const Color(0xFFFFEEF5), borderRadius: BorderRadius.circular(20)),
               child: const Text(
                 '3 months',
                 style: TextStyle(
                   color: Color(0xFFC85A7A),
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
+                  decoration: TextDecoration.none, // ✅
                 ),
               ),
             ),
@@ -933,10 +1089,7 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
           child: ListView.separated(
             itemCount: history.length,
             separatorBuilder: (_, __) => const SizedBox(height: 10),
-            itemBuilder: (context, index) {
-              final item = history[index];
-              return _buildHistoryItem(item);
-            },
+            itemBuilder: (context, index) => _buildHistoryItem(history[index]),
           ),
         ),
       ],
@@ -949,10 +1102,7 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
       decoration: BoxDecoration(
         color: const Color(0xFFFFF5F9),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFFEED4E0),
-          width: 1,
-        ),
+        border: Border.all(color: const Color(0xFFEED4E0), width: 1),
       ),
       child: Row(
         children: [
@@ -960,25 +1110,11 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
             width: 46,
             height: 46,
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFFE87DAB), Color(0xFFC85A7A)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+              gradient: const LinearGradient(colors: [Color(0xFFE87DAB), Color(0xFFC85A7A)], begin: Alignment.topLeft, end: Alignment.bottomRight),
               borderRadius: BorderRadius.circular(14),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFFC85A7A).withOpacity(0.3),
-                  blurRadius: 8,
-                  offset: const Offset(0, 3),
-                )
-              ],
+              boxShadow: [BoxShadow(color: const Color(0xFFC85A7A).withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 3))],
             ),
-            child: const Icon(
-              Icons.water_drop_rounded,
-              color: Colors.white,
-              size: 22,
-            ),
+            child: const Icon(Icons.water_drop_rounded, color: Colors.white, size: 22),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -991,6 +1127,7 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
                     color: Color(0xFF2D1B2E),
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
+                    decoration: TextDecoration.none, // ✅
                   ),
                 ),
                 const SizedBox(height: 3),
@@ -999,6 +1136,7 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
                   style: TextStyle(
                     color: Colors.grey[500],
                     fontSize: 12,
+                    decoration: TextDecoration.none, // ✅
                   ),
                 ),
               ],
@@ -1009,16 +1147,14 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
             children: [
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFC85A7A),
-                  borderRadius: BorderRadius.circular(8),
-                ),
+                decoration: BoxDecoration(color: const Color(0xFFC85A7A), borderRadius: BorderRadius.circular(8)),
                 child: Text(
                   item['duration']!,
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
+                    decoration: TextDecoration.none, // ✅
                   ),
                 ),
               ),
@@ -1029,6 +1165,7 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
                   color: Color(0xFF9B84D4),
                   fontSize: 11,
                   fontWeight: FontWeight.w500,
+                  decoration: TextDecoration.none, // ✅
                 ),
               ),
             ],
@@ -1076,27 +1213,11 @@ class _FullCalendarModalState extends State<_FullCalendarModal> {
     _fertileDays = List.from(widget.fertileDays);
   }
 
-  int get _daysInMonth =>
-      DateTime(_currentDate.year, _currentDate.month + 1, 0).day;
-
-  int get _firstWeekday =>
-      DateTime(_currentDate.year, _currentDate.month, 1).weekday;
+  int get _daysInMonth => DateTime(_currentDate.year, _currentDate.month + 1, 0).day;
+  int get _firstWeekday => DateTime(_currentDate.year, _currentDate.month, 1).weekday;
 
   String _getMonthName(int month) {
-    const months = [
-      'January',
-      'February',
-      'March',
-      'April',
-      'May',
-      'June',
-      'July',
-      'August',
-      'September',
-      'October',
-      'November',
-      'December'
-    ];
+    const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
     return months[month - 1];
   }
 
@@ -1112,20 +1233,17 @@ class _FullCalendarModalState extends State<_FullCalendarModal> {
         padding: EdgeInsets.zero,
         physics: const ClampingScrollPhysics(),
         children: [
-          // ── Drag handle ──────────────────────────────────────────
+          // Drag handle
           Center(
             child: Container(
               margin: const EdgeInsets.only(top: 12, bottom: 4),
               width: 44,
               height: 5,
-              decoration: BoxDecoration(
-                color: const Color(0xFFE0C8D8),
-                borderRadius: BorderRadius.circular(3),
-              ),
+              decoration: BoxDecoration(color: const Color(0xFFE0C8D8), borderRadius: BorderRadius.circular(3)),
             ),
           ),
 
-          // ── Header ───────────────────────────────────────────────
+          // Header
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
             child: Row(
@@ -1133,36 +1251,23 @@ class _FullCalendarModalState extends State<_FullCalendarModal> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFFE87DAB), Color(0xFFC85A7A)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
+                    gradient: const LinearGradient(colors: [Color(0xFFE87DAB), Color(0xFFC85A7A)], begin: Alignment.topLeft, end: Alignment.bottomRight),
                     borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFFC85A7A).withOpacity(0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
+                    boxShadow: [BoxShadow(color: const Color(0xFFC85A7A).withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 3))],
                   ),
-                  child: const Icon(
-                    Icons.calendar_month_rounded,
-                    color: Colors.white,
-                    size: 20,
-                  ),
+                  child: const Icon(Icons.calendar_month_rounded, color: Colors.white, size: 20),
                 ),
                 const SizedBox(width: 12),
-                Column(
+                const Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
+                  children: [
                     Text(
                       'Period Calendar',
                       style: TextStyle(
                         color: Color(0xFF2D1B2E),
                         fontSize: 18,
                         fontWeight: FontWeight.w800,
+                        decoration: TextDecoration.none, // ✅
                       ),
                     ),
                     Text(
@@ -1171,6 +1276,7 @@ class _FullCalendarModalState extends State<_FullCalendarModal> {
                         color: Color(0xFFBBAACE),
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
+                        decoration: TextDecoration.none, // ✅
                       ),
                     ),
                   ],
@@ -1180,22 +1286,15 @@ class _FullCalendarModalState extends State<_FullCalendarModal> {
                   onTap: () => Navigator.pop(context),
                   child: Container(
                     padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF5EEF5),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(
-                      Icons.close_rounded,
-                      color: Color(0xFFBB8FAE),
-                      size: 18,
-                    ),
+                    decoration: BoxDecoration(color: const Color(0xFFF5EEF5), borderRadius: BorderRadius.circular(10)),
+                    child: const Icon(Icons.close_rounded, color: Color(0xFFBB8FAE), size: 18),
                   ),
                 ),
               ],
             ),
           ),
 
-          // ── Month navigation ──────────────────────────────────────
+          // Month navigation
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             child: Row(
@@ -1203,8 +1302,7 @@ class _FullCalendarModalState extends State<_FullCalendarModal> {
               children: [
                 _navButton(Icons.chevron_left_rounded, () {
                   setState(() {
-                    _currentDate =
-                        DateTime(_currentDate.year, _currentDate.month - 1, 1);
+                    _currentDate = DateTime(_currentDate.year, _currentDate.month - 1, 1);
                     _selectedDay = null;
                   });
                 }),
@@ -1217,6 +1315,7 @@ class _FullCalendarModalState extends State<_FullCalendarModal> {
                         fontSize: 20,
                         fontWeight: FontWeight.w800,
                         letterSpacing: -0.5,
+                        decoration: TextDecoration.none, // ✅
                       ),
                     ),
                     Text(
@@ -1226,14 +1325,14 @@ class _FullCalendarModalState extends State<_FullCalendarModal> {
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                         letterSpacing: 1.5,
+                        decoration: TextDecoration.none, // ✅
                       ),
                     ),
                   ],
                 ),
                 _navButton(Icons.chevron_right_rounded, () {
                   setState(() {
-                    _currentDate =
-                        DateTime(_currentDate.year, _currentDate.month + 1, 1);
+                    _currentDate = DateTime(_currentDate.year, _currentDate.month + 1, 1);
                     _selectedDay = null;
                   });
                 }),
@@ -1241,35 +1340,32 @@ class _FullCalendarModalState extends State<_FullCalendarModal> {
             ),
           ),
 
-          // ── Weekday header row ────────────────────────────────────
+          // Weekday header row
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               children: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-                  .map(
-                    (d) => Expanded(
-                      child: Center(
-                        child: Text(
-                          d,
-                          style: TextStyle(
-                            color: (d == 'Sat' || d == 'Sun')
-                                ? const Color(0xFFE087A8)
-                                : const Color(0xFFBBAACC),
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.3,
+                  .map((d) => Expanded(
+                        child: Center(
+                          child: Text(
+                            d,
+                            style: TextStyle(
+                              color: (d == 'Sat' || d == 'Sun') ? const Color(0xFFE087A8) : const Color(0xFFBBAACC),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.3,
+                              decoration: TextDecoration.none, // ✅
+                            ),
                           ),
                         ),
-                      ),
-                    ),
-                  )
+                      ))
                   .toList(),
             ),
           ),
 
           const SizedBox(height: 8),
 
-          // ── Calendar grid (fully self-sizing) ─────────────────────
+          // Calendar grid
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: _buildCalendarTable(),
@@ -1277,7 +1373,7 @@ class _FullCalendarModalState extends State<_FullCalendarModal> {
 
           const SizedBox(height: 16),
 
-          // ── Legend ────────────────────────────────────────────────
+          // Legend
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Container(
@@ -1301,10 +1397,9 @@ class _FullCalendarModalState extends State<_FullCalendarModal> {
 
           const SizedBox(height: 16),
 
-          // ── Done button ───────────────────────────────────────────
+          // Done button
           Padding(
-            padding: EdgeInsets.fromLTRB(
-                20, 0, 20, MediaQuery.of(context).padding.bottom + 20),
+            padding: EdgeInsets.fromLTRB(20, 0, 20, MediaQuery.of(context).padding.bottom + 20),
             child: GestureDetector(
               onTap: () {
                 widget.onMonthChanged(_currentDate);
@@ -1314,19 +1409,9 @@ class _FullCalendarModalState extends State<_FullCalendarModal> {
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFFE87DAB), Color(0xFFC85A7A)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+                  gradient: const LinearGradient(colors: [Color(0xFFE87DAB), Color(0xFFC85A7A)], begin: Alignment.topLeft, end: Alignment.bottomRight),
                   borderRadius: BorderRadius.circular(18),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFFC85A7A).withOpacity(0.35),
-                      blurRadius: 14,
-                      offset: const Offset(0, 5),
-                    ),
-                  ],
+                  boxShadow: [BoxShadow(color: const Color(0xFFC85A7A).withOpacity(0.35), blurRadius: 14, offset: const Offset(0, 5))],
                 ),
                 child: const Center(
                   child: Text(
@@ -1336,6 +1421,7 @@ class _FullCalendarModalState extends State<_FullCalendarModal> {
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 0.5,
+                      decoration: TextDecoration.none, // ✅
                     ),
                   ),
                 ),
@@ -1347,22 +1433,14 @@ class _FullCalendarModalState extends State<_FullCalendarModal> {
     );
   }
 
-  /// Builds the month grid as a plain Column of Rows — never clips.
   Widget _buildCalendarTable() {
-    final int startOffset = _firstWeekday - 1; // Mon=0 … Sun=6
+    final int startOffset = _firstWeekday - 1;
     final int totalDays = _daysInMonth;
-
-    // Build flat list: nulls for empty leading cells, then 1..totalDays
     final List<int?> cells = [
       ...List<int?>.filled(startOffset, null),
       ...List<int?>.generate(totalDays, (i) => i + 1),
     ];
-
-    // Pad to a complete final row
-    while (cells.length % 7 != 0) {
-      cells.add(null);
-    }
-
+    while (cells.length % 7 != 0) cells.add(null);
     final int rowCount = cells.length ~/ 7;
 
     return Column(
@@ -1394,11 +1472,7 @@ class _FullCalendarModalState extends State<_FullCalendarModal> {
       onTap: () {
         setState(() {
           _selectedDay = day;
-          if (_periodDays.contains(day)) {
-            _periodDays.remove(day);
-          } else {
-            _periodDays.add(day);
-          }
+          if (_periodDays.contains(day)) { _periodDays.remove(day); } else { _periodDays.add(day); }
         });
         widget.onDayTap(day);
       },
@@ -1408,49 +1482,23 @@ class _FullCalendarModalState extends State<_FullCalendarModal> {
         height: 44,
         decoration: BoxDecoration(
           gradient: isPeriod
-              ? const LinearGradient(
-                  colors: [Color(0xFFE87DAB), Color(0xFFC85A7A)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                )
+              ? const LinearGradient(colors: [Color(0xFFE87DAB), Color(0xFFC85A7A)], begin: Alignment.topLeft, end: Alignment.bottomRight)
               : isFertile
-                  ? const LinearGradient(
-                      colors: [Color(0xFFB5A4E0), Color(0xFF9B84D4)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    )
+                  ? const LinearGradient(colors: [Color(0xFFB5A4E0), Color(0xFF9B84D4)], begin: Alignment.topLeft, end: Alignment.bottomRight)
                   : null,
           color: (!isPeriod && !isFertile)
-              ? isToday
-                  ? const Color(0xFFFFD6E8)
-                  : isSelected
-                      ? const Color(0xFFEED8F0)
-                      : Colors.transparent
+              ? isToday ? const Color(0xFFFFD6E8) : isSelected ? const Color(0xFFEED8F0) : Colors.transparent
               : null,
           borderRadius: BorderRadius.circular(12),
           border: isSelected && !isPeriod
               ? Border.all(color: const Color(0xFFC85A7A), width: 2)
               : isToday && !isPeriod
-                  ? Border.all(
-                      color: const Color(0xFFE87DAB).withOpacity(0.5),
-                      width: 1.5)
+                  ? Border.all(color: const Color(0xFFE87DAB).withOpacity(0.5), width: 1.5)
                   : null,
           boxShadow: isPeriod
-              ? [
-                  BoxShadow(
-                    color: const Color(0xFFC85A7A).withOpacity(0.28),
-                    blurRadius: 6,
-                    offset: const Offset(0, 3),
-                  )
-                ]
+              ? [BoxShadow(color: const Color(0xFFC85A7A).withOpacity(0.28), blurRadius: 6, offset: const Offset(0, 3))]
               : isFertile
-                  ? [
-                      BoxShadow(
-                        color: const Color(0xFF9B84D4).withOpacity(0.28),
-                        blurRadius: 6,
-                        offset: const Offset(0, 3),
-                      )
-                    ]
+                  ? [BoxShadow(color: const Color(0xFF9B84D4).withOpacity(0.28), blurRadius: 6, offset: const Offset(0, 3))]
                   : null,
         ),
         child: Center(
@@ -1459,15 +1507,10 @@ class _FullCalendarModalState extends State<_FullCalendarModal> {
             style: TextStyle(
               color: isPeriod || isFertile
                   ? Colors.white
-                  : isToday
-                      ? const Color(0xFFC85A7A)
-                      : isWeekend
-                          ? const Color(0xFFE087A8)
-                          : const Color(0xFF2D1B2E),
+                  : isToday ? const Color(0xFFC85A7A) : isWeekend ? const Color(0xFFE087A8) : const Color(0xFF2D1B2E),
               fontSize: 14,
-              fontWeight: isPeriod || isFertile || isToday || isSelected
-                  ? FontWeight.w700
-                  : FontWeight.w500,
+              fontWeight: isPeriod || isFertile || isToday || isSelected ? FontWeight.w700 : FontWeight.w500,
+              decoration: TextDecoration.none, // ✅
             ),
           ),
         ),
@@ -1484,10 +1527,7 @@ class _FullCalendarModalState extends State<_FullCalendarModal> {
         decoration: BoxDecoration(
           color: const Color(0xFFFFF0F7),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: const Color(0xFFEEC4D6),
-            width: 1,
-          ),
+          border: Border.all(color: const Color(0xFFEEC4D6), width: 1),
         ),
         child: Icon(icon, color: const Color(0xFFC85A7A), size: 22),
       ),
@@ -1503,12 +1543,7 @@ class _FullCalendarModalState extends State<_FullCalendarModal> {
           decoration: BoxDecoration(
             color: color,
             borderRadius: BorderRadius.circular(4),
-            boxShadow: [
-              BoxShadow(
-                color: color.withOpacity(0.4),
-                blurRadius: 4,
-              ),
-            ],
+            boxShadow: [BoxShadow(color: color.withOpacity(0.4), blurRadius: 4)],
           ),
         ),
         const SizedBox(width: 6),
@@ -1518,6 +1553,7 @@ class _FullCalendarModalState extends State<_FullCalendarModal> {
             color: color,
             fontSize: 12,
             fontWeight: FontWeight.w600,
+            decoration: TextDecoration.none, // ✅
           ),
         ),
       ],
