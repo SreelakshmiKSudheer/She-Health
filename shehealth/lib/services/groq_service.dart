@@ -60,6 +60,14 @@ Provide accurate, empathetic, and helpful information. Always remind users to co
     }
   }
 
+  Future<String> sendSimpleMessage(String prompt) async {
+  try {
+    final response = await sendMessage(prompt, []);
+    return response;
+  } catch (e) {
+    return "Unable to generate health tip right now.";
+  }
+}
   Future<String> generateDietPlan(String condition) async {
     try {
       final List<Map<String, dynamic>> messages = [
