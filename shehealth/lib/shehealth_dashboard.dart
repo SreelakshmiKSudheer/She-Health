@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'report.dart'; // Import the health report page
-import 'questionnaire.dart'; // Add this import for the questionnaire page
-import 'chatbot.dart'; // Add this import for the chatbot page
+import 'report.dart';
+import 'questionnaire.dart';
+import 'chatbot.dart';
 import 'calendar.dart';
 import 'dietplan.dart';
 
@@ -24,7 +24,6 @@ class _DashboardPageState extends State<DashboardPage> {
   final GlobalKey _riskAssessmentKey = GlobalKey();
   final GlobalKey _remindersKey = GlobalKey();
 
-  // Track which section is expanded (null means none)
   String? _expandedSection;
 
   // Track selected trend tab
@@ -42,16 +41,15 @@ class _DashboardPageState extends State<DashboardPage> {
     }
   }
 
-  void _onBottomNavTap(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-    // Handle navigation to different pages based on index
+  void _onBottomNavTap(int index) async {
     if (index == 0) {
-      // Home - already here
-    } else if (index == 1) {
-      // Navigate to Health Report Page
-      Navigator.push(
+      setState(() {
+        _selectedIndex = 0;
+      });
+    }
+
+    if (index == 1) {
+      await Navigator.push(
         context,
         MaterialPageRoute(
           builder: (context) => HealthReportPage(
@@ -59,18 +57,30 @@ class _DashboardPageState extends State<DashboardPage> {
           ),
         ),
       );
-    } else if (index == 2) {
-      Navigator.push(
+    }
+
+    if (index == 2) {
+      await Navigator.push(
         context,
         MaterialPageRoute(
           builder: (context) => const PeriodCalendarWidget(),
         ),
       );
-    } else if (index == 3) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Opening Surveys...')),
+    }
+
+    if (index == 3) {
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const SurveyPage(),
+        ),
       );
     }
+
+    // Reset to home when returning
+    setState(() {
+      _selectedIndex = 0;
+    });
   }
 
   void _openDietPlan() {
@@ -992,59 +1002,35 @@ class _DashboardPageState extends State<DashboardPage> {
         _buildRiskItem(
             'Cervical Cancer', '2 weeks ago', 'No Risk', Colors.green),
         const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: ElevatedButton(
-                onPressed: () {
-                  // Navigate to Health Report Page for full assessment
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => HealthReportPage(
-                        reportText: "No report available.",
-                      ),
-                    ),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFC85A7A),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => HealthReportPage(
+                    reportText: "No report available.",
                   ),
                 ),
-                child: const Text(
-                  'Full Assessment',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFC85A7A),
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
               ),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: ElevatedButton(
-                onPressed: () {},
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF4CAF50),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                ),
-                child: const Text(
-                  'Get Diet Plan',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+            child: const Text(
+              'Full Assessment',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
               ),
             ),
-          ],
-        ),
+          ),
+        )
       ],
     );
   }
