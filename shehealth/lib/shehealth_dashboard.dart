@@ -5,6 +5,9 @@ import 'chatbot.dart';
 import 'calendar.dart';
 import 'dietplan.dart';
 import 'survey.dart';
+import 'services/groq_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -16,6 +19,10 @@ class DashboardPage extends StatefulWidget {
 class _DashboardPageState extends State<DashboardPage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final ScrollController _scrollController = ScrollController();
+  final GroqService _groqService = GroqService();
+
+String _dailyTip = "Loading today's health tip...";
+bool _isTipLoading = true;
 
   int _selectedIndex = 0;
 
@@ -92,6 +99,61 @@ class _DashboardPageState extends State<DashboardPage> {
       ),
     );
   }
+  
+  Future<void> _fetchDailyTip() async {
+  try {
+    final prefs = await SharedPreferences.getInstance();
+
+    String today = DateTime.now().toString().substring(0, 10);
+
+    String? savedDate = prefs.getString('tip_date');
+    String? savedTip = prefs.getString('daily_tip');
+
+    // If tip already generated today
+    if (savedDate == today && savedTip != null) {
+      setState(() {
+        _dailyTip = savedTip;
+        _isTipLoading = false;
+      });
+      return;
+    }
+
+    // Generate new tip from Groq
+    String prompt =
+        "Give one short helpful women's health tip for today. Keep it under 30 words.";
+
+    String response = await _groqService.sendMessage(prompt, []);
+
+    // Save tip and date
+    await prefs.setString('daily_tip', response);
+    await prefs.setString('tip_date', today);
+
+    setState(() {
+      _dailyTip = response;
+      _isTipLoading = false;
+    });
+  } catch (e) {
+    setState(() {
+      _dailyTip = "Drink enough water and maintain a healthy routine.";
+      _isTipLoading = false;
+    });
+  }
+}
+
+Future<void> _openHealthArticle() async {
+  final Uri url = Uri.parse(
+      "https://www.google.com/search?q=women+health+tips+daily");
+
+  if (await canLaunchUrl(url)) {
+    await launchUrl(url, mode: LaunchMode.externalApplication);
+  }
+}
+
+@override
+void initState() {
+  super.initState();
+  _fetchDailyTip();
+}
 
   @override
   Widget build(BuildContext context) {
@@ -1257,16 +1319,19 @@ class _DashboardPageState extends State<DashboardPage> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    const Text(
-                      'Stay hydrated throughout the day! Proper hydration helps regulate your menstrual cycle and reduces bloating.',
-                      style: TextStyle(color: Colors.white70, fontSize: 13),
-                    ),
+                    Text(
+  _isTipLoading ? "Generating today's health tip..." : _dailyTip,
+  style: const TextStyle(
+    color: Colors.white70,
+    fontSize: 13,
+  ),
+),
                   ],
                 ),
               ),
               const SizedBox(width: 12),
               ElevatedButton(
-                onPressed: () {},
+  onPressed: _openHealthArticle,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
                   foregroundColor: const Color(0xFFE59393),
