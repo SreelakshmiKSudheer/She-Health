@@ -8,6 +8,7 @@ import 'survey.dart';
 import 'services/groq_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'personal_details.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -21,8 +22,8 @@ class _DashboardPageState extends State<DashboardPage> {
   final ScrollController _scrollController = ScrollController();
   final GroqService _groqService = GroqService();
 
-String _dailyTip = "Loading today's health tip...";
-bool _isTipLoading = true;
+  String _dailyTip = "Loading today's health tip...";
+  bool _isTipLoading = true;
 
   int _selectedIndex = 0;
 
@@ -99,61 +100,61 @@ bool _isTipLoading = true;
       ),
     );
   }
-  
+
   Future<void> _fetchDailyTip() async {
-  try {
-    final prefs = await SharedPreferences.getInstance();
+    try {
+      final prefs = await SharedPreferences.getInstance();
 
-    String today = DateTime.now().toString().substring(0, 10);
+      String today = DateTime.now().toString().substring(0, 10);
 
-    String? savedDate = prefs.getString('tip_date');
-    String? savedTip = prefs.getString('daily_tip');
+      String? savedDate = prefs.getString('tip_date');
+      String? savedTip = prefs.getString('daily_tip');
 
-    // If tip already generated today
-    if (savedDate == today && savedTip != null) {
+      // If tip already generated today
+      if (savedDate == today && savedTip != null) {
+        setState(() {
+          _dailyTip = savedTip;
+          _isTipLoading = false;
+        });
+        return;
+      }
+
+      // Generate new tip from Groq
+      String prompt =
+          "Give one short helpful women's health tip for today. Keep it under 30 words.";
+
+      String response = await _groqService.sendMessage(prompt, []);
+
+      // Save tip and date
+      await prefs.setString('daily_tip', response);
+      await prefs.setString('tip_date', today);
+
       setState(() {
-        _dailyTip = savedTip;
+        _dailyTip = response;
         _isTipLoading = false;
       });
-      return;
+    } catch (e) {
+      setState(() {
+        _dailyTip = "Drink enough water and maintain a healthy routine.";
+        _isTipLoading = false;
+      });
     }
-
-    // Generate new tip from Groq
-    String prompt =
-        "Give one short helpful women's health tip for today. Keep it under 30 words.";
-
-    String response = await _groqService.sendMessage(prompt, []);
-
-    // Save tip and date
-    await prefs.setString('daily_tip', response);
-    await prefs.setString('tip_date', today);
-
-    setState(() {
-      _dailyTip = response;
-      _isTipLoading = false;
-    });
-  } catch (e) {
-    setState(() {
-      _dailyTip = "Drink enough water and maintain a healthy routine.";
-      _isTipLoading = false;
-    });
   }
-}
 
-Future<void> _openHealthArticle() async {
-  final Uri url = Uri.parse(
-      "https://www.google.com/search?q=women+health+tips+daily");
+  Future<void> _openHealthArticle() async {
+    final Uri url =
+        Uri.parse("https://www.google.com/search?q=women+health+tips+daily");
 
-  if (await canLaunchUrl(url)) {
-    await launchUrl(url, mode: LaunchMode.externalApplication);
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+    }
   }
-}
 
-@override
-void initState() {
-  super.initState();
-  _fetchDailyTip();
-}
+  @override
+  void initState() {
+    super.initState();
+    _fetchDailyTip();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -544,49 +545,62 @@ void initState() {
                       ),
                     ],
                   ),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 16,
-                          backgroundColor: Colors.white,
-                          child: const Text(
-                            'SA',
-                            style: TextStyle(
-                              color: Color(0xFFE59393),
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
-                            ),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const PersonalDetailsPage(
+                            fullName: "Sarah Anderson",
+                            email: "sarah@example.com",
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        const Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Sarah Anderson',
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 16,
+                            backgroundColor: Colors.white,
+                            child: const Text(
+                              'SA',
                               style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w600,
+                                color: Color(0xFFE59393),
+                                fontWeight: FontWeight.bold,
                                 fontSize: 12,
                               ),
                             ),
-                            Text(
-                              'ID: SH2024001',
-                              style: TextStyle(
-                                  color: Colors.white70, fontSize: 10),
-                            ),
-                          ],
-                        ),
-                      ],
+                          ),
+                          const SizedBox(width: 8),
+                          const Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Sarah Anderson',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 12,
+                                ),
+                              ),
+                              Text(
+                                'ID: SH2024001',
+                                style: TextStyle(
+                                    color: Colors.white70, fontSize: 10),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
+                  )
                 ],
               ),
             ],
@@ -1320,18 +1334,20 @@ void initState() {
                     ),
                     const SizedBox(height: 8),
                     Text(
-  _isTipLoading ? "Generating today's health tip..." : _dailyTip,
-  style: const TextStyle(
-    color: Colors.white70,
-    fontSize: 13,
-  ),
-),
+                      _isTipLoading
+                          ? "Generating today's health tip..."
+                          : _dailyTip,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 13,
+                      ),
+                    ),
                   ],
                 ),
               ),
               const SizedBox(width: 12),
               ElevatedButton(
-  onPressed: _openHealthArticle,
+                onPressed: _openHealthArticle,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
                   foregroundColor: const Color(0xFFE59393),
