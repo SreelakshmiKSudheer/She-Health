@@ -68,16 +68,36 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
 
   String _getMonthName(int month) {
     const months = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December'
     ];
     return months[month - 1];
   }
 
   String _getShortMonthName(int month) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
     ];
     return months[month - 1];
   }
@@ -213,9 +233,7 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
         width: 44,
         height: 44,
         decoration: BoxDecoration(
-          color: isHighlighted
-              ? const Color(0xFFC85A7A)
-              : Colors.white,
+          color: isHighlighted ? const Color(0xFFC85A7A) : Colors.white,
           borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
@@ -262,8 +280,7 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
 
           // Circular day markers
           ...List.generate(totalDays, (index) {
-            final angle =
-                (2 * math.pi / totalDays) * index - math.pi / 2;
+            final angle = (2 * math.pi / totalDays) * index - math.pi / 2;
             final x = radius * math.cos(angle);
             final y = radius * math.sin(angle);
             final day = index + 1;
@@ -331,8 +348,8 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
                         : isFertile
                             ? [
                                 BoxShadow(
-                                  color: const Color(0xFF9B84D4)
-                                      .withOpacity(0.35),
+                                  color:
+                                      const Color(0xFF9B84D4).withOpacity(0.35),
                                   blurRadius: 6,
                                   offset: const Offset(0, 2),
                                 )
@@ -423,7 +440,8 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _buildBadge('${periodDays.length}d period', const Color(0xFFC85A7A)),
+            _buildBadge(
+                '${periodDays.length}d period', const Color(0xFFC85A7A)),
             const SizedBox(width: 8),
             _buildBadge('day ${selectedDay ?? selectedDate.day}',
                 const Color(0xFF9B84D4)),
@@ -514,8 +532,7 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
               )
             ],
           ),
-          child:
-              Icon(icon, color: const Color(0xFFC85A7A), size: 20),
+          child: Icon(icon, color: const Color(0xFFC85A7A), size: 20),
         ),
       ),
     );
@@ -633,9 +650,8 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
             ),
           ],
         ),
-        child: selectedTab == 0
-            ? _buildLogDayContent()
-            : _buildHistoryContent(),
+        child:
+            selectedTab == 0 ? _buildLogDayContent() : _buildHistoryContent(),
       ),
     );
   }
@@ -742,18 +758,15 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
                     isPeriodDay
                         ? Icons.check_circle_rounded
                         : Icons.water_drop_outlined,
-                    color: isPeriodDay
-                        ? Colors.white
-                        : const Color(0xFFC85A7A),
+                    color: isPeriodDay ? Colors.white : const Color(0xFFC85A7A),
                     size: 22,
                   ),
                   const SizedBox(width: 10),
                   Text(
                     isPeriodDay ? 'Period tracked!' : 'Mark as period day',
                     style: TextStyle(
-                      color: isPeriodDay
-                          ? Colors.white
-                          : const Color(0xFFC85A7A),
+                      color:
+                          isPeriodDay ? Colors.white : const Color(0xFFC85A7A),
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
                     ),
@@ -899,8 +912,7 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
               ),
             ),
             Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
                 color: const Color(0xFFFFEEF5),
                 borderRadius: BorderRadius.circular(20),
@@ -996,8 +1008,7 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: const Color(0xFFC85A7A),
                   borderRadius: BorderRadius.circular(8),
@@ -1073,8 +1084,18 @@ class _FullCalendarModalState extends State<_FullCalendarModal> {
 
   String _getMonthName(int month) {
     const months = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December'
     ];
     return months[month - 1];
   }
@@ -1182,8 +1203,8 @@ class _FullCalendarModalState extends State<_FullCalendarModal> {
               children: [
                 _navButton(Icons.chevron_left_rounded, () {
                   setState(() {
-                    _currentDate = DateTime(
-                        _currentDate.year, _currentDate.month - 1, 1);
+                    _currentDate =
+                        DateTime(_currentDate.year, _currentDate.month - 1, 1);
                     _selectedDay = null;
                   });
                 }),
@@ -1211,8 +1232,8 @@ class _FullCalendarModalState extends State<_FullCalendarModal> {
                 ),
                 _navButton(Icons.chevron_right_rounded, () {
                   setState(() {
-                    _currentDate = DateTime(
-                        _currentDate.year, _currentDate.month + 1, 1);
+                    _currentDate =
+                        DateTime(_currentDate.year, _currentDate.month + 1, 1);
                     _selectedDay = null;
                   });
                 }),

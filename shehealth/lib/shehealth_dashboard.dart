@@ -50,7 +50,46 @@ bool _isTipLoading = true;
   }
 
   void _onBottomNavTap(int index) async {
+<<<<<<< HEAD
+    if (index == 0) {
+      setState(() {
+        _selectedIndex = 0;
+      });
+    }
+
+    if (index == 1) {
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => HealthReportPage(
+            reportText: "No report available.",
+          ),
+        ),
+      );
+    }
+
+    if (index == 2) {
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const PeriodCalendarWidget(),
+        ),
+      );
+    }
+
+    if (index == 3) {
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const SurveyPage(),
+        ),
+      );
+    }
+
+    // Reset to home when returning
+=======
   if (index == 0) {
+>>>>>>> 5dd31b827a45b392eb831d12b189b64744be52d6
     setState(() {
       _selectedIndex = 0;
     });
@@ -1066,6 +1105,36 @@ void initState() {
             'Cervical Cancer', '2 weeks ago', 'No Risk', Colors.green),
         const SizedBox(height: 16),
         SizedBox(
+<<<<<<< HEAD
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => HealthReportPage(
+                    reportText: "No report available.",
+                  ),
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFC85A7A),
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+            ),
+            child: const Text(
+              'Full Assessment',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        )
+=======
   width: double.infinity,
   child: ElevatedButton(
     onPressed: () {
@@ -1094,6 +1163,7 @@ void initState() {
     ),
   ),
 )
+>>>>>>> 5dd31b827a45b392eb831d12b189b64744be52d6
       ],
     );
   }
