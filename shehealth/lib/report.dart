@@ -297,9 +297,6 @@ class _HealthReportPageState extends State<HealthReportPage>
     );
   }
 
-  // ══════════════════════════════════════════════
-  //  OVERALL RISK SUMMARY BAR  (retained as-is)
-  // ══════════════════════════════════════════════
   Widget _buildOverallRiskBar() {
     final prob        = _overallProbability;
     final cfg         = riskConfig(prob);
