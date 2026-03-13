@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'auth_page.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -14,6 +15,18 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _medicationReminders = true;
   bool _healthTipNotifications = false;
   bool _dataSync = true;
+
+  final TextEditingController _nameController =
+      TextEditingController(text: 'Sarah Anderson');
+  final TextEditingController _emailController =
+      TextEditingController(text: 'sarah@example.com');
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -58,10 +71,8 @@ class _SettingsPageState extends State<SettingsPage> {
                     onChanged: (v) =>
                         setState(() => _healthTipNotifications = v),
                   ),
-
                   const SizedBox(height: 20),
                   _buildSectionTitle('Privacy & Security'),
-
                   _buildToggleTile(
                     icon: Icons.cloud_sync,
                     iconColor: Colors.blue,
@@ -194,18 +205,6 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
       ),
     );
-  }
-
-  final TextEditingController _nameController =
-      TextEditingController(text: 'Sarah Anderson');
-  final TextEditingController _emailController =
-      TextEditingController(text: 'sarah@example.com');
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _emailController.dispose();
-    super.dispose();
   }
 
   Widget _buildAccountCard(BuildContext context) {
@@ -593,13 +592,37 @@ class _SettingsPageState extends State<SettingsPage> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildHelpItem(Icons.quiz_outlined, 'FAQs', 'Find answers to common questions'),
+            _buildHelpItem(
+              context,
+              Icons.quiz_outlined,
+              'FAQs',
+              'Find answers to common questions',
+              () => _showFAQs(context),
+            ),
             const SizedBox(height: 12),
-            _buildHelpItem(Icons.email_outlined, 'Email Us', 'support@shehealth.app'),
+            _buildHelpItem(
+              context,
+              Icons.email_outlined,
+              'Email Us',
+              'support@shehealth.app',
+              () => _copyEmail(context),
+            ),
             const SizedBox(height: 12),
-            _buildHelpItem(Icons.chat_outlined, 'Live Chat', 'Chat with our support team'),
+            _buildHelpItem(
+              context,
+              Icons.chat_outlined,
+              'Live Chat',
+              'Chat with our support team',
+              () => _openLiveChat(context),
+            ),
             const SizedBox(height: 12),
-            _buildHelpItem(Icons.book_outlined, 'User Guide', 'Learn how to use SHE-HEALTH'),
+            _buildHelpItem(
+              context,
+              Icons.book_outlined,
+              'User Guide',
+              'Learn how to use SHE-HEALTH',
+              () => _showUserGuide(context),
+            ),
           ],
         ),
         actions: [
@@ -616,27 +639,384 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  Widget _buildHelpItem(IconData icon, String title, String subtitle) {
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: Colors.green.withOpacity(0.1),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, color: Colors.green, size: 18),
+  Widget _buildHelpItem(
+    BuildContext context,
+    IconData icon,
+    String title,
+    String subtitle,
+    VoidCallback onTap,
+  ) {
+    return InkWell(
+      onTap: () {
+        Navigator.pop(context);
+        onTap();
+      },
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.green.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.green.withOpacity(0.2)),
         ),
-        const SizedBox(width: 12),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
           children: [
-            Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-            Text(subtitle, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.green.withOpacity(0.15),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: Colors.green, size: 18),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                      color: Colors.grey,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right, color: Colors.grey, size: 18),
           ],
         ),
-      ],
+      ),
     );
   }
 
+  // FAQs Function
+  void _showFAQs(BuildContext context) {
+    final List<Map<String, String>> faqs = [
+      {
+        'question': 'How accurate are the period predictions?',
+        'answer': 'Our AI-powered predictions have an accuracy rate of 85-90% based on your cycle history. The more data you log, the more accurate predictions become.',
+      },
+      {
+        'question': 'Is my health data secure?',
+        'answer': 'Yes! All your data is encrypted end-to-end and stored securely. We never share your personal health information with third parties.',
+      },
+      {
+        'question': 'How do I log my symptoms?',
+        'answer': 'Tap the "Log Symptoms" button on your dashboard, then complete the questionnaire. You can log symptoms daily or as needed.',
+      },
+      {
+        'question': 'Can I export my health reports?',
+        'answer': 'Yes, you can export your health reports as PDF files from the Reports section. This is useful for sharing with your healthcare provider.',
+      },
+      {
+        'question': 'What if I miss logging my period?',
+        'answer': 'You can manually add past period dates in the Calendar section. Go to the date and mark it as a period day.',
+      },
+      {
+        'question': 'How do I change my notification settings?',
+        'answer': 'Go to Settings > Notifications and toggle the options you want to enable or disable.',
+      },
+    ];
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.green.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.quiz_outlined, color: Colors.green, size: 20),
+            ),
+            const SizedBox(width: 10),
+            const Text('Frequently Asked Questions', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          ],
+        ),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: faqs.length,
+            itemBuilder: (context, index) {
+              return ExpansionTile(
+                tilePadding: EdgeInsets.zero,
+                title: Text(
+                  faqs[index]['question'] ?? '',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                  ),
+                ),
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Text(
+                      faqs[index]['answer'] ?? '',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey,
+                        height: 1.5,
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFC85A7A),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: const Text('Close', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Copy Email Function
+  void _copyEmail(BuildContext context) {
+    Clipboard.setData(const ClipboardData(text: 'support@shehealth.app'));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Row(
+          children: [
+            Icon(Icons.check_circle, color: Colors.white, size: 20),
+            SizedBox(width: 10),
+            Text('Email copied to clipboard!'),
+          ],
+        ),
+        backgroundColor: Colors.green,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  // Live Chat Function
+  void _openLiveChat(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.green.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.chat_outlined, color: Colors.green, size: 20),
+            ),
+            const SizedBox(width: 10),
+            const Text('Live Chat', style: TextStyle(fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.green.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Column(
+                children: [
+                  Icon(Icons.support_agent, size: 48, color: Colors.green),
+                  SizedBox(height: 12),
+                  Text(
+                    'Our support team is available',
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                    textAlign: TextAlign.center,
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'Monday - Friday\n9:00 AM - 6:00 PM EST',
+                    style: TextStyle(color: Colors.grey, fontSize: 12),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Start a live chat session with our support team. Average wait time: 2 minutes',
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: const Text('Connecting to support agent...'),
+                  backgroundColor: Colors.green,
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: const Text('Start Chat', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // User Guide Function
+  void _showUserGuide(BuildContext context) {
+    final List<Map<String, dynamic>> guides = [
+      {
+        'icon': Icons.login,
+        'title': 'Getting Started',
+        'description': 'Create your account and set up your profile with basic health information.',
+      },
+      {
+        'icon': Icons.calendar_today,
+        'title': 'Track Your Cycle',
+        'description': 'Log your period dates and symptoms in the calendar for accurate predictions.',
+      },
+      {
+        'icon': Icons.assignment,
+        'title': 'Complete Surveys',
+        'description': 'Fill out health surveys to get personalized insights and risk assessments.',
+      },
+      {
+        'icon': Icons.description,
+        'title': 'View Reports',
+        'description': 'Access detailed health reports and AI-powered predictions in the Reports tab.',
+      },
+      {
+        'icon': Icons.chat_bubble,
+        'title': 'Ask the AI Chatbot',
+        'description': 'Get instant answers to your health questions using our AI health assistant.',
+      },
+      {
+        'icon': Icons.restaurant,
+        'title': 'Get Diet Plans',
+        'description': 'Receive personalized diet and exercise plans based on your health condition.',
+      },
+    ];
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.green.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.book_outlined, color: Colors.green, size: 20),
+            ),
+            const SizedBox(width: 10),
+            const Text('User Guide', style: TextStyle(fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: guides.length,
+            itemBuilder: (context, index) {
+              return Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.green.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.green.withOpacity(0.2)),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.green.withOpacity(0.15),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        guides[index]['icon'] as IconData,
+                        color: Colors.green,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            guides[index]['title'] as String,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            guides[index]['description'] as String,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey,
+                              height: 1.4,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFC85A7A),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: const Text('Got It!', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
 }
