@@ -12,8 +12,6 @@ class _HealthReportPageState extends State<HealthReportPage>
     with SingleTickerProviderStateMixin {
   final Color pinkStart = const Color(0xFFC85A7A);
   final Color pinkEnd   = const Color(0xFFE59393);
-  double aiProbability = 0.0;
-  String aiCategory = "No Risk";
 
   late AnimationController _animController;
   late Animation<double>   _barAnimation;
@@ -108,37 +106,15 @@ class _HealthReportPageState extends State<HealthReportPage>
 
   // Overall risk = highest probability among all conditions
   double get _overallProbability {
-  return aiProbability;
-}
-
-
-  void parseAIReport() {
-
-  if (widget.reportText == null) return;
-
-  final text = widget.reportText!;
-
-  final probMatch = RegExp(
-    r'Overall Risk Probability:\s*(0?\.\d+)'
-  ).firstMatch(text);
-
-  final categoryMatch = RegExp(
-    r'Risk Category:\s*(.*)'
-  ).firstMatch(text);
-
-  if (probMatch != null) {
-    aiProbability = double.tryParse(probMatch.group(1)!) ?? 0.0;
+    final risks = reportData['riskAssessment'] as List;
+    return risks
+        .map((r) => (r['probability'] as num).toDouble())
+        .reduce((a, b) => a > b ? a : b);
   }
 
-  if (categoryMatch != null) {
-    aiCategory = categoryMatch.group(1)!.trim();
-  }
-
-}
   @override
   void initState() {
     super.initState();
-    parseAIReport();
     _animController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1400),
@@ -207,9 +183,6 @@ class _HealthReportPageState extends State<HealthReportPage>
 
                     _buildSectionCard('Patient Information', Icons.person,
                         _buildPatientInfo()),
-                    const SizedBox(height: 16),
-                    _buildSectionCard('Symptom Summary', Icons.favorite,
-                        _buildSymptoms()),
                     const SizedBox(height: 16),
                     _buildSectionCard('Risk Assessment', Icons.shield,
                         _buildRiskAssessment()),
@@ -297,13 +270,16 @@ class _HealthReportPageState extends State<HealthReportPage>
     );
   }
 
+  // ══════════════════════════════════════════════
+  //  OVERALL RISK SUMMARY BAR  (retained as-is)
+  // ══════════════════════════════════════════════
   Widget _buildOverallRiskBar() {
     final prob        = _overallProbability;
     final cfg         = riskConfig(prob);
     final Color barColor   = cfg['color']  as Color;
     final Color bgColor    = cfg['bg']     as Color;
     final Color borderColor= cfg['border'] as Color;
-    final String label = aiCategory;
+    final String label     = cfg['label']  as String;
     final IconData icon    = cfg['icon']   as IconData;
 
     final segments  = ['No Risk', 'Low', 'Moderate', 'High', 'Very High'];
@@ -709,7 +685,7 @@ class _HealthReportPageState extends State<HealthReportPage>
     final color  = cfg['color']  as Color;
     final bg     = cfg['bg']     as Color;
     final border = cfg['border'] as Color;
-    final String label = aiCategory;
+    final label  = cfg['label']  as String;
     final icon   = cfg['icon']   as IconData;
 
     return Container(
