@@ -8,6 +8,7 @@ class FeatureMapping(BaseModel):
 class OptionCreate(BaseModel):
     id: Optional[str] = None
     text: str
+    description: Optional[str] = None  # Added here
     mappings: List[FeatureMapping]
 
 class QuestionCreate(BaseModel):
@@ -29,6 +30,7 @@ class QuestionUpdate(BaseModel):
 class OptionResponse(BaseModel):
     id: str
     text: str
+    description: Optional[str] = None  # Added here
     mappings: List[FeatureMapping]
 
 class QuestionResponse(BaseModel):
@@ -38,8 +40,9 @@ class QuestionResponse(BaseModel):
     q_type: str
     is_initial: bool
     priority: int
-    options: List[OptionResponse]
+    # Change this line to allow None/Default to empty list
+    options: Optional[List[OptionResponse]] = []
 
     class Config:
         from_attributes = True
-        extra = "ignore" # Critically prevents ObjectId serialization errors
+        extra = "ignore"
