@@ -1,54 +1,47 @@
-from sqlalchemy.orm import Session
-from app.models.questionnaire import UserResponse
+from motor.motor_asyncio import AsyncIOMotorDatabase
 from app.schemas.response import SubmitResponse
+from datetime import datetime
 
 class ResponseService:
-    def __init__(self, db: Session):
-        self.db = db
+    def __init__(self, db: AsyncIOMotorDatabase):
+        self.collection = db.get_collection("user_responses")
+        self.questions_collection = db.get_collection("questions")
 
     async def save_user_responses(self, data: SubmitResponse):
-        """
-        Saves the user's answers. If they have answered these 
-        questions before, we replace them to keep the profile current.
-        """
-        user_id = data.user_id
+        # We replace the user's responses in MongoDB (Upsert)
+        await self.collection.update_one(
+            {"user_id": data.user_id},
+            {
+                "$set": {
+                    "responses": [r.model_dump() for r in data.responses],
+                    "updated_at": datetime.utcnow()
+                }
+            },
+            upsert=True
+        )
+        return {"status": "success", "message": "Responses updated in MongoDB"}
+
+    async def get_user_answers_as_feature_dict(self, user_id: str):
+        user_record = await self.collection.find_one({"user_id": user_id})
+        if not user_record:
+            return {}
+
+        # Collect all selected option IDs across all questions
+        selected_opt_ids = []
+        for r in user_record["responses"]:
+            selected_opt_ids.extend(r["selected_option_ids"])
+
+        feature_vector = {}
         
-        for item in data.responses:
-            # 1. Clear old responses for this specific question to avoid duplicates
-            self.db.query(UserResponse).filter(
-                UserResponse.user_id == user_id,
-                UserResponse.question_id == item.question_id
-            ).delete()
-
-            # 2. Save each selected option (handles multi-select)
-            for opt_id in item.selected_option_ids:
-                new_resp = UserResponse(
-                    user_id=user_id,
-                    question_id=item.question_id,
-                    option_id=opt_id
-                )
-                self.db.add(new_resp)
+        # Aggregate logic: Search through the nested 'options' in 'questions' collection
+        pipeline = [
+            {"$unwind": "$options"},
+            {"$match": {"options.id": {"$in": selected_opt_ids}}},
+            {"$unwind": "$options.mappings"}
+        ]
         
-        self.db.commit()
-        return {"status": "success", "message": "Responses saved successfully"}
+        async for doc in self.questions_collection.aggregate(pipeline):
+            mapping = doc["options"]["mappings"]
+            feature_vector[mapping["feature_name"]] = mapping["feature_value"]
 
-    def get_user_answers_as_feature_dict(self, user_id: str):
-        """
-        This is the "Bridge" function for the ML model.
-        It converts the user's saved choices into a dictionary of 125 features.
-        """
-        from app.models.questionnaire import OptionFeatureMap
-        
-        # Initialize all features to 0.0 (or a neutral baseline)
-        # In a real scenario, you'd pull the full list of 125 feature names
-        feature_vector = {} 
-
-        # Join UserResponse with OptionFeatureMap to get the 'Intelligence'
-        results = self.db.query(OptionFeatureMap.feature_name, OptionFeatureMap.feature_value).\
-            join(UserResponse, UserResponse.option_id == OptionFeatureMap.option_id).\
-            filter(UserResponse.user_id == user_id).all()
-
-        for f_name, f_val in results:
-            feature_vector[f_name] = f_val
-            
         return feature_vector
