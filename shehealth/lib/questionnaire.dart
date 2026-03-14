@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'shehealth_dashboard.dart'; // Make sure this import is correct
+import 'shehealth_dashboard.dart';
+import 'services/groq_service.dart';
+import 'report.dart';
 
 class SymptomQuestionnaire extends StatefulWidget {
   const SymptomQuestionnaire({super.key});
@@ -16,16 +18,56 @@ class _SymptomQuestionnaireState extends State<SymptomQuestionnaire>
   bool _isProcessing = false;
 
   final List<Map<String, dynamic>> questions = [
-    {'id': 1, 'question': "How's Your Cycle Regularity?", 'options': ["Regular", "Irregular", "Absent", "Unpredictable"]},
-    {'id': 2, 'question': "Period Pain Level?", 'options': ["None", "Mild", "Moderate", "Severe"]},
-    {'id': 3, 'question': "Any Weight Changes?", 'options': ["None", "Gain", "Loss", "Fluctuating"]},
-    {'id': 4, 'question': "Fatigue Frequency?", 'options': ["Rarely", "Sometimes", "Often", "Always"]},
-    {'id': 5, 'question': "Mood Swing Pattern?", 'options': ["None", "Occasional", "Frequent", "Severe"]},
-    {'id': 6, 'question': "Hair Changes Noticed?", 'options': ["None", "Excessive Growth", "Hair Loss", "Both"]},
-    {'id': 7, 'question': "Sleep Quality Rating?", 'options': ["Good", "Fair", "Poor", "Very Poor"]},
-    {'id': 8, 'question': "Digestive Concerns?", 'options': ["None", "Bloating", "Constipation", "Severe"]},
-    {'id': 9, 'question': "Skin Condition Status?", 'options': ["Clear", "Occasional Acne", "Persistent Acne", "Severe"]},
-    {'id': 10, 'question': "Headache Frequency?", 'options': ["Rarely", "Monthly", "Weekly", "Daily"]}
+    {
+      'id': 1,
+      'question': "How's Your Cycle Regularity?",
+      'options': ["Regular", "Irregular", "Absent", "Unpredictable"]
+    },
+    {
+      'id': 2,
+      'question': "Period Pain Level?",
+      'options': ["None", "Mild", "Moderate", "Severe"]
+    },
+    {
+      'id': 3,
+      'question': "Any Weight Changes?",
+      'options': ["None", "Gain", "Loss", "Fluctuating"]
+    },
+    {
+      'id': 4,
+      'question': "Fatigue Frequency?",
+      'options': ["Rarely", "Sometimes", "Often", "Always"]
+    },
+    {
+      'id': 5,
+      'question': "Mood Swing Pattern?",
+      'options': ["None", "Occasional", "Frequent", "Severe"]
+    },
+    {
+      'id': 6,
+      'question': "Hair Changes Noticed?",
+      'options': ["None", "Excessive Growth", "Hair Loss", "Both"]
+    },
+    {
+      'id': 7,
+      'question': "Sleep Quality Rating?",
+      'options': ["Good", "Fair", "Poor", "Very Poor"]
+    },
+    {
+      'id': 8,
+      'question': "Digestive Concerns?",
+      'options': ["None", "Bloating", "Constipation", "Severe"]
+    },
+    {
+      'id': 9,
+      'question': "Skin Condition Status?",
+      'options': ["Clear", "Occasional Acne", "Persistent Acne", "Severe"]
+    },
+    {
+      'id': 10,
+      'question': "Headache Frequency?",
+      'options': ["Rarely", "Monthly", "Weekly", "Daily"]
+    }
   ];
 
   @override
@@ -58,11 +100,72 @@ class _SymptomQuestionnaireState extends State<SymptomQuestionnaire>
     });
   }
 
-  void _completeAssessment() {
+  Future<void> _completeAssessment() async {
     setState(() => _isProcessing = true);
-    Future.delayed(const Duration(seconds: 2), () {
-      setState(() => _isProcessing = false);
-    });
+
+    // Convert answers into readable format
+    String formattedAnswers =
+        answers.entries.map((e) => "Q${e.key}: ${e.value}").join("\n");
+
+    // Call Groq service
+    final groqService = GroqService();
+
+    String aiReport = await groqService.sendMessage(
+      """
+You are a women's health AI specialist.
+
+Analyze the questionnaire responses and estimate the overall health risk.
+
+Responses:
+$formattedAnswers
+
+Generate the report in the following format.
+
+IMPORTANT:
+At the VERY TOP show:
+
+Overall Risk Probability: value between 0 and 1  
+Risk Category: No Risk / Low Risk / Moderate Risk / High Risk / Very High Risk
+
+Then continue with the report sections.
+
+Full structure:
+
+Overall Risk Probability: 0.xx  
+Risk Category: (No / Low / Moderate / High / Very High)
+
+1. Patient Summary
+Short summary of symptoms.
+
+2. Symptom Analysis
+Explain patterns in symptoms.
+
+3. Possible Conditions
+Mention possible women's health conditions if symptoms suggest them.
+
+4. Recommendations
+Medical or lifestyle recommendations.
+
+5. Lifestyle Advice
+Diet, sleep, and stress suggestions.
+
+6. Medical Disclaimer
+Mention that this is not a medical diagnosis.
+
+Keep the report clear and professional.
+""",
+      [],
+    );
+
+    setState(() => _isProcessing = false);
+
+    // Navigate to report page
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => HealthReportPage(reportText: aiReport),
+      ),
+    );
   }
 
   void _goToDashboard() {
@@ -72,7 +175,8 @@ class _SymptomQuestionnaireState extends State<SymptomQuestionnaire>
     );
   }
 
-  double get progress => ((currentIndex) / questions.length).clamp(0.0, 1.0) * 100;
+  double get progress =>
+      ((currentIndex) / questions.length).clamp(0.0, 1.0) * 100;
 
   @override
   Widget build(BuildContext context) {
@@ -164,7 +268,8 @@ class _SymptomQuestionnaireState extends State<SymptomQuestionnaire>
                         const SizedBox(height: 4),
                         Row(
                           children: [
-                            const Icon(Icons.auto_awesome, color: Colors.white, size: 16),
+                            const Icon(Icons.auto_awesome,
+                                color: Colors.white, size: 16),
                             const SizedBox(width: 6),
                             Text(
                               'Question ${currentIndex + 1} of 10',
@@ -438,7 +543,7 @@ class ParallelogramClipper extends CustomClipper<Path> {
     path.close();
     return path;
   }
-  
+
   @override
   bool shouldReclip(CustomClipper<Path> oldClipper) => false;
 }

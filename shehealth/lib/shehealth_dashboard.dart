@@ -1,7 +1,15 @@
 import 'package:flutter/material.dart';
-import 'report.dart'; // Import the health report page
-import 'questionnaire.dart'; // Add this import for the questionnaire page
-import 'chatbot.dart'; // Add this import for the chatbot page
+import 'report.dart';
+import 'questionnaire.dart';
+import 'chatbot.dart';
+import 'calendar.dart';
+import 'dietplan.dart';
+import 'survey.dart';
+import 'services/groq_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'personal_details.dart';
+import 'settings.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -13,7 +21,11 @@ class DashboardPage extends StatefulWidget {
 class _DashboardPageState extends State<DashboardPage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final ScrollController _scrollController = ScrollController();
-  
+  final GroqService _groqService = GroqService();
+
+  String _dailyTip = "Loading today's health tip...";
+  bool _isTipLoading = true;
+
   int _selectedIndex = 0;
 
   // Keys for sections to scroll to
@@ -22,8 +34,10 @@ class _DashboardPageState extends State<DashboardPage> {
   final GlobalKey _riskAssessmentKey = GlobalKey();
   final GlobalKey _remindersKey = GlobalKey();
 
-  // Track which section is expanded (null means none)
   String? _expandedSection;
+
+  // Track selected trend tab
+  String _selectedTrendTab = 'Week';
 
   void _scrollToSection(GlobalKey key) {
     final context = key.currentContext;
@@ -37,28 +51,110 @@ class _DashboardPageState extends State<DashboardPage> {
     }
   }
 
-  void _onBottomNavTap(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-    // Handle navigation to different pages based on index
+  void _onBottomNavTap(int index) async {
     if (index == 0) {
-      // Home - already here
-    } else if (index == 1) {
-      // Navigate to Health Report Page
-      Navigator.push(
+      setState(() {
+        _selectedIndex = 0;
+      });
+    }
+
+    if (index == 1) {
+      await Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => const HealthReportPage()),
-      );
-    } else if (index == 2) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Opening Calendar...')),
-      );
-    } else if (index == 3) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Opening Surveys...')),
+        MaterialPageRoute(
+          builder: (context) => HealthReportPage(
+            reportText: "No report available.",
+          ),
+        ),
       );
     }
+
+    if (index == 2) {
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const PeriodCalendarWidget(),
+        ),
+      );
+    }
+
+    if (index == 3) {
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const SurveyPage(),
+        ),
+      );
+    }
+
+    // Reset to home when returning
+    setState(() {
+      _selectedIndex = 0;
+    });
+  }
+
+  void _openDietPlan() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const DietPlanPage(),
+      ),
+    );
+  }
+
+  Future<void> _fetchDailyTip() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+
+      String today = DateTime.now().toString().substring(0, 10);
+
+      String? savedDate = prefs.getString('tip_date');
+      String? savedTip = prefs.getString('daily_tip');
+
+      // If tip already generated today
+      if (savedDate == today && savedTip != null) {
+        setState(() {
+          _dailyTip = savedTip;
+          _isTipLoading = false;
+        });
+        return;
+      }
+
+      // Generate new tip from Groq
+      String prompt =
+          "Give one short helpful women's health tip for today. Keep it under 30 words.";
+
+      String response = await _groqService.sendMessage(prompt, []);
+
+      // Save tip and date
+      await prefs.setString('daily_tip', response);
+      await prefs.setString('tip_date', today);
+
+      setState(() {
+        _dailyTip = response;
+        _isTipLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _dailyTip = "Drink enough water and maintain a healthy routine.";
+        _isTipLoading = false;
+      });
+    }
+  }
+
+  Future<void> _openHealthArticle() async {
+    final Uri url =
+        Uri.parse("https://www.google.com/search?q=women+health+tips+daily");
+
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchDailyTip();
   }
 
   @override
@@ -102,12 +198,14 @@ class _DashboardPageState extends State<DashboardPage> {
                 // Navigate to Health Chatbot Page
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const HealthChatbotPage()),
+                  MaterialPageRoute(
+                      builder: (context) => const HealthChatbotPage()),
                 );
               },
               backgroundColor: const Color(0xFFC85A7A),
               elevation: 8,
-              child: const Icon(Icons.chat_bubble, color: Colors.white, size: 28),
+              child:
+                  const Icon(Icons.chat_bubble, color: Colors.white, size: 28),
             ),
           ),
         ],
@@ -116,8 +214,6 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  // ... [All other existing widget methods remain the same until _buildWelcomeSection]
-
   Widget _buildWelcomeSection() {
     return Stack(
       children: [
@@ -125,7 +221,11 @@ class _DashboardPageState extends State<DashboardPage> {
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
             gradient: const LinearGradient(
-              colors: [Color(0xFFC85A7A), Color(0xFFE59393), Color.fromARGB(255, 255, 225, 225)],
+              colors: [
+                Color(0xFFC85A7A),
+                Color(0xFFE59393),
+                Color.fromARGB(255, 255, 225, 225)
+              ],
             ),
             borderRadius: BorderRadius.circular(24),
             boxShadow: [
@@ -157,40 +257,70 @@ class _DashboardPageState extends State<DashboardPage> {
                 children: [
                   ElevatedButton(
                     onPressed: () {
-                      // Navigate to Symptom Questionnaire Page
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const SymptomQuestionnaire()),
+                        MaterialPageRoute(
+                          builder: (context) => const SymptomQuestionnaire(),
+                        ),
                       );
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,
                       foregroundColor: const Color(0xFFE59393),
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
                       ),
                     ),
-                    child: const Text('Log Symptoms', style: TextStyle(fontWeight: FontWeight.bold)),
+                    child: const Text(
+                      'Log Symptoms',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
                   ),
                   const SizedBox(width: 12),
                   OutlinedButton(
                     onPressed: () {
-                      // Navigate to Health Report Page
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const HealthReportPage()),
+                        MaterialPageRoute(
+                          builder: (context) => HealthReportPage(
+                            reportText: "No report available.",
+                          ),
+                        ),
                       );
                     },
                     style: OutlinedButton.styleFrom(
                       foregroundColor: Colors.white,
                       side: const BorderSide(color: Colors.white30),
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
                       ),
                     ),
                     child: const Text('View Report'),
+                  ),
+                  const SizedBox(width: 12),
+                  OutlinedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const DietPlanPage(),
+                        ),
+                      );
+                    },
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      side: const BorderSide(color: Colors.white30),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                    ),
+                    child: const Text('View Diet Plan'),
                   ),
                 ],
               ),
@@ -213,8 +343,6 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  // ... [All other widget methods remain exactly the same]
-  
   Widget _buildBottomNavigationBar() {
     return Container(
       decoration: BoxDecoration(
@@ -287,7 +415,8 @@ class _DashboardPageState extends State<DashboardPage> {
                       ),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(Icons.favorite, color: Colors.white, size: 24),
+                    child: const Icon(Icons.favorite,
+                        color: Colors.white, size: 24),
                   ),
                   const SizedBox(width: 12),
                   const Column(
@@ -295,7 +424,8 @@ class _DashboardPageState extends State<DashboardPage> {
                     children: [
                       Text(
                         'Menu',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold),
                       ),
                       Text(
                         'Quick Navigation',
@@ -307,10 +437,14 @@ class _DashboardPageState extends State<DashboardPage> {
               ),
             ),
             const Divider(),
-            _buildDrawerItem(Icons.calendar_today, 'Next Period', _nextPeriodKey),
-            _buildDrawerItem(Icons.trending_up, 'Health Trends', _healthTrendsKey),
-            _buildDrawerItem(Icons.monitor_heart, 'Risk Assessment', _riskAssessmentKey),
-            _buildDrawerItem(Icons.notifications, 'Today\'s Reminders', _remindersKey),
+            _buildDrawerItem(
+                Icons.calendar_today, 'Next Period', _nextPeriodKey),
+            _buildDrawerItem(
+                Icons.trending_up, 'Health Trends', _healthTrendsKey),
+            _buildDrawerItem(
+                Icons.monitor_heart, 'Risk Assessment', _riskAssessmentKey),
+            _buildDrawerItem(
+                Icons.notifications, 'Today\'s Reminders', _remindersKey),
           ],
         ),
       ),
@@ -335,7 +469,11 @@ class _DashboardPageState extends State<DashboardPage> {
           padding: const EdgeInsets.fromLTRB(16, 50, 16, 20),
           decoration: const BoxDecoration(
             gradient: LinearGradient(
-              colors: [Color(0xFFC85A7A), Color(0xFFE59393), Color.fromARGB(255, 255, 225, 225)],
+              colors: [
+                Color(0xFFC85A7A),
+                Color(0xFFE59393),
+                Color.fromARGB(255, 255, 225, 225)
+              ],
               begin: Alignment.centerLeft,
               end: Alignment.centerRight,
             ),
@@ -360,7 +498,8 @@ class _DashboardPageState extends State<DashboardPage> {
                           ),
                         ],
                       ),
-                      child: const Icon(Icons.favorite, color: Color(0xFFE59393), size: 28),
+                      child: const Icon(Icons.favorite,
+                          color: Color(0xFFE59393), size: 28),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -386,67 +525,73 @@ class _DashboardPageState extends State<DashboardPage> {
               ),
               Row(
                 children: [
-                  Stack(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.notifications, color: Colors.white),
-                        onPressed: () {},
-                      ),
-                      Positioned(
-                        right: 8,
-                        top: 8,
-                        child: Container(
-                          width: 8,
-                          height: 8,
-                          decoration: const BoxDecoration(
-                            color: Colors.yellow,
-                            shape: BoxShape.circle,
-                          ),
+                  IconButton(
+                    icon: const Icon(Icons.settings, color: Colors.white),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const SettingsPage(),
                         ),
-                      ),
-                    ],
+                      );
+                    },
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 16,
-                          backgroundColor: Colors.white,
-                          child: const Text(
-                            'SA',
-                            style: TextStyle(
-                              color: Color(0xFFE59393),
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
-                            ),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const PersonalDetailsPage(
+                            fullName: "Sarah Anderson",
+                            email: "sarah@example.com",
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        const Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Sarah Anderson',
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 16,
+                            backgroundColor: Colors.white,
+                            child: const Text(
+                              'SA',
                               style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w600,
+                                color: Color(0xFFE59393),
+                                fontWeight: FontWeight.bold,
                                 fontSize: 12,
                               ),
                             ),
-                            Text(
-                              'ID: SH2024001',
-                              style: TextStyle(color: Colors.white70, fontSize: 10),
-                            ),
-                          ],
-                        ),
-                      ],
+                          ),
+                          const SizedBox(width: 8),
+                          const Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Sarah Anderson',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 12,
+                                ),
+                              ),
+                              Text(
+                                'ID: SH2024001',
+                                style: TextStyle(
+                                    color: Colors.white70, fontSize: 10),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
+                  )
                 ],
               ),
             ],
@@ -513,10 +658,12 @@ class _DashboardPageState extends State<DashboardPage> {
                             color: Colors.green.shade50,
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.check_circle, color: Colors.green, size: 24),
+                          child: const Icon(Icons.check_circle,
+                              color: Colors.green, size: 24),
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
                             color: Colors.green.shade100,
                             borderRadius: BorderRadius.circular(20),
@@ -557,72 +704,88 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
             const SizedBox(width: 16),
             Expanded(
-              child: Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFFC85A7A), Color(0xFFE59393), Color.fromARGB(255, 255, 225, 225)],
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFFE59393).withOpacity(0.3),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const PeriodCalendarWidget(),
                     ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.calendar_today, color: Colors.white, size: 24),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: const Text(
-                            '5 days',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ),
+                  );
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [
+                        Color(0xFFC85A7A),
+                        Color(0xFFE59393),
+                        Color.fromARGB(255, 255, 225, 225)
                       ],
                     ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Next Period',
-                      style: TextStyle(color: Colors.white70, fontSize: 14),
-                    ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      'Oct 17, 2025',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFE59393).withOpacity(0.3),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      'Predicted date',
-                      style: TextStyle(color: Colors.white70, fontSize: 12),
-                    ),
-                  ],
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.calendar_today,
+                                color: Colors.white, size: 24),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: const Text(
+                              '5 days',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Next Period',
+                        style: TextStyle(color: Colors.white70, fontSize: 14),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'Oct 17, 2025',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'Predicted date',
+                        style: TextStyle(color: Colors.white70, fontSize: 12),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -638,14 +801,19 @@ class _DashboardPageState extends State<DashboardPage> {
       children: [
         Row(
           children: [
-            Expanded(child: _buildSectionIcon('health_trends', Icons.trending_up, 'Health Trends')),
+            Expanded(
+                child: _buildSectionIcon(
+                    'health_trends', Icons.trending_up, 'Health Trends')),
             const SizedBox(width: 12),
-            Expanded(child: _buildSectionIcon('risk_assessment', Icons.monitor_heart, 'Risk Assessment')),
+            Expanded(
+                child: _buildSectionIcon(
+                    'risk_assessment', Icons.monitor_heart, 'Risk Assessment')),
             const SizedBox(width: 12),
-            Expanded(child: _buildSectionIcon('reminders', Icons.notifications, 'Today\'s Reminders')),
+            Expanded(
+                child: _buildSectionIcon(
+                    'reminders', Icons.notifications, 'Today\'s Reminders')),
           ],
         ),
-        
         if (_expandedSection != null) ...[
           const SizedBox(height: 16),
           Container(
@@ -665,7 +833,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Widget _buildSectionIcon(String section, IconData icon, String label) {
     final isActive = _expandedSection == section;
-    
+
     return InkWell(
       onTap: () {
         setState(() {
@@ -681,20 +849,24 @@ class _DashboardPageState extends State<DashboardPage> {
             color: isActive ? const Color(0xFFE59393) : const Color(0xFFFCE7F3),
             width: 2,
           ),
-          boxShadow: isActive ? [
-            BoxShadow(
-              color: const Color(0xFFE59393).withOpacity(0.3),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ] : null,
+          boxShadow: isActive
+              ? [
+                  BoxShadow(
+                    color: const Color(0xFFE59393).withOpacity(0.3),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : null,
         ),
         child: Column(
           children: [
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: isActive ? Colors.white.withOpacity(0.2) : const Color(0xFFFCE7F3),
+                color: isActive
+                    ? Colors.white.withOpacity(0.2)
+                    : const Color(0xFFFCE7F3),
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -732,7 +904,94 @@ class _DashboardPageState extends State<DashboardPage> {
     }
   }
 
+  // Returns data based on the selected trend tab
+  Map<String, Map<String, dynamic>> _getTrendData() {
+    switch (_selectedTrendTab) {
+      case 'Month':
+        return {
+          'Symptom Severity': {
+            'label': 'Moderate',
+            'value': 0.5,
+            'color': Colors.orange
+          },
+          'Stress Level': {'label': 'High', 'value': 0.72, 'color': Colors.red},
+          'Energy Level': {
+            'label': 'Moderate',
+            'value': 0.6,
+            'color': Colors.green
+          },
+          'Mood Score': {'label': 'Fair', 'value': 0.55, 'color': Colors.blue},
+          'Weight Changes': {
+            'label': '+1.2 kg',
+            'value': 0.55,
+            'color': Colors.purple
+          },
+        };
+      case 'Year':
+        return {
+          'Symptom Severity': {
+            'label': 'Variable',
+            'value': 0.45,
+            'color': Colors.deepOrange
+          },
+          'Stress Level': {
+            'label': 'Low',
+            'value': 0.3,
+            'color': Colors.orange
+          },
+          'Energy Level': {
+            'label': 'Good',
+            'value': 0.75,
+            'color': Colors.green
+          },
+          'Mood Score': {'label': 'Great', 'value': 0.85, 'color': Colors.blue},
+          'Weight Changes': {
+            'label': 'Stable',
+            'value': 0.5,
+            'color': Colors.purple
+          },
+        };
+      default: // Week
+        return {
+          'Symptom Severity': {
+            'label': 'Low',
+            'value': 0.3,
+            'color': Colors.pink
+          },
+          'Stress Level': {
+            'label': 'Moderate',
+            'value': 0.55,
+            'color': Colors.orange
+          },
+          'Energy Level': {
+            'label': 'High',
+            'value': 0.8,
+            'color': Colors.green
+          },
+          'Mood Score': {'label': 'Good', 'value': 0.7, 'color': Colors.blue},
+          'Weight Changes': {
+            'label': 'Stable',
+            'value': 0.5,
+            'color': Colors.purple
+          },
+        };
+    }
+  }
+
+  String _getTrendInsight() {
+    switch (_selectedTrendTab) {
+      case 'Month':
+        return 'Stress levels were elevated mid-month. Consider relaxation techniques to manage better next month.';
+      case 'Year':
+        return 'Your overall health improved significantly over the year. Mood and energy scores are at an all-time high!';
+      default:
+        return 'Your symptom severity has decreased by 15% this week. Keep up the healthy habits!';
+    }
+  }
+
   Widget _buildHealthTrendsContent() {
+    final trendData = _getTrendData();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -745,21 +1004,22 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
             Row(
               children: [
-                _buildTabButton('Week', true),
+                _buildTabButton('Week'),
                 const SizedBox(width: 8),
-                _buildTabButton('Month', false),
+                _buildTabButton('Month'),
                 const SizedBox(width: 8),
-                _buildTabButton('Year', false),
+                _buildTabButton('Year'),
               ],
             ),
           ],
         ),
         const SizedBox(height: 20),
-        _buildProgressBar('Symptom Severity', 'Low', 0.3, Colors.pink),
-        _buildProgressBar('Stress Level', 'Moderate', 0.55, Colors.orange),
-        _buildProgressBar('Energy Level', 'High', 0.8, Colors.green),
-        _buildProgressBar('Mood Score', 'Good', 0.7, Colors.blue),
-        _buildProgressBar('Weight Changes', 'Stable', 0.5, Colors.purple),
+        ...trendData.entries.map((entry) => _buildProgressBar(
+              entry.key,
+              entry.value['label'] as String,
+              entry.value['value'] as double,
+              entry.value['color'] as Color,
+            )),
         const SizedBox(height: 16),
         Container(
           padding: const EdgeInsets.all(16),
@@ -776,16 +1036,20 @@ class _DashboardPageState extends State<DashboardPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Positive Trend',
-                      style: TextStyle(
+                    Text(
+                      _selectedTrendTab == 'Week'
+                          ? 'Positive Trend'
+                          : _selectedTrendTab == 'Month'
+                              ? 'Monthly Summary'
+                              : 'Yearly Overview',
+                      style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         color: Color(0xFFC85A7A),
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Your symptom severity has decreased by 15% this week. Keep up the healthy habits!',
+                      _getTrendInsight(),
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.grey.shade700,
@@ -813,57 +1077,38 @@ class _DashboardPageState extends State<DashboardPage> {
         _buildRiskItem('PCOD/PCOS', '3 days ago', 'Low', Colors.green),
         _buildRiskItem('Thyroid', '1 week ago', 'No Risk', Colors.green),
         _buildRiskItem('Endometriosis', '5 days ago', 'Monitor', Colors.orange),
-        _buildRiskItem('Cervical Cancer', '2 weeks ago', 'No Risk', Colors.green),
+        _buildRiskItem(
+            'Cervical Cancer', '2 weeks ago', 'No Risk', Colors.green),
         const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: ElevatedButton(
-                onPressed: () {
-                  // Navigate to Health Report Page for full assessment
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const HealthReportPage()),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFC85A7A),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => HealthReportPage(
+                    reportText: "No report available.",
                   ),
                 ),
-                child: const Text(
-                  'Full Assessment',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFC85A7A),
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
               ),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: ElevatedButton(
-                onPressed: () {},
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF4CAF50),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                ),
-                child: const Text(
-                  'Get Diet Plan',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+            child: const Text(
+              'Full Assessment',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
               ),
             ),
-          ],
-        ),
+          ),
+        )
       ],
     );
   }
@@ -877,38 +1122,53 @@ class _DashboardPageState extends State<DashboardPage> {
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 20),
-        _buildReminderItem(Icons.apple, 'Take Vitamin D', 'After breakfast', Colors.pink),
-        _buildReminderItem(Icons.water_drop, 'Drink Water - 2L', 'Stay hydrated throughout the day', Colors.blue),
-        _buildReminderItem(Icons.directions_walk, 'Evening Walk', '30 minutes recommended', Colors.purple),
-        _buildReminderItem(Icons.calendar_today, 'Pap Smear Due', 'Schedule in 2 weeks', Colors.pink),
+        _buildReminderItem(
+            Icons.apple, 'Take Vitamin D', 'After breakfast', Colors.pink),
+        _buildReminderItem(Icons.water_drop, 'Drink Water - 2L',
+            'Stay hydrated throughout the day', Colors.blue),
+        _buildReminderItem(Icons.directions_walk, 'Evening Walk',
+            '30 minutes recommended', Colors.purple),
+        _buildReminderItem(Icons.calendar_today, 'Pap Smear Due',
+            'Schedule in 2 weeks', Colors.pink),
       ],
     );
   }
 
-  Widget _buildTabButton(String label, bool active) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        gradient: active
-            ? const LinearGradient(
-                colors: [Color(0xFFC85A7A), Color(0xFFE59393)],
-              )
-            : null,
-        color: active ? null : Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: active ? Colors.white : Colors.grey.shade600,
-          fontWeight: FontWeight.w600,
-          fontSize: 12,
+  // Updated: tappable tab button that updates _selectedTrendTab
+  Widget _buildTabButton(String label) {
+    final bool active = _selectedTrendTab == label;
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedTrendTab = label;
+        });
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          gradient: active
+              ? const LinearGradient(
+                  colors: [Color(0xFFC85A7A), Color(0xFFE59393)],
+                )
+              : null,
+          color: active ? null : Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: active ? Colors.white : Colors.grey.shade600,
+            fontWeight: FontWeight.w600,
+            fontSize: 12,
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildProgressBar(String label, String value, double progress, Color color) {
+  Widget _buildProgressBar(
+      String label, String value, double progress, Color color) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Column(
@@ -916,7 +1176,8 @@ class _DashboardPageState extends State<DashboardPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(label, style: const TextStyle(color: Colors.grey, fontSize: 14)),
+              Text(label,
+                  style: const TextStyle(color: Colors.grey, fontSize: 14)),
               Text(
                 value,
                 style: TextStyle(
@@ -957,7 +1218,8 @@ class _DashboardPageState extends State<DashboardPage> {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 14),
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -987,7 +1249,8 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildReminderItem(IconData icon, String title, String subtitle, Color color) {
+  Widget _buildReminderItem(
+      IconData icon, String title, String subtitle, Color color) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
@@ -1012,7 +1275,8 @@ class _DashboardPageState extends State<DashboardPage> {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 14),
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -1053,7 +1317,8 @@ class _DashboardPageState extends State<DashboardPage> {
                   color: Colors.white.withOpacity(0.2),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.favorite, color: Colors.white, size: 32),
+                child:
+                    const Icon(Icons.favorite, color: Colors.white, size: 32),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -1069,20 +1334,26 @@ class _DashboardPageState extends State<DashboardPage> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    const Text(
-                      'Stay hydrated throughout the day! Proper hydration helps regulate your menstrual cycle and reduces bloating.',
-                      style: TextStyle(color: Colors.white70, fontSize: 13),
+                    Text(
+                      _isTipLoading
+                          ? "Generating today's health tip..."
+                          : _dailyTip,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 13,
+                      ),
                     ),
                   ],
                 ),
               ),
               const SizedBox(width: 12),
               ElevatedButton(
-                onPressed: () {},
+                onPressed: _openHealthArticle,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
                   foregroundColor: const Color(0xFFE59393),
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
@@ -1102,8 +1373,7 @@ class _DashboardPageState extends State<DashboardPage> {
             width: 100,
             height: 100,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.1),
-              shape: BoxShape.circle),
+                color: Colors.white.withOpacity(0.1), shape: BoxShape.circle),
           ),
         ),
       ],
