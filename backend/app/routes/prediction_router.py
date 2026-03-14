@@ -1,12 +1,14 @@
-from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
-from app.db.database import get_db, MongoDB
+from fastapi import APIRouter, HTTPException
+from app.db.database import MongoDB
 from app.services.prediction_service import PredictionService
 
 router = APIRouter(prefix="/predict", tags=["Predictions"])
 
 @router.post("/{user_id}")
-async def get_prediction(user_id: str, db: Session = Depends(get_db)):
-    # Pass both SQL (for features) and Mongo (for results storage)
-    service = PredictionService(db, MongoDB.db)
+async def get_prediction(user_id: str):
+    if MongoDB.db is None:
+        raise HTTPException(status_code=500, detail="Database not connected")
+    
+    # We pass the MongoDB database instance directly to the service
+    service = PredictionService(MongoDB.db)
     return await service.run_full_assessment(user_id)
