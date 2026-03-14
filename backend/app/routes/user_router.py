@@ -32,7 +32,7 @@ async def list_users(service: UserService = Depends(get_user_service)):
 
 @router.put("/{user_id}", response_model=UserResponse)
 async def update_user(user_id: str, update_data: UserUpdate, service: UserService = Depends(get_user_service)):
-    data = update_data.model_dump(exclude_unset=True) # model_dump is the Pydantic v2 version of .dict()
+    data = update_data.model_dump(exclude_unset=True)
     success = await service.update_user_profile(user_id, data)
     
     if not success:
