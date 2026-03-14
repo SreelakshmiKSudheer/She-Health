@@ -1,0 +1,1223 @@
+[
+  {
+    "disease": "PCOS",
+    "case_id": "PCO-1",
+    "actual": 0,
+    "predicted": 0,
+    "probability": 0.031402,
+    "threshold": 0.25,
+    "questionnaire_response_count": 8,
+    "questionnaire_responses_preview": [
+      {
+        "question_id": "Q_AGE",
+        "q_type": "input",
+        "input_values": [
+          {
+            "feature_name": "Age_pcos",
+            "source_column": "Age",
+            "value": 2.0
+          }
+        ]
+      },
+      {
+        "question_id": "Q_CYCLE_DESC",
+        "q_type": "single_select",
+        "selected_option_ids": [
+          "OPT_CYCLE_IRREG"
+        ],
+        "selected_option_texts": [
+          "Irregular"
+        ],
+        "matched_mappings": [
+          {
+            "feature_name": "irregular_missed_periods_pcos",
+            "source_column": "irregular or missed periods",
+            "expected": 1.0,
+            "actual": 1.0
+          }
+        ]
+      },
+      {
+        "question_id": "Q_CYCLE_LENGTH",
+        "q_type": "input",
+        "input_values": [
+          {
+            "feature_name": "Period_Length_pcos",
+            "source_column": "Period Length",
+            "value": 5
+          }
+        ]
+      },
+      {
+        "question_id": "Q_PERIOD_DURATION",
+        "q_type": "input",
+        "input_values": [
+          {
+            "feature_name": "Cycle_Length_pcos",
+            "source_column": "Cycle Length",
+            "value": 27.0
+          }
+        ]
+      },
+      {
+        "question_id": "Q_SYSTEMIC_SYMPTOMS",
+        "q_type": "multi_select",
+        "selected_option_ids": [
+          "OPT_SYSTEMIC_NONE"
+        ],
+        "selected_option_texts": [
+          "None"
+        ],
+        "matched_mappings": [
+          {
+            "feature_name": "more_Mood_Swings_pcos",
+            "source_column": "more Mood Swings",
+            "expected": 0.0,
+            "actual": 0.0
+          },
+          {
+            "feature_name": "always_tired_pcos",
+            "source_column": "always tired",
+            "expected": 0.0,
+            "actual": 0.0
+          }
+        ]
+      }
+    ],
+    "model_feature_count": 20,
+    "model_input": {
+      "Period Length": 5.0,
+      "Cycle Length": 27.0,
+      "Age": 2.0,
+      "Overweight": 0.0,
+      "irregular or missed periods": 1.0,
+      "Difficulty in conceiving": 0.0,
+      "Hair growth on Chin": 0.0,
+      "Hair growth  on Cheeks": 0.0,
+      "Hair growth Between breasts": 0.0,
+      "Hair growth  on Upper lips": 0.0,
+      "Hair growth in Arms": 0.0,
+      "Hair growth on Inner thighs": 0.0,
+      "Acne or skin tags": 0.0,
+      "Hair thinning or hair loss": 1.0,
+      "Dark patches": 0.0,
+      "always tired": 0.0,
+      "exercise per week": 5.0,
+      "eat outside per week": 2.0,
+      "canned food often": 0.0,
+      "relocated city": 0.0
+    }
+  },
+  {
+    "disease": "PCOS",
+    "case_id": "PCO-2",
+    "actual": 0,
+    "predicted": 1,
+    "probability": 0.256335,
+    "threshold": 0.25,
+    "questionnaire_response_count": 8,
+    "questionnaire_responses_preview": [
+      {
+        "question_id": "Q_AGE",
+        "q_type": "input",
+        "input_values": [
+          {
+            "feature_name": "Age_pcos",
+            "source_column": "Age",
+            "value": 2.0
+          }
+        ]
+      },
+      {
+        "question_id": "Q_CYCLE_DESC",
+        "q_type": "single_select",
+        "selected_option_ids": [
+          "OPT_CYCLE_IRREG"
+        ],
+        "selected_option_texts": [
+          "Irregular"
+        ],
+        "matched_mappings": [
+          {
+            "feature_name": "irregular_missed_periods_pcos",
+            "source_column": "irregular or missed periods",
+            "expected": 1.0,
+            "actual": 1.0
+          }
+        ]
+      },
+      {
+        "question_id": "Q_CYCLE_LENGTH",
+        "q_type": "input",
+        "input_values": [
+          {
+            "feature_name": "Period_Length_pcos",
+            "source_column": "Period Length",
+            "value": 5
+          }
+        ]
+      },
+      {
+        "question_id": "Q_PERIOD_DURATION",
+        "q_type": "input",
+        "input_values": [
+          {
+            "feature_name": "Cycle_Length_pcos",
+            "source_column": "Cycle Length",
+            "value": NaN
+          }
+        ]
+      },
+      {
+        "question_id": "Q_SYSTEMIC_SYMPTOMS",
+        "q_type": "multi_select",
+        "selected_option_ids": [
+          "OPT_MOOD_SWINGS",
+          "OPT_ALWAYS_TIRED"
+        ],
+        "selected_option_texts": [
+          "Mood Swings",
+          "Always Tired"
+        ],
+        "matched_mappings": [
+          {
+            "feature_name": "more_Mood_Swings_pcos",
+            "source_column": "more Mood Swings",
+            "expected": 1.0,
+            "actual": 1.0
+          },
+          {
+            "feature_name": "always_tired_pcos",
+            "source_column": "always tired",
+            "expected": 1.0,
+            "actual": 1.0
+          }
+        ]
+      }
+    ],
+    "model_feature_count": 20,
+    "model_input": {
+      "Period Length": 5.0,
+      "Cycle Length": 0.0,
+      "Age": 2.0,
+      "Overweight": 0.0,
+      "irregular or missed periods": 1.0,
+      "Difficulty in conceiving": 0.0,
+      "Hair growth on Chin": 2.0,
+      "Hair growth  on Cheeks": 2.0,
+      "Hair growth Between breasts": 0.0,
+      "Hair growth  on Upper lips": 1.0,
+      "Hair growth in Arms": 2.0,
+      "Hair growth on Inner thighs": 0.0,
+      "Acne or skin tags": 1.0,
+      "Hair thinning or hair loss": 1.0,
+      "Dark patches": 0.0,
+      "always tired": 1.0,
+      "exercise per week": 1.0,
+      "eat outside per week": 1.0,
+      "canned food often": 0.0,
+      "relocated city": 0.0
+    }
+  },
+  {
+    "disease": "PCOS",
+    "case_id": "PCO-3",
+    "actual": 0,
+    "predicted": 0,
+    "probability": 0.190397,
+    "threshold": 0.25,
+    "questionnaire_response_count": 8,
+    "questionnaire_responses_preview": [
+      {
+        "question_id": "Q_AGE",
+        "q_type": "input",
+        "input_values": [
+          {
+            "feature_name": "Age_pcos",
+            "source_column": "Age",
+            "value": 2.0
+          }
+        ]
+      },
+      {
+        "question_id": "Q_CYCLE_DESC",
+        "q_type": "single_select",
+        "selected_option_ids": [
+          "OPT_CYCLE_IRREG"
+        ],
+        "selected_option_texts": [
+          "Irregular"
+        ],
+        "matched_mappings": [
+          {
+            "feature_name": "irregular_missed_periods_pcos",
+            "source_column": "irregular or missed periods",
+            "expected": 1.0,
+            "actual": 1.0
+          }
+        ]
+      },
+      {
+        "question_id": "Q_CYCLE_LENGTH",
+        "q_type": "input",
+        "input_values": [
+          {
+            "feature_name": "Period_Length_pcos",
+            "source_column": "Period Length",
+            "value": 5
+          }
+        ]
+      },
+      {
+        "question_id": "Q_PERIOD_DURATION",
+        "q_type": "input",
+        "input_values": [
+          {
+            "feature_name": "Cycle_Length_pcos",
+            "source_column": "Cycle Length",
+            "value": NaN
+          }
+        ]
+      },
+      {
+        "question_id": "Q_SYSTEMIC_SYMPTOMS",
+        "q_type": "multi_select",
+        "selected_option_ids": [
+          "OPT_SYSTEMIC_NONE"
+        ],
+        "selected_option_texts": [
+          "None"
+        ],
+        "matched_mappings": [
+          {
+            "feature_name": "more_Mood_Swings_pcos",
+            "source_column": "more Mood Swings",
+            "expected": 0.0,
+            "actual": 0.0
+          },
+          {
+            "feature_name": "always_tired_pcos",
+            "source_column": "always tired",
+            "expected": 0.0,
+            "actual": 0.0
+          }
+        ]
+      }
+    ],
+    "model_feature_count": 20,
+    "model_input": {
+      "Period Length": 5.0,
+      "Cycle Length": 0.0,
+      "Age": 2.0,
+      "Overweight": 0.0,
+      "irregular or missed periods": 1.0,
+      "Difficulty in conceiving": 0.0,
+      "Hair growth on Chin": 0.0,
+      "Hair growth  on Cheeks": 0.0,
+      "Hair growth Between breasts": 0.0,
+      "Hair growth  on Upper lips": 0.0,
+      "Hair growth in Arms": 0.0,
+      "Hair growth on Inner thighs": 0.0,
+      "Acne or skin tags": 1.0,
+      "Hair thinning or hair loss": 1.0,
+      "Dark patches": 0.0,
+      "always tired": 0.0,
+      "exercise per week": 1.0,
+      "eat outside per week": 7.0,
+      "canned food often": 0.0,
+      "relocated city": 1.0
+    }
+  },
+  {
+    "disease": "PCOS",
+    "case_id": "PCO-4",
+    "actual": 1,
+    "predicted": 1,
+    "probability": 0.774447,
+    "threshold": 0.25,
+    "questionnaire_response_count": 8,
+    "questionnaire_responses_preview": [
+      {
+        "question_id": "Q_AGE",
+        "q_type": "input",
+        "input_values": [
+          {
+            "feature_name": "Age_pcos",
+            "source_column": "Age",
+            "value": 4.0
+          }
+        ]
+      },
+      {
+        "question_id": "Q_CYCLE_DESC",
+        "q_type": "single_select",
+        "selected_option_ids": [
+          "OPT_CYCLE_IRREG"
+        ],
+        "selected_option_texts": [
+          "Irregular"
+        ],
+        "matched_mappings": [
+          {
+            "feature_name": "irregular_missed_periods_pcos",
+            "source_column": "irregular or missed periods",
+            "expected": 1.0,
+            "actual": 1.0
+          }
+        ]
+      },
+      {
+        "question_id": "Q_CYCLE_LENGTH",
+        "q_type": "input",
+        "input_values": [
+          {
+            "feature_name": "Period_Length_pcos",
+            "source_column": "Period Length",
+            "value": 9
+          }
+        ]
+      },
+      {
+        "question_id": "Q_PERIOD_DURATION",
+        "q_type": "input",
+        "input_values": [
+          {
+            "feature_name": "Cycle_Length_pcos",
+            "source_column": "Cycle Length",
+            "value": 37.0
+          }
+        ]
+      },
+      {
+        "question_id": "Q_SYSTEMIC_SYMPTOMS",
+        "q_type": "multi_select",
+        "selected_option_ids": [
+          "OPT_MOOD_SWINGS",
+          "OPT_ALWAYS_TIRED"
+        ],
+        "selected_option_texts": [
+          "Mood Swings",
+          "Always Tired"
+        ],
+        "matched_mappings": [
+          {
+            "feature_name": "more_Mood_Swings_pcos",
+            "source_column": "more Mood Swings",
+            "expected": 1.0,
+            "actual": 1.0
+          },
+          {
+            "feature_name": "always_tired_pcos",
+            "source_column": "always tired",
+            "expected": 1.0,
+            "actual": 1.0
+          }
+        ]
+      }
+    ],
+    "model_feature_count": 20,
+    "model_input": {
+      "Period Length": 9.0,
+      "Cycle Length": 37.0,
+      "Age": 4.0,
+      "Overweight": 0.0,
+      "irregular or missed periods": 1.0,
+      "Difficulty in conceiving": 1.0,
+      "Hair growth on Chin": 2.0,
+      "Hair growth  on Cheeks": 0.0,
+      "Hair growth Between breasts": 0.0,
+      "Hair growth  on Upper lips": 2.0,
+      "Hair growth in Arms": 1.0,
+      "Hair growth on Inner thighs": 1.0,
+      "Acne or skin tags": 1.0,
+      "Hair thinning or hair loss": 1.0,
+      "Dark patches": 1.0,
+      "always tired": 1.0,
+      "exercise per week": 2.0,
+      "eat outside per week": 0.0,
+      "canned food often": 0.0,
+      "relocated city": 0.0
+    }
+  },
+  {
+    "disease": "PCOS",
+    "case_id": "PCO-5",
+    "actual": 0,
+    "predicted": 0,
+    "probability": 0.028304,
+    "threshold": 0.25,
+    "questionnaire_response_count": 8,
+    "questionnaire_responses_preview": [
+      {
+        "question_id": "Q_AGE",
+        "q_type": "input",
+        "input_values": [
+          {
+            "feature_name": "Age_pcos",
+            "source_column": "Age",
+            "value": 2.0
+          }
+        ]
+      },
+      {
+        "question_id": "Q_CYCLE_DESC",
+        "q_type": "single_select",
+        "selected_option_ids": [
+          "OPT_CYCLE_REG"
+        ],
+        "selected_option_texts": [
+          "Regular"
+        ],
+        "matched_mappings": [
+          {
+            "feature_name": "irregular_missed_periods_pcos",
+            "source_column": "irregular or missed periods",
+            "expected": 0.0,
+            "actual": 0.0
+          }
+        ]
+      },
+      {
+        "question_id": "Q_CYCLE_LENGTH",
+        "q_type": "input",
+        "input_values": [
+          {
+            "feature_name": "Period_Length_pcos",
+            "source_column": "Period Length",
+            "value": 5
+          }
+        ]
+      },
+      {
+        "question_id": "Q_PERIOD_DURATION",
+        "q_type": "input",
+        "input_values": [
+          {
+            "feature_name": "Cycle_Length_pcos",
+            "source_column": "Cycle Length",
+            "value": 32.0
+          }
+        ]
+      },
+      {
+        "question_id": "Q_SYSTEMIC_SYMPTOMS",
+        "q_type": "multi_select",
+        "selected_option_ids": [
+          "OPT_MOOD_SWINGS",
+          "OPT_ALWAYS_TIRED"
+        ],
+        "selected_option_texts": [
+          "Mood Swings",
+          "Always Tired"
+        ],
+        "matched_mappings": [
+          {
+            "feature_name": "more_Mood_Swings_pcos",
+            "source_column": "more Mood Swings",
+            "expected": 1.0,
+            "actual": 1.0
+          },
+          {
+            "feature_name": "always_tired_pcos",
+            "source_column": "always tired",
+            "expected": 1.0,
+            "actual": 1.0
+          }
+        ]
+      }
+    ],
+    "model_feature_count": 20,
+    "model_input": {
+      "Period Length": 5.0,
+      "Cycle Length": 32.0,
+      "Age": 2.0,
+      "Overweight": 0.0,
+      "irregular or missed periods": 0.0,
+      "Difficulty in conceiving": 0.0,
+      "Hair growth on Chin": 0.0,
+      "Hair growth  on Cheeks": 0.0,
+      "Hair growth Between breasts": 0.0,
+      "Hair growth  on Upper lips": 0.0,
+      "Hair growth in Arms": 2.0,
+      "Hair growth on Inner thighs": 2.0,
+      "Acne or skin tags": 1.0,
+      "Hair thinning or hair loss": 1.0,
+      "Dark patches": 1.0,
+      "always tired": 1.0,
+      "exercise per week": 0.0,
+      "eat outside per week": 3.0,
+      "canned food often": 0.0,
+      "relocated city": 0.0
+    }
+  },
+  {
+    "disease": "Endometriosis",
+    "case_id": "END-1",
+    "actual": 1,
+    "predicted": 1,
+    "probability": 0.990308,
+    "threshold": 0.35,
+    "questionnaire_response_count": 2,
+    "questionnaire_responses_preview": [
+      {
+        "question_id": "Q_CYCLE_DESC",
+        "q_type": "single_select",
+        "selected_option_ids": [
+          "OPT_CYCLE_REG"
+        ],
+        "selected_option_texts": [
+          "Regular"
+        ],
+        "matched_mappings": [
+          {
+            "feature_name": "irregular_missed_periods_endo",
+            "source_column": "Irregular / Missed periods",
+            "expected": 0.0,
+            "actual": 0.0
+          }
+        ]
+      },
+      {
+        "question_id": "Q_BLEEDING_PATTERNS",
+        "q_type": "multi_select",
+        "selected_option_ids": [
+          "OPT_HEAVY_BLEED"
+        ],
+        "selected_option_texts": [
+          "Heavy/ Excessive bleeding"
+        ],
+        "matched_mappings": [
+          {
+            "feature_name": "heavy_extreme_bleeding_endo",
+            "source_column": "Heavy / Extreme menstrual bleeding",
+            "expected": 1.0,
+            "actual": 1.0
+          }
+        ]
+      }
+    ],
+    "model_feature_count": 24,
+    "model_input": {
+      "Heavy / Extreme menstrual bleeding": 1.0,
+      "Irregular / Missed periods": 0.0,
+      "Abnormal uterine bleeding": 0.0,
+      "Menstrual pain (Dysmenorrhea)": 1.0,
+      "Painful bowel movements": 0.0,
+      "Bowel pain": 0.0,
+      "Pelvic pain": 1.0,
+      "IBS-like symptoms": 0.0,
+      "Painful cramps during period": 0.0,
+      "Fatigue / Chronic fatigue": 0.0,
+      "Loss of appetite": 0.0,
+      "Constant bleeding": 0.0,
+      "Painful ovulation": 0.0,
+      "Hormonal problems": 1.0,
+      "Malaise / Sickness": 0.0,
+      "Fever": 0.0,
+      "Cramping": 0.0,
+      "Bloating": 0.0,
+      "Painful / Burning pain during sex (Dyspareunia)": 0.0,
+      "Extreme / Severe pain": 0.0,
+      "Pain / Chronic pain": 0.0,
+      "Ovarian cysts": 1.0,
+      "Fertility Issues": 0.0,
+      "Feeling sick": 0.0
+    }
+  },
+  {
+    "disease": "Endometriosis",
+    "case_id": "END-2",
+    "actual": 1,
+    "predicted": 1,
+    "probability": 0.999457,
+    "threshold": 0.35,
+    "questionnaire_response_count": 2,
+    "questionnaire_responses_preview": [
+      {
+        "question_id": "Q_CYCLE_DESC",
+        "q_type": "single_select",
+        "selected_option_ids": [
+          "OPT_CYCLE_REG"
+        ],
+        "selected_option_texts": [
+          "Regular"
+        ],
+        "matched_mappings": [
+          {
+            "feature_name": "irregular_missed_periods_endo",
+            "source_column": "Irregular / Missed periods",
+            "expected": 0.0,
+            "actual": 0.0
+          }
+        ]
+      },
+      {
+        "question_id": "Q_BLEEDING_PATTERNS",
+        "q_type": "multi_select",
+        "selected_option_ids": [
+          "OPT_HEAVY_BLEED"
+        ],
+        "selected_option_texts": [
+          "Heavy/ Excessive bleeding"
+        ],
+        "matched_mappings": [
+          {
+            "feature_name": "heavy_extreme_bleeding_endo",
+            "source_column": "Heavy / Extreme menstrual bleeding",
+            "expected": 1.0,
+            "actual": 1.0
+          }
+        ]
+      }
+    ],
+    "model_feature_count": 24,
+    "model_input": {
+      "Heavy / Extreme menstrual bleeding": 1.0,
+      "Irregular / Missed periods": 0.0,
+      "Abnormal uterine bleeding": 0.0,
+      "Menstrual pain (Dysmenorrhea)": 1.0,
+      "Painful bowel movements": 1.0,
+      "Bowel pain": 0.0,
+      "Pelvic pain": 1.0,
+      "IBS-like symptoms": 0.0,
+      "Painful cramps during period": 1.0,
+      "Fatigue / Chronic fatigue": 1.0,
+      "Loss of appetite": 0.0,
+      "Constant bleeding": 0.0,
+      "Painful ovulation": 0.0,
+      "Hormonal problems": 1.0,
+      "Malaise / Sickness": 0.0,
+      "Fever": 0.0,
+      "Cramping": 1.0,
+      "Bloating": 1.0,
+      "Painful / Burning pain during sex (Dyspareunia)": 1.0,
+      "Extreme / Severe pain": 0.0,
+      "Pain / Chronic pain": 1.0,
+      "Ovarian cysts": 0.0,
+      "Fertility Issues": 0.0,
+      "Feeling sick": 1.0
+    }
+  },
+  {
+    "disease": "Endometriosis",
+    "case_id": "END-3",
+    "actual": 0,
+    "predicted": 0,
+    "probability": 0.006529,
+    "threshold": 0.35,
+    "questionnaire_response_count": 2,
+    "questionnaire_responses_preview": [
+      {
+        "question_id": "Q_CYCLE_DESC",
+        "q_type": "single_select",
+        "selected_option_ids": [
+          "OPT_CYCLE_REG"
+        ],
+        "selected_option_texts": [
+          "Regular"
+        ],
+        "matched_mappings": [
+          {
+            "feature_name": "irregular_missed_periods_endo",
+            "source_column": "Irregular / Missed periods",
+            "expected": 0.0,
+            "actual": 0.0
+          }
+        ]
+      },
+      {
+        "question_id": "Q_BLEEDING_PATTERNS",
+        "q_type": "multi_select",
+        "selected_option_ids": [
+          "OPT_NONE_BLEED"
+        ],
+        "selected_option_texts": [
+          "None of the above"
+        ],
+        "matched_mappings": [
+          {
+            "feature_name": "heavy_extreme_bleeding_endo",
+            "source_column": "Heavy / Extreme menstrual bleeding",
+            "expected": 0.0,
+            "actual": 0.0
+          }
+        ]
+      }
+    ],
+    "model_feature_count": 24,
+    "model_input": {
+      "Heavy / Extreme menstrual bleeding": 0.0,
+      "Irregular / Missed periods": 0.0,
+      "Abnormal uterine bleeding": 0.0,
+      "Menstrual pain (Dysmenorrhea)": 0.0,
+      "Painful bowel movements": 0.0,
+      "Bowel pain": 0.0,
+      "Pelvic pain": 0.0,
+      "IBS-like symptoms": 0.0,
+      "Painful cramps during period": 0.0,
+      "Fatigue / Chronic fatigue": 0.0,
+      "Loss of appetite": 0.0,
+      "Constant bleeding": 0.0,
+      "Painful ovulation": 0.0,
+      "Hormonal problems": 0.0,
+      "Malaise / Sickness": 0.0,
+      "Fever": 1.0,
+      "Cramping": 0.0,
+      "Bloating": 0.0,
+      "Painful / Burning pain during sex (Dyspareunia)": 0.0,
+      "Extreme / Severe pain": 0.0,
+      "Pain / Chronic pain": 0.0,
+      "Ovarian cysts": 0.0,
+      "Fertility Issues": 0.0,
+      "Feeling sick": 0.0
+    }
+  },
+  {
+    "disease": "Endometriosis",
+    "case_id": "END-4",
+    "actual": 0,
+    "predicted": 0,
+    "probability": 0.040904,
+    "threshold": 0.35,
+    "questionnaire_response_count": 2,
+    "questionnaire_responses_preview": [
+      {
+        "question_id": "Q_CYCLE_DESC",
+        "q_type": "single_select",
+        "selected_option_ids": [
+          "OPT_CYCLE_REG"
+        ],
+        "selected_option_texts": [
+          "Regular"
+        ],
+        "matched_mappings": [
+          {
+            "feature_name": "irregular_missed_periods_endo",
+            "source_column": "Irregular / Missed periods",
+            "expected": 0.0,
+            "actual": 0.0
+          }
+        ]
+      },
+      {
+        "question_id": "Q_BLEEDING_PATTERNS",
+        "q_type": "multi_select",
+        "selected_option_ids": [
+          "OPT_NONE_BLEED"
+        ],
+        "selected_option_texts": [
+          "None of the above"
+        ],
+        "matched_mappings": [
+          {
+            "feature_name": "heavy_extreme_bleeding_endo",
+            "source_column": "Heavy / Extreme menstrual bleeding",
+            "expected": 0.0,
+            "actual": 0.0
+          }
+        ]
+      }
+    ],
+    "model_feature_count": 24,
+    "model_input": {
+      "Heavy / Extreme menstrual bleeding": 0.0,
+      "Irregular / Missed periods": 0.0,
+      "Abnormal uterine bleeding": 0.0,
+      "Menstrual pain (Dysmenorrhea)": 0.0,
+      "Painful bowel movements": 0.0,
+      "Bowel pain": 0.0,
+      "Pelvic pain": 0.0,
+      "IBS-like symptoms": 0.0,
+      "Painful cramps during period": 0.0,
+      "Fatigue / Chronic fatigue": 0.0,
+      "Loss of appetite": 0.0,
+      "Constant bleeding": 0.0,
+      "Painful ovulation": 0.0,
+      "Hormonal problems": 0.0,
+      "Malaise / Sickness": 0.0,
+      "Fever": 0.0,
+      "Cramping": 0.0,
+      "Bloating": 0.0,
+      "Painful / Burning pain during sex (Dyspareunia)": 0.0,
+      "Extreme / Severe pain": 0.0,
+      "Pain / Chronic pain": 0.0,
+      "Ovarian cysts": 0.0,
+      "Fertility Issues": 0.0,
+      "Feeling sick": 0.0
+    }
+  },
+  {
+    "disease": "Endometriosis",
+    "case_id": "END-5",
+    "actual": 0,
+    "predicted": 0,
+    "probability": 0.074242,
+    "threshold": 0.35,
+    "questionnaire_response_count": 2,
+    "questionnaire_responses_preview": [
+      {
+        "question_id": "Q_CYCLE_DESC",
+        "q_type": "single_select",
+        "selected_option_ids": [
+          "OPT_CYCLE_REG"
+        ],
+        "selected_option_texts": [
+          "Regular"
+        ],
+        "matched_mappings": [
+          {
+            "feature_name": "irregular_missed_periods_endo",
+            "source_column": "Irregular / Missed periods",
+            "expected": 0.0,
+            "actual": 0.0
+          }
+        ]
+      },
+      {
+        "question_id": "Q_BLEEDING_PATTERNS",
+        "q_type": "multi_select",
+        "selected_option_ids": [
+          "OPT_NONE_BLEED"
+        ],
+        "selected_option_texts": [
+          "None of the above"
+        ],
+        "matched_mappings": [
+          {
+            "feature_name": "heavy_extreme_bleeding_endo",
+            "source_column": "Heavy / Extreme menstrual bleeding",
+            "expected": 0.0,
+            "actual": 0.0
+          }
+        ]
+      }
+    ],
+    "model_feature_count": 24,
+    "model_input": {
+      "Heavy / Extreme menstrual bleeding": 0.0,
+      "Irregular / Missed periods": 0.0,
+      "Abnormal uterine bleeding": 0.0,
+      "Menstrual pain (Dysmenorrhea)": 0.0,
+      "Painful bowel movements": 0.0,
+      "Bowel pain": 1.0,
+      "Pelvic pain": 1.0,
+      "IBS-like symptoms": 0.0,
+      "Painful cramps during period": 0.0,
+      "Fatigue / Chronic fatigue": 0.0,
+      "Loss of appetite": 0.0,
+      "Constant bleeding": 0.0,
+      "Painful ovulation": 0.0,
+      "Hormonal problems": 0.0,
+      "Malaise / Sickness": 0.0,
+      "Fever": 0.0,
+      "Cramping": 0.0,
+      "Bloating": 0.0,
+      "Painful / Burning pain during sex (Dyspareunia)": 0.0,
+      "Extreme / Severe pain": 1.0,
+      "Pain / Chronic pain": 1.0,
+      "Ovarian cysts": 0.0,
+      "Fertility Issues": 0.0,
+      "Feeling sick": 0.0
+    }
+  },
+  {
+    "disease": "Cervical",
+    "case_id": "CER-1",
+    "actual": 0,
+    "predicted": 1,
+    "probability": 0.122778,
+    "threshold": 0.1,
+    "questionnaire_response_count": 1,
+    "questionnaire_responses_preview": [
+      {
+        "question_id": "Q_AGE",
+        "q_type": "input",
+        "input_values": [
+          {
+            "feature_name": "Age_cervical_cancer",
+            "source_column": "Age",
+            "value": 16.0
+          }
+        ]
+      }
+    ],
+    "model_feature_count": 35,
+    "model_input": {
+      "Age": 16.0,
+      "Number of sexual partners": 1.0,
+      "First sexual intercourse": 16.0,
+      "Num of pregnancies": 1.0,
+      "Smokes": 0.0,
+      "Smokes (years)": 0.0,
+      "Smokes (packs/year)": 0.0,
+      "Hormonal Contraceptives": 0.0,
+      "Hormonal Contraceptives (years)": 0.0,
+      "IUD": 0.0,
+      "IUD (years)": 0.0,
+      "STDs": 0.0,
+      "STDs (number)": 0.0,
+      "STDs:condylomatosis": 0.0,
+      "STDs:cervical condylomatosis": 0.0,
+      "STDs:vaginal condylomatosis": 0.0,
+      "STDs:vulvo-perineal condylomatosis": 0.0,
+      "STDs:syphilis": 0.0,
+      "STDs:pelvic inflammatory disease": 0.0,
+      "STDs:genital herpes": 0.0,
+      "STDs:molluscum contagiosum": 0.0,
+      "STDs:AIDS": 0.0,
+      "STDs:HIV": 0.0,
+      "STDs:Hepatitis B": 0.0,
+      "STDs:HPV": 0.0,
+      "STDs: Number of diagnosis": 0.0,
+      "STDs: Time since first diagnosis": 0.0,
+      "STDs: Time since last diagnosis": 0.0,
+      "Dx:Cancer": 0.0,
+      "Dx:CIN": 0.0,
+      "Dx:HPV": 0.0,
+      "Dx": 0.0,
+      "Hinselmann": 0.0,
+      "Schiller": 0.0,
+      "Citology": 0.0
+    }
+  },
+  {
+    "disease": "Cervical",
+    "case_id": "CER-2",
+    "actual": 0,
+    "predicted": 0,
+    "probability": 0.064364,
+    "threshold": 0.1,
+    "questionnaire_response_count": 1,
+    "questionnaire_responses_preview": [
+      {
+        "question_id": "Q_AGE",
+        "q_type": "input",
+        "input_values": [
+          {
+            "feature_name": "Age_cervical_cancer",
+            "source_column": "Age",
+            "value": 23.0
+          }
+        ]
+      }
+    ],
+    "model_feature_count": 35,
+    "model_input": {
+      "Age": 23.0,
+      "Number of sexual partners": 3.0,
+      "First sexual intercourse": 17.0,
+      "Num of pregnancies": 2.0,
+      "Smokes": 0.0,
+      "Smokes (years)": 0.0,
+      "Smokes (packs/year)": 0.0,
+      "Hormonal Contraceptives": 0.0,
+      "Hormonal Contraceptives (years)": 0.0,
+      "IUD": 0.0,
+      "IUD (years)": 0.0,
+      "STDs": 0.0,
+      "STDs (number)": 0.0,
+      "STDs:condylomatosis": 0.0,
+      "STDs:cervical condylomatosis": 0.0,
+      "STDs:vaginal condylomatosis": 0.0,
+      "STDs:vulvo-perineal condylomatosis": 0.0,
+      "STDs:syphilis": 0.0,
+      "STDs:pelvic inflammatory disease": 0.0,
+      "STDs:genital herpes": 0.0,
+      "STDs:molluscum contagiosum": 0.0,
+      "STDs:AIDS": 0.0,
+      "STDs:HIV": 0.0,
+      "STDs:Hepatitis B": 0.0,
+      "STDs:HPV": 0.0,
+      "STDs: Number of diagnosis": 0.0,
+      "STDs: Time since first diagnosis": 0.0,
+      "STDs: Time since last diagnosis": 0.0,
+      "Dx:Cancer": 0.0,
+      "Dx:CIN": 0.0,
+      "Dx:HPV": 0.0,
+      "Dx": 0.0,
+      "Hinselmann": 0.0,
+      "Schiller": 0.0,
+      "Citology": 0.0
+    }
+  },
+  {
+    "disease": "Cervical",
+    "case_id": "CER-3",
+    "actual": 0,
+    "predicted": 0,
+    "probability": 0.069921,
+    "threshold": 0.1,
+    "questionnaire_response_count": 1,
+    "questionnaire_responses_preview": [
+      {
+        "question_id": "Q_AGE",
+        "q_type": "input",
+        "input_values": [
+          {
+            "feature_name": "Age_cervical_cancer",
+            "source_column": "Age",
+            "value": 33.0
+          }
+        ]
+      }
+    ],
+    "model_feature_count": 35,
+    "model_input": {
+      "Age": 33.0,
+      "Number of sexual partners": 1.0,
+      "First sexual intercourse": 16.0,
+      "Num of pregnancies": 4.0,
+      "Smokes": 0.0,
+      "Smokes (years)": 0.0,
+      "Smokes (packs/year)": 0.0,
+      "Hormonal Contraceptives": 0.0,
+      "Hormonal Contraceptives (years)": 0.0,
+      "IUD": 0.0,
+      "IUD (years)": 0.0,
+      "STDs": 0.0,
+      "STDs (number)": 0.0,
+      "STDs:condylomatosis": 0.0,
+      "STDs:cervical condylomatosis": 0.0,
+      "STDs:vaginal condylomatosis": 0.0,
+      "STDs:vulvo-perineal condylomatosis": 0.0,
+      "STDs:syphilis": 0.0,
+      "STDs:pelvic inflammatory disease": 0.0,
+      "STDs:genital herpes": 0.0,
+      "STDs:molluscum contagiosum": 0.0,
+      "STDs:AIDS": 0.0,
+      "STDs:HIV": 0.0,
+      "STDs:Hepatitis B": 0.0,
+      "STDs:HPV": 0.0,
+      "STDs: Number of diagnosis": 0.0,
+      "STDs: Time since first diagnosis": 0.0,
+      "STDs: Time since last diagnosis": 0.0,
+      "Dx:Cancer": 0.0,
+      "Dx:CIN": 0.0,
+      "Dx:HPV": 0.0,
+      "Dx": 0.0,
+      "Hinselmann": 0.0,
+      "Schiller": 0.0,
+      "Citology": 0.0
+    }
+  },
+  {
+    "disease": "Cervical",
+    "case_id": "CER-4",
+    "actual": 0,
+    "predicted": 0,
+    "probability": 0.063525,
+    "threshold": 0.1,
+    "questionnaire_response_count": 1,
+    "questionnaire_responses_preview": [
+      {
+        "question_id": "Q_AGE",
+        "q_type": "input",
+        "input_values": [
+          {
+            "feature_name": "Age_cervical_cancer",
+            "source_column": "Age",
+            "value": 27.0
+          }
+        ]
+      }
+    ],
+    "model_feature_count": 35,
+    "model_input": {
+      "Age": 27.0,
+      "Number of sexual partners": 4.0,
+      "First sexual intercourse": 16.0,
+      "Num of pregnancies": 1.0,
+      "Smokes": 0.0,
+      "Smokes (years)": 0.0,
+      "Smokes (packs/year)": 0.0,
+      "Hormonal Contraceptives": 1.0,
+      "Hormonal Contraceptives (years)": 0.67,
+      "IUD": 0.0,
+      "IUD (years)": 0.0,
+      "STDs": 0.0,
+      "STDs (number)": 0.0,
+      "STDs:condylomatosis": 0.0,
+      "STDs:cervical condylomatosis": 0.0,
+      "STDs:vaginal condylomatosis": 0.0,
+      "STDs:vulvo-perineal condylomatosis": 0.0,
+      "STDs:syphilis": 0.0,
+      "STDs:pelvic inflammatory disease": 0.0,
+      "STDs:genital herpes": 0.0,
+      "STDs:molluscum contagiosum": 0.0,
+      "STDs:AIDS": 0.0,
+      "STDs:HIV": 0.0,
+      "STDs:Hepatitis B": 0.0,
+      "STDs:HPV": 0.0,
+      "STDs: Number of diagnosis": 0.0,
+      "STDs: Time since first diagnosis": 0.0,
+      "STDs: Time since last diagnosis": 0.0,
+      "Dx:Cancer": 0.0,
+      "Dx:CIN": 0.0,
+      "Dx:HPV": 0.0,
+      "Dx": 0.0,
+      "Hinselmann": 0.0,
+      "Schiller": 0.0,
+      "Citology": 0.0
+    }
+  },
+  {
+    "disease": "Cervical",
+    "case_id": "CER-5",
+    "actual": 0,
+    "predicted": 0,
+    "probability": 0.096197,
+    "threshold": 0.1,
+    "questionnaire_response_count": 1,
+    "questionnaire_responses_preview": [
+      {
+        "question_id": "Q_AGE",
+        "q_type": "input",
+        "input_values": [
+          {
+            "feature_name": "Age_cervical_cancer",
+            "source_column": "Age",
+            "value": 18.0
+          }
+        ]
+      }
+    ],
+    "model_feature_count": 35,
+    "model_input": {
+      "Age": 18.0,
+      "Number of sexual partners": 3.0,
+      "First sexual intercourse": 15.0,
+      "Num of pregnancies": 1.0,
+      "Smokes": 1.0,
+      "Smokes (years)": 2.0,
+      "Smokes (packs/year)": 0.003,
+      "Hormonal Contraceptives": 1.0,
+      "Hormonal Contraceptives (years)": 0.58,
+      "IUD": 0.0,
+      "IUD (years)": 0.0,
+      "STDs": 0.0,
+      "STDs (number)": 0.0,
+      "STDs:condylomatosis": 0.0,
+      "STDs:cervical condylomatosis": 0.0,
+      "STDs:vaginal condylomatosis": 0.0,
+      "STDs:vulvo-perineal condylomatosis": 0.0,
+      "STDs:syphilis": 0.0,
+      "STDs:pelvic inflammatory disease": 0.0,
+      "STDs:genital herpes": 0.0,
+      "STDs:molluscum contagiosum": 0.0,
+      "STDs:AIDS": 0.0,
+      "STDs:HIV": 0.0,
+      "STDs:Hepatitis B": 0.0,
+      "STDs:HPV": 0.0,
+      "STDs: Number of diagnosis": 0.0,
+      "STDs: Time since first diagnosis": 0.0,
+      "STDs: Time since last diagnosis": 0.0,
+      "Dx:Cancer": 0.0,
+      "Dx:CIN": 0.0,
+      "Dx:HPV": 0.0,
+      "Dx": 0.0,
+      "Hinselmann": 0.0,
+      "Schiller": 0.0,
+      "Citology": 0.0
+    }
+  }
+]
