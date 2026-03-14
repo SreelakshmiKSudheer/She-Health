@@ -1,12 +1,6 @@
-from pymongo import AsyncMongoClient
-import pymongo
-import os
+# Compatibility shim — all DB access goes through app.db.database.MongoDB
+from app.db.database import MongoDB
 
-# MongoDB connection
-conn: AsyncMongoClient = None
-db = None
-
-async def connect_to_mongo():
-    global conn, db
-    client = AsyncMongoClient(os.environ["MONGODB_URL"],server_api=pymongo.server_api.ServerApi(version="1", strict=True,deprecation_errors=True))
-    db = client.get_database(os.environ["DB_NAME"])
+def get_database():
+    """Return the active Motor database from the canonical MongoDB singleton."""
+    return MongoDB.db
