@@ -9,6 +9,7 @@ class FeatureMappingModel(BaseModel):
 class AnswerOptionModel(BaseModel):
     id: str
     text: str
+    description: Optional[str] = None  # New Field
     mappings: List[FeatureMappingModel] = []
 
 class QuestionDocument(BaseModel):
