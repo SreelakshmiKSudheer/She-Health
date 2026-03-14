@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, model_validator
 from datetime import datetime
 from typing import Optional
 
@@ -14,11 +14,9 @@ class UserProfile(BaseModel):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
-    @validator('bmi', pre=True, always=True)
-    def calculate_bmi(cls, v, values):
-        height = values.get('height')
-        weight = values.get('weight')
-        if height and weight:
-            height_m = height / 100
-            return round(weight / (height_m ** 2), 2)
-        return v
+    @model_validator(mode="after")
+    def calculate_bmi(self):
+        if self.height and self.weight:
+            height_m = self.height / 100
+            self.bmi = round(self.weight / (height_m ** 2), 2)
+        return self

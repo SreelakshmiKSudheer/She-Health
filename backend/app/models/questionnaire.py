@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from typing import List, Optional
 from datetime import datetime
 
@@ -10,7 +10,7 @@ class AnswerOptionModel(BaseModel):
     id: str
     text: str
     description: Optional[str] = None  # New Field
-    mappings: List[FeatureMappingModel] = []
+    mappings: List[FeatureMappingModel] = Field(default_factory=list)
 
 class QuestionDocument(BaseModel):
     id: str  # Custom ID like "Q_CYCLE_01"
@@ -19,8 +19,7 @@ class QuestionDocument(BaseModel):
     q_type: str
     is_initial: bool = True
     priority: int = 0
-    options: List[AnswerOptionModel] = []
+    options: List[AnswerOptionModel] = Field(default_factory=list)
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
