@@ -6,7 +6,7 @@ base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 
 
 # Define dataset paths
 cer = pd.read_csv(os.path.join(base_path, 'dataset', 'final_dataset', 'cervical_cancer.csv'))
-pc = pd.read_csv(os.path.join(base_path, 'dataset', 'set_2', 'pcos', 'results.csv'))
+pc = pd.read_csv(os.path.join(base_path, 'dataset', 'final_dataset', 'pcos.csv'))
 en = pd.read_csv(os.path.join(base_path, 'dataset', 'final_dataset', 'endometriosis.csv'))
 
 data = {
