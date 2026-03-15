@@ -31,6 +31,13 @@ class PredictionService:
         saved = await self.collection.find_one({"_id": insert_result.inserted_id}, _NO_ID)
         return saved
 
+    async def get_latest_prediction(self, user_id: str):
+        return await self.collection.find_one(
+            {"user_id": user_id},
+            _NO_ID,
+            sort=[("created_at", -1)],
+        )
+
     async def validate_user_feature_coverage(self, user_id: str):
         await self.response_service.assert_user_completed_questionnaire(user_id)
         features = await self.response_service.get_user_answers_as_feature_dict(user_id)

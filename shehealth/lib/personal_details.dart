@@ -1,14 +1,25 @@
 import 'package:flutter/material.dart';
+
+import 'models/app_models.dart';
 import 'questionnaire.dart';
+import 'services/backend_api_service.dart';
+import 'services/local_storage_service.dart';
+import 'services/session_service.dart';
 
 class PersonalDetailsPage extends StatefulWidget {
+  final String userId;
   final String fullName;
   final String email;
+  final String phone;
+  final String password;
 
   const PersonalDetailsPage({
     super.key,
+    required this.userId,
     required this.fullName,
     required this.email,
+    required this.phone,
+    required this.password,
   });
 
   @override
@@ -36,6 +47,11 @@ class _PersonalDetailsPageState extends State<PersonalDetailsPage> {
   bool _isOnMedication = false;
 
   int _currentStep = 0;
+  bool _isSaving = false;
+
+  final BackendApiService _backendApi = BackendApiService();
+  final LocalStorageService _localStorage = LocalStorageService.instance;
+  final SessionService _sessionService = SessionService();
 
   final List<String> _bloodGroups = [
     'A+',
@@ -112,13 +128,125 @@ class _PersonalDetailsPageState extends State<PersonalDetailsPage> {
     }
   }
 
-  void _submitDetails() {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const SymptomQuestionnaire(),
-      ),
-    );
+  Future<void> _submitDetails() async {
+    if (_isSaving) {
+      return;
+    }
+
+    final dob = _dobController.text.trim();
+    final height = double.tryParse(_heightController.text.trim());
+    final weight = double.tryParse(_weightController.text.trim());
+
+    if (dob.isEmpty ||
+        height == null ||
+        weight == null ||
+        _selectedMaritalStatus == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please complete date of birth, height, weight, and marital status.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    final age = _calculateAgeFromDob(dob);
+    if (age == null || age <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please provide a valid date of birth.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isSaving = true);
+
+    try {
+      final localUser = LocalUserProfile(
+        userId: widget.userId,
+        fullName: widget.fullName,
+        email: widget.email,
+        phone: widget.phone,
+        password: widget.password,
+        dob: dob,
+        bloodGroup: _selectedBloodGroup,
+        maritalStatus: _selectedMaritalStatus,
+        activityLevel: _selectedActivityLevel,
+        emergencyContact: _emergencyContactController.text.trim(),
+        hasAllergies: _hasAllergies,
+        hasChronicConditions: _hasChronicConditions,
+        isOnMedication: _isOnMedication,
+        heightCm: height,
+        weightKg: weight,
+      );
+
+      await _localStorage.upsertUser(localUser);
+
+      // Persist only backend-approved user profile fields in MongoDB.
+      await _backendApi.registerUserProfile(
+        userId: widget.userId,
+        age: age,
+        height: height,
+        weight: weight,
+        maritalStatus: _selectedMaritalStatus,
+        familyHistory: _hasChronicConditions,
+      );
+
+      await _sessionService.setCurrentUserId(widget.userId);
+
+      if (!mounted) {
+        return;
+      }
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => SymptomQuestionnaire(userId: widget.userId),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to save profile: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
+    }
+  }
+
+  int? _calculateAgeFromDob(String dob) {
+    try {
+      final parts = dob.split('/');
+      if (parts.length != 3) {
+        return null;
+      }
+
+      final day = int.parse(parts[0]);
+      final month = int.parse(parts[1]);
+      final year = int.parse(parts[2]);
+      final birthDate = DateTime(year, month, day);
+      final now = DateTime.now();
+
+      var age = now.year - birthDate.year;
+      final hasBirthdayPassed =
+          now.month > birthDate.month || (now.month == birthDate.month && now.day >= birthDate.day);
+      if (!hasBirthdayPassed) {
+        age -= 1;
+      }
+      return age;
+    } catch (_) {
+      return null;
+    }
   }
 
   @override
@@ -721,7 +849,7 @@ class _PersonalDetailsPageState extends State<PersonalDetailsPage> {
         Expanded(
           flex: 2,
           child: ElevatedButton(
-            onPressed: _nextStep,
+            onPressed: _isSaving ? null : _nextStep,
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFC85A7A),
               padding: const EdgeInsets.symmetric(vertical: 16),
@@ -734,7 +862,11 @@ class _PersonalDetailsPageState extends State<PersonalDetailsPage> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  isLastStep ? 'Continue to Health Survey' : 'Continue',
+                  _isSaving
+                      ? 'Saving...'
+                      : isLastStep
+                          ? 'Continue to Health Survey'
+                          : 'Continue',
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -742,13 +874,14 @@ class _PersonalDetailsPageState extends State<PersonalDetailsPage> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                Icon(
-                  isLastStep
-                      ? Icons.assignment_outlined
-                      : Icons.arrow_forward_rounded,
-                  color: Colors.white,
-                  size: 20,
-                ),
+                if (!_isSaving)
+                  Icon(
+                    isLastStep
+                        ? Icons.assignment_outlined
+                        : Icons.arrow_forward_rounded,
+                    color: Colors.white,
+                    size: 20,
+                  ),
               ],
             ),
           ),

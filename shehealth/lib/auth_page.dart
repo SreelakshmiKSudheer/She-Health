@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:uuid/uuid.dart';
+
+import 'models/app_models.dart';
 import 'shehealth_dashboard.dart';
 import 'personal_details.dart';
+import 'services/local_storage_service.dart';
+import 'services/session_service.dart';
 
 class AuthPage extends StatefulWidget {
   const AuthPage({super.key});
@@ -20,15 +25,84 @@ class _AuthPageState extends State<AuthPage> {
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
 
-  void _handleButtonPress() {
+  final LocalStorageService _localStorage = LocalStorageService.instance;
+  final SessionService _sessionService = SessionService();
+
+  bool _isSubmitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _restoreSessionIfAvailable();
+  }
+
+  Future<void> _restoreSessionIfAvailable() async {
+    final userId = await _sessionService.getCurrentUserId();
+    if (!mounted || userId == null) {
+      return;
+    }
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const DashboardPage()),
+    );
+  }
+
+  Future<void> _handleButtonPress() async {
+    if (_isSubmitting) {
+      return;
+    }
+
     if (isLogin) {
-      // Login → go to Dashboard
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const DashboardPage()),
-      );
+      if (emailController.text.trim().isEmpty || passwordController.text.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please enter email and password.'),
+            backgroundColor: Color(0xFFC85A7A),
+          ),
+        );
+        return;
+      }
+
+      setState(() => _isSubmitting = true);
+      try {
+        final user = await _localStorage.findByEmailAndPassword(
+          email: emailController.text.trim().toLowerCase(),
+          password: passwordController.text,
+        );
+
+        if (!mounted) {
+          return;
+        }
+
+        if (user == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Invalid email or password.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          return;
+        }
+
+        await _sessionService.setCurrentUserId(user.userId);
+
+        if (!mounted) {
+          return;
+        }
+
+        // Login -> go to Dashboard
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const DashboardPage()),
+        );
+      } finally {
+        if (mounted) {
+          setState(() => _isSubmitting = false);
+        }
+      }
     } else {
-      // Register → validate then go to Personal Details
+      // Register -> validate then go to Personal Details
       if (nameController.text.trim().isEmpty ||
           emailController.text.trim().isEmpty ||
           phoneController.text.trim().isEmpty ||
@@ -53,15 +127,40 @@ class _AuthPageState extends State<AuthPage> {
         return;
       }
 
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => PersonalDetailsPage(
-            fullName: nameController.text.trim(),
-            email: emailController.text.trim(),
-          ),
-        ),
+      final userId = const Uuid().v4();
+      final localUser = LocalUserProfile(
+        userId: userId,
+        fullName: nameController.text.trim(),
+        email: emailController.text.trim().toLowerCase(),
+        phone: phoneController.text.trim(),
+        password: passwordController.text,
       );
+
+      setState(() => _isSubmitting = true);
+      try {
+        await _localStorage.upsertUser(localUser);
+
+        if (!mounted) {
+          return;
+        }
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => PersonalDetailsPage(
+              userId: userId,
+              fullName: localUser.fullName,
+              email: localUser.email,
+              phone: localUser.phone,
+              password: localUser.password,
+            ),
+          ),
+        );
+      } finally {
+        if (mounted) {
+          setState(() => _isSubmitting = false);
+        }
+      }
     }
   }
 
@@ -108,14 +207,23 @@ class _AuthPageState extends State<AuthPage> {
                           borderRadius: BorderRadius.circular(12)),
                       minimumSize: const Size(double.infinity, 52),
                     ),
-                    child: Text(
-                      isLogin ? "Login" : "Create Account",
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
+                    child: _isSubmitting
+                        ? const SizedBox(
+                            height: 22,
+                            width: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              color: Colors.white,
+                            ),
+                          )
+                        : Text(
+                            isLogin ? "Login" : "Create Account",
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
                   ),
                   const SizedBox(height: 40),
                 ],

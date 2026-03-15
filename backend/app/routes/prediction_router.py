@@ -14,6 +14,18 @@ async def get_prediction(user_id: str):
     return await service.run_full_assessment(user_id)
 
 
+@router.get("/latest/{user_id}")
+async def get_latest_prediction(user_id: str):
+    if MongoDB.db is None:
+        raise HTTPException(status_code=500, detail="Database not connected")
+
+    service = PredictionService(MongoDB.db)
+    latest = await service.get_latest_prediction(user_id)
+    if latest is None:
+        raise HTTPException(status_code=404, detail="No prediction found for this user")
+    return latest
+
+
 @router.get("/validate/{user_id}")
 async def validate_feature_coverage(user_id: str):
     if MongoDB.db is None:

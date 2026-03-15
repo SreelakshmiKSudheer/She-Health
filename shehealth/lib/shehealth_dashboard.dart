@@ -10,6 +10,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'personal_details.dart';
 import 'settings.dart';
+import 'models/app_models.dart';
+import 'services/backend_api_service.dart';
+import 'services/local_storage_service.dart';
+import 'services/session_service.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -22,9 +26,16 @@ class _DashboardPageState extends State<DashboardPage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final ScrollController _scrollController = ScrollController();
   final GroqService _groqService = GroqService();
+  final BackendApiService _backendApi = BackendApiService();
+  final LocalStorageService _localStorage = LocalStorageService.instance;
+  final SessionService _sessionService = SessionService();
 
   String _dailyTip = "Loading today's health tip...";
   bool _isTipLoading = true;
+  bool _isDashboardLoading = true;
+
+  LocalUserProfile? _localUser;
+  Map<String, dynamic>? _latestPrediction;
 
   int _selectedIndex = 0;
 
@@ -59,14 +70,7 @@ class _DashboardPageState extends State<DashboardPage> {
     }
 
     if (index == 1) {
-      await Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => HealthReportPage(
-            reportText: "No report available.",
-          ),
-        ),
-      );
+      await _openLatestReport();
     }
 
     if (index == 2) {
@@ -98,6 +102,68 @@ class _DashboardPageState extends State<DashboardPage> {
       context,
       MaterialPageRoute(
         builder: (context) => const DietPlanPage(),
+      ),
+    );
+  }
+
+  Future<void> _loadDashboardData() async {
+    try {
+      final userId = await _sessionService.getCurrentUserId();
+      if (userId == null) {
+        if (!mounted) {
+          return;
+        }
+        setState(() {
+          _isDashboardLoading = false;
+        });
+        return;
+      }
+
+      final localUser = await _localStorage.findByUserId(userId);
+
+      Map<String, dynamic>? prediction;
+      try {
+        prediction = await _backendApi.getLatestPrediction(userId);
+      } catch (_) {
+        prediction = null;
+      }
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _localUser = localUser;
+        _latestPrediction = prediction;
+        _isDashboardLoading = false;
+      });
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _isDashboardLoading = false;
+      });
+    }
+  }
+
+  Future<void> _openLatestReport() async {
+    final userId = _localUser?.userId ?? await _sessionService.getCurrentUserId();
+    if (!mounted) {
+      return;
+    }
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => HealthReportPage(
+          userId: userId,
+          predictionData: _latestPrediction,
+          localUser: _localUser,
+          reportText: _latestPrediction == null
+              ? 'No report available yet. Complete the questionnaire to generate your first assessment.'
+              : null,
+        ),
       ),
     );
   }
@@ -154,6 +220,7 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   void initState() {
     super.initState();
+    _loadDashboardData();
     _fetchDailyTip();
   }
 
@@ -239,9 +306,9 @@ class _DashboardPageState extends State<DashboardPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Welcome back, Sarah! 💗',
-                style: TextStyle(
+              Text(
+                'Welcome back, ${(_localUser?.fullName ?? 'User').split(' ').first}! 💗',
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 26,
                   fontWeight: FontWeight.bold,
@@ -257,10 +324,20 @@ class _DashboardPageState extends State<DashboardPage> {
                 children: [
                   ElevatedButton(
                     onPressed: () {
+                      final userId = _localUser?.userId;
+                      if (userId == null || userId.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Please sign in to continue.'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                        return;
+                      }
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const SymptomQuestionnaire(),
+                          builder: (context) => SymptomQuestionnaire(userId: userId),
                         ),
                       );
                     },
@@ -281,14 +358,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   const SizedBox(width: 12),
                   OutlinedButton(
                     onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => HealthReportPage(
-                            reportText: "No report available.",
-                          ),
-                        ),
-                      );
+                      _openLatestReport();
                     },
                     style: OutlinedButton.styleFrom(
                       foregroundColor: Colors.white,
@@ -538,12 +608,19 @@ class _DashboardPageState extends State<DashboardPage> {
                   ),
                   GestureDetector(
                     onTap: () {
+                      final user = _localUser;
+                      if (user == null) {
+                        return;
+                      }
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const PersonalDetailsPage(
-                            fullName: "Sarah Anderson",
-                            email: "sarah@example.com",
+                          builder: (context) => PersonalDetailsPage(
+                            userId: user.userId,
+                            fullName: user.fullName,
+                            email: user.email,
+                            phone: user.phone,
+                            password: user.password,
                           ),
                         ),
                       );
@@ -570,20 +647,20 @@ class _DashboardPageState extends State<DashboardPage> {
                             ),
                           ),
                           const SizedBox(width: 8),
-                          const Column(
+                          Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Sarah Anderson',
-                                style: TextStyle(
+                                _localUser?.fullName ?? 'User',
+                                style: const TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.w600,
                                   fontSize: 12,
                                 ),
                               ),
                               Text(
-                                'ID: SH2024001',
-                                style: TextStyle(
+                                'ID: ${_localUser?.userId ?? 'N/A'}',
+                                style: const TextStyle(
                                     color: Colors.white70, fontSize: 10),
                               ),
                             ],
@@ -685,18 +762,18 @@ class _DashboardPageState extends State<DashboardPage> {
                       style: TextStyle(color: Colors.grey, fontSize: 14),
                     ),
                     const SizedBox(height: 4),
-                    const Text(
-                      'No Risk',
-                      style: TextStyle(
+                    Text(
+                      _dashboardRiskLabel,
+                      style: const TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
                         color: Colors.black87,
                       ),
                     ),
                     const SizedBox(height: 4),
-                    const Text(
-                      'Last updated: Today',
-                      style: TextStyle(color: Colors.grey, fontSize: 12),
+                    Text(
+                      _latestPrediction == null ? 'Last updated: --' : 'Last updated: Recent',
+                      style: const TextStyle(color: Colors.grey, fontSize: 12),
                     ),
                   ],
                 ),
@@ -989,6 +1066,63 @@ class _DashboardPageState extends State<DashboardPage> {
     }
   }
 
+  String get _dashboardRiskLabel {
+    final predictions = _latestPrediction?['predictions'];
+    if (predictions is! Map<String, dynamic> || predictions.isEmpty) {
+      return _isDashboardLoading ? 'Loading...' : 'No Data';
+    }
+
+    double maxProb = 0;
+    String maxLabel = 'No Risk';
+    for (final item in predictions.values) {
+      if (item is! Map<String, dynamic>) {
+        continue;
+      }
+      final p = (item['probability'] as num? ?? 0).toDouble();
+      if (p >= maxProb) {
+        maxProb = p;
+        maxLabel = item['label'] as String? ?? maxLabel;
+      }
+    }
+    return maxLabel;
+  }
+
+  List<Map<String, dynamic>> get _predictionRows {
+    final predictions = _latestPrediction?['predictions'];
+    if (predictions is! Map<String, dynamic>) {
+      return const [];
+    }
+
+    final rows = <Map<String, dynamic>>[];
+    for (final entry in predictions.entries) {
+      final value = entry.value;
+      if (value is! Map<String, dynamic>) {
+        continue;
+      }
+      final label = value['label'] as String? ?? 'Unknown';
+      final prob = (value['probability'] as num? ?? 0).toDouble();
+
+      Color color;
+      if (prob < 10) {
+        color = Colors.green;
+      } else if (prob < 30) {
+        color = Colors.lightGreen;
+      } else if (prob < 55) {
+        color = Colors.orange;
+      } else {
+        color = Colors.red;
+      }
+
+      rows.add({
+        'name': entry.key,
+        'label': label,
+        'color': color,
+      });
+    }
+
+    return rows;
+  }
+
   Widget _buildHealthTrendsContent() {
     final trendData = _getTrendData();
 
@@ -1074,24 +1208,22 @@ class _DashboardPageState extends State<DashboardPage> {
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 20),
-        _buildRiskItem('PCOD/PCOS', '3 days ago', 'Low', Colors.green),
-        _buildRiskItem('Thyroid', '1 week ago', 'No Risk', Colors.green),
-        _buildRiskItem('Endometriosis', '5 days ago', 'Monitor', Colors.orange),
-        _buildRiskItem(
-            'Cervical Cancer', '2 weeks ago', 'No Risk', Colors.green),
+        if (_predictionRows.isEmpty)
+          const Text('No assessment available. Complete questionnaire first.'),
+        ..._predictionRows.map(
+          (item) => _buildRiskItem(
+            item['name'] as String,
+            'Latest',
+            item['label'] as String,
+            item['color'] as Color,
+          ),
+        ),
         const SizedBox(height: 16),
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
             onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => HealthReportPage(
-                    reportText: "No report available.",
-                  ),
-                ),
-              );
+              _openLatestReport();
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFC85A7A),

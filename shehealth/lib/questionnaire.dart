@@ -1,182 +1,192 @@
 import 'package:flutter/material.dart';
-import 'shehealth_dashboard.dart';
-import 'services/groq_service.dart';
+
+import 'models/app_models.dart';
 import 'report.dart';
+import 'services/backend_api_service.dart';
+import 'services/local_storage_service.dart';
 
 class SymptomQuestionnaire extends StatefulWidget {
-  const SymptomQuestionnaire({super.key});
+  final String userId;
+
+  const SymptomQuestionnaire({super.key, required this.userId});
 
   @override
   State<SymptomQuestionnaire> createState() => _SymptomQuestionnaireState();
 }
 
-class _SymptomQuestionnaireState extends State<SymptomQuestionnaire>
-    with SingleTickerProviderStateMixin {
-  int currentIndex = 0;
-  Map<int, String> answers = {};
-  late AnimationController _pulseController;
-  bool _isProcessing = false;
+class _SymptomQuestionnaireState extends State<SymptomQuestionnaire> {
+  final BackendApiService _api = BackendApiService();
+  final LocalStorageService _localStorage = LocalStorageService.instance;
 
-  final List<Map<String, dynamic>> questions = [
-    {
-      'id': 1,
-      'question': "How's Your Cycle Regularity?",
-      'options': ["Regular", "Irregular", "Absent", "Unpredictable"]
-    },
-    {
-      'id': 2,
-      'question': "Period Pain Level?",
-      'options': ["None", "Mild", "Moderate", "Severe"]
-    },
-    {
-      'id': 3,
-      'question': "Any Weight Changes?",
-      'options': ["None", "Gain", "Loss", "Fluctuating"]
-    },
-    {
-      'id': 4,
-      'question': "Fatigue Frequency?",
-      'options': ["Rarely", "Sometimes", "Often", "Always"]
-    },
-    {
-      'id': 5,
-      'question': "Mood Swing Pattern?",
-      'options': ["None", "Occasional", "Frequent", "Severe"]
-    },
-    {
-      'id': 6,
-      'question': "Hair Changes Noticed?",
-      'options': ["None", "Excessive Growth", "Hair Loss", "Both"]
-    },
-    {
-      'id': 7,
-      'question': "Sleep Quality Rating?",
-      'options': ["Good", "Fair", "Poor", "Very Poor"]
-    },
-    {
-      'id': 8,
-      'question': "Digestive Concerns?",
-      'options': ["None", "Bloating", "Constipation", "Severe"]
-    },
-    {
-      'id': 9,
-      'question': "Skin Condition Status?",
-      'options': ["Clear", "Occasional Acne", "Persistent Acne", "Severe"]
-    },
-    {
-      'id': 10,
-      'question': "Headache Frequency?",
-      'options': ["Rarely", "Monthly", "Weekly", "Daily"]
-    }
-  ];
+  List<QuestionnaireQuestion> _questions = [];
+  final Map<String, List<String>> _answers = {};
+  int _currentIndex = 0;
+
+  bool _isLoadingQuestions = true;
+  bool _isSubmitting = false;
+  String? _selectedDescription;
 
   @override
   void initState() {
     super.initState();
-    _pulseController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 2),
-    )..repeat(reverse: true);
+    _loadQuestionnaire();
   }
 
-  @override
-  void dispose() {
-    _pulseController.dispose();
-    super.dispose();
-  }
-
-  void handleAnswer(String option) {
+  Future<void> _loadQuestionnaire() async {
     setState(() {
-      answers[questions[currentIndex]['id']] = option;
+      _isLoadingQuestions = true;
     });
 
-    Future.delayed(const Duration(milliseconds: 300), () {
-      if (currentIndex < questions.length - 1) {
-        setState(() => currentIndex++);
-      } else {
-        setState(() => currentIndex++); // Trigger the "Completion" UI
-        _completeAssessment();
+    try {
+      final loaded = await _api.fetchQuestionnaire();
+      if (!mounted) {
+        return;
       }
+
+      setState(() {
+        _questions = loaded;
+        _isLoadingQuestions = false;
+      });
+    } catch (e) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _isLoadingQuestions = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to load questionnaire: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  QuestionnaireQuestion get _currentQuestion => _questions[_currentIndex];
+
+  List<String> get _currentAnswer => _answers[_currentQuestion.id] ?? const [];
+
+  bool get _isCurrentAnswered => _currentAnswer.isNotEmpty;
+
+  double get _progress {
+    if (_questions.isEmpty) {
+      return 0;
+    }
+    return ((_currentIndex + 1) / _questions.length).clamp(0.0, 1.0);
+  }
+
+  void _onOptionTap(QuestionnaireOption option) {
+    final question = _currentQuestion;
+    final current = List<String>.from(_answers[question.id] ?? const []);
+
+    if (question.isMultiSelect) {
+      if (current.contains(option.id)) {
+        current.remove(option.id);
+      } else {
+        current.add(option.id);
+      }
+    } else {
+      current
+        ..clear()
+        ..add(option.id);
+    }
+
+    setState(() {
+      _answers[question.id] = current;
+      _selectedDescription = option.description;
     });
   }
 
-  Future<void> _completeAssessment() async {
-    setState(() => _isProcessing = true);
-
-    // Convert answers into readable format
-    String formattedAnswers =
-        answers.entries.map((e) => "Q${e.key}: ${e.value}").join("\n");
-
-    // Call Groq service
-    final groqService = GroqService();
-
-    String aiReport = await groqService.sendMessage(
-      """
-You are a women's health AI specialist.
-
-Analyze the questionnaire responses and estimate the overall health risk.
-
-Responses:
-$formattedAnswers
-
-Generate the report in the following format.
-
-IMPORTANT:
-At the VERY TOP show:
-
-Overall Risk Probability: value between 0 and 1  
-Risk Category: No Risk / Low Risk / Moderate Risk / High Risk / Very High Risk
-
-Then continue with the report sections.
-
-Full structure:
-
-Overall Risk Probability: 0.xx  
-Risk Category: (No / Low / Moderate / High / Very High)
-
-1. Patient Summary
-Short summary of symptoms.
-
-2. Symptom Analysis
-Explain patterns in symptoms.
-
-3. Possible Conditions
-Mention possible women's health conditions if symptoms suggest them.
-
-4. Recommendations
-Medical or lifestyle recommendations.
-
-5. Lifestyle Advice
-Diet, sleep, and stress suggestions.
-
-6. Medical Disclaimer
-Mention that this is not a medical diagnosis.
-
-Keep the report clear and professional.
-""",
-      [],
-    );
-
-    setState(() => _isProcessing = false);
-
-    // Navigate to report page
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (_) => HealthReportPage(reportText: aiReport),
-      ),
-    );
+  void _showDescription(QuestionnaireOption option) {
+    setState(() {
+      _selectedDescription = option.description ??
+          'No additional description is available for this option.';
+    });
   }
 
-  void _goToDashboard() {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const DashboardPage()),
-    );
+  Future<void> _nextOrSubmit() async {
+    if (!_isCurrentAnswered) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please answer this question before continuing.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (_currentIndex < _questions.length - 1) {
+      setState(() {
+        _currentIndex += 1;
+        _selectedDescription = null;
+      });
+      return;
+    }
+
+    await _submitAssessment();
   }
 
-  double get progress =>
-      ((currentIndex) / questions.length).clamp(0.0, 1.0) * 100;
+  Future<void> _submitAssessment() async {
+    if (_isSubmitting) {
+      return;
+    }
+
+    if (_answers.length != _questions.length) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please answer all questions before submitting.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    try {
+      await _api.submitResponses(
+        userId: widget.userId,
+        selectedOptionIdsByQuestion: _answers,
+      );
+
+      final prediction = await _api.runPrediction(widget.userId);
+      final localUser = await _localStorage.findByUserId(widget.userId);
+
+      if (!mounted) {
+        return;
+      }
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => HealthReportPage(
+            userId: widget.userId,
+            predictionData: prediction,
+            localUser: localUser,
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to complete assessment: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -190,36 +200,61 @@ Keep the report clear and professional.
           ),
         ),
         child: SafeArea(
-          child: Column(
-            children: [
-              _buildHeader(),
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    children: [
-                      if (currentIndex < questions.length) ...[
-                        _buildQuestionCard(),
-                        const SizedBox(height: 24),
-                        _buildOptionsGrid(),
-                        const SizedBox(height: 20),
-                        _buildHelpfulTip(),
-                      ] else
-                        _buildCompletion(),
-                    ],
-                  ),
-                ),
-              ),
-              _buildFooter(),
-            ],
-          ),
+          child: _isLoadingQuestions
+              ? const Center(
+                  child: CircularProgressIndicator(color: Color(0xFFC85A7A)),
+                )
+              : _questions.isEmpty
+                  ? _buildEmptyState()
+                  : Column(
+                      children: [
+                        _buildHeader(),
+                        Expanded(
+                          child: SingleChildScrollView(
+                            padding: const EdgeInsets.all(20),
+                            child: Column(
+                              children: [
+                                _buildQuestionCard(),
+                                const SizedBox(height: 20),
+                                _buildOptionsList(),
+                                const SizedBox(height: 16),
+                                _buildDescriptionPanel(),
+                                const SizedBox(height: 16),
+                                _buildHelpfulTip(),
+                              ],
+                            ),
+                          ),
+                        ),
+                        _buildBottomActions(),
+                      ],
+                    ),
         ),
       ),
     );
   }
 
+  Widget _buildEmptyState() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Icon(Icons.assignment_late, size: 72, color: Color(0xFFC85A7A)),
+        const SizedBox(height: 12),
+        const Text(
+          'Questionnaire is not configured yet.',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 16),
+        ElevatedButton(
+          onPressed: _loadQuestionnaire,
+          child: const Text('Retry'),
+        ),
+      ],
+    );
+  }
+
   Widget _buildHeader() {
     return Container(
+      padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [Color(0xFFD4879C), Color(0xFFE5A1A1)],
@@ -227,228 +262,176 @@ Keep the report clear and professional.
         boxShadow: [
           BoxShadow(
             color: const Color(0xFFD4879C).withOpacity(0.3),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           )
         ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 56,
-                  height: 56,
-                  decoration: const BoxDecoration(
+      child: Column(
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.favorite, color: Colors.white, size: 28),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Question ${_currentIndex + 1} of ${_questions.length}',
+                  style: const TextStyle(
                     color: Colors.white,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.favorite,
-                    color: Color(0xFFD4879C),
-                    size: 28,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Symptom Assessment',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      if (currentIndex < questions.length) ...[
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            const Icon(Icons.auto_awesome,
-                                color: Colors.white, size: 16),
-                            const SizedBox(width: 6),
-                            Text(
-                              'Question ${currentIndex + 1} of 10',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: LinearProgressIndicator(
-                value: progress / 100,
-                backgroundColor: Colors.white.withOpacity(0.3),
-                color: Colors.white,
-                minHeight: 8,
               ),
-            ),
-            const SizedBox(height: 8),
-            Align(
-              alignment: Alignment.centerRight,
-              child: Text(
-                '${progress.round()}% Complete',
+              Text(
+                '${(_progress * 100).round()}%',
                 style: const TextStyle(
                   color: Colors.white,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: LinearProgressIndicator(
+              value: _progress,
+              minHeight: 8,
+              backgroundColor: Colors.white.withOpacity(0.3),
+              color: Colors.white,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildQuestionCard() {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
-          )
+          ),
         ],
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: const BoxDecoration(
-              color: Color(0xFFE5A1A1),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.person,
-              color: Colors.white,
-              size: 24,
+          Text(
+            _currentQuestion.category,
+            style: const TextStyle(
+              color: Color(0xFFC85A7A),
+              fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'HEALTH ASSISTANT',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFFD4879C),
-                    letterSpacing: 0.5,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  questions[currentIndex]['question'],
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF2D2D2D),
-                  ),
-                ),
-              ],
+          const SizedBox(height: 8),
+          Text(
+            _currentQuestion.text,
+            style: const TextStyle(
+              fontSize: 19,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF2D2D2D),
             ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            _currentQuestion.isMultiSelect
+                ? 'Select one or more options.'
+                : 'Select one option.',
+            style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildOptionsGrid() {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        childAspectRatio: 2.0,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-      ),
-      itemCount: questions[currentIndex]['options'].length,
-      itemBuilder: (context, index) {
-        final option = questions[currentIndex]['options'][index];
-        return InkWell(
-          onTap: () => handleAnswer(option),
-          child: ClipPath(
-            clipper: ParallelogramClipper(),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                border: Border.all(
-                  color: const Color(0xFFE5C4C4),
-                  width: 2.5,
-                ),
-              ),
-              child: Center(
-                child: Text(
-                  option,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 15,
-                    color: Color(0xFF2D2D2D),
+  Widget _buildOptionsList() {
+    return Column(
+      children: _currentQuestion.options.map((option) {
+        final selected = _currentAnswer.contains(option.id);
+        return Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          decoration: BoxDecoration(
+            color: selected ? const Color(0xFFFCE7F3) : Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: selected ? const Color(0xFFC85A7A) : const Color(0xFFF5D7E3),
+              width: selected ? 2 : 1.4,
+            ),
+          ),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(14),
+            onTap: () => _onOptionTap(option),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              child: Row(
+                children: [
+                  Icon(
+                    selected
+                        ? Icons.check_circle
+                        : (_currentQuestion.isMultiSelect
+                            ? Icons.radio_button_unchecked
+                            : Icons.circle_outlined),
+                    color: selected ? const Color(0xFFC85A7A) : Colors.grey,
                   ),
-                  textAlign: TextAlign.center,
-                ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      option.text,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'Option info',
+                    onPressed: () => _showDescription(option),
+                    icon: const Icon(
+                      Icons.info_outline,
+                      color: Color(0xFFC85A7A),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
         );
-      },
+      }).toList(),
     );
   }
 
-  Widget _buildHelpfulTip() {
+  Widget _buildDescriptionPanel() {
+    final text = (_selectedDescription == null || _selectedDescription!.isEmpty)
+        ? 'Tap an info icon to view option details here.'
+        : _selectedDescription!;
+
     return Container(
-      padding: const EdgeInsets.all(18),
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: const Color(0xFFFFF0F3),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFFE5C4C4).withOpacity(0.3),
-          width: 1.5,
-        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFF5D7E3)),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Icon(
-              Icons.auto_awesome,
-              color: Color(0xFFD4879C),
-              size: 20,
-            ),
-          ),
-          const SizedBox(width: 12),
-          const Expanded(
+          const Icon(Icons.info_outline, color: Color(0xFFC85A7A), size: 20),
+          const SizedBox(width: 10),
+          Expanded(
             child: Text(
-              "Tip: Answer based on your experiences over the past 3 months for more accurate insights.",
+              text,
               style: TextStyle(
                 fontSize: 13,
-                color: Color(0xFF666666),
+                color: Colors.grey.shade700,
                 height: 1.4,
               ),
             ),
@@ -458,92 +441,77 @@ Keep the report clear and professional.
     );
   }
 
-  Widget _buildCompletion() {
-    return Column(
-      children: [
-        const Icon(Icons.favorite, size: 80, color: Color(0xFFD4879C)),
-        const SizedBox(height: 16),
-        const Text(
-          "Assessment Complete!",
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFFD4879C),
-          ),
-        ),
-        const SizedBox(height: 20),
-        if (_isProcessing)
-          const CircularProgressIndicator(
-            color: Color(0xFFD4879C),
-          )
-        else
-          ElevatedButton(
-            onPressed: _goToDashboard,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFD4879C),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: const Text(
-              "Go to Dashboard",
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-
-  Widget _buildFooter() {
+  Widget _buildHelpfulTip() {
     return Container(
-      padding: const EdgeInsets.all(20),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFF5D7E3)),
+      ),
+      child: const Row(
         children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: const BoxDecoration(
-              color: Color(0xFFD4879C),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.favorite,
-              color: Colors.white,
-              size: 16,
-            ),
-          ),
-          const SizedBox(width: 10),
-          const Text(
-            "Backed By Medical Experts",
-            style: TextStyle(
-              fontWeight: FontWeight.w600,
-              color: Color(0xFFD4879C),
-              fontSize: 14,
+          Icon(Icons.auto_awesome, color: Color(0xFFC85A7A)),
+          SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Answer based on your recent health experience for better model predictions.',
+              style: TextStyle(fontSize: 13, color: Color(0xFF5D5D5D)),
             ),
           ),
         ],
       ),
     );
   }
-}
 
-class ParallelogramClipper extends CustomClipper<Path> {
-  @override
-  Path getClip(Size size) {
-    final path = Path();
-    path.moveTo(size.width * 0.08, 0);
-    path.lineTo(size.width, 0);
-    path.lineTo(size.width * 0.92, size.height);
-    path.lineTo(0, size.height);
-    path.close();
-    return path;
+  Widget _buildBottomActions() {
+    final isLast = _currentIndex == _questions.length - 1;
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 18),
+      child: Row(
+        children: [
+          if (_currentIndex > 0)
+            Expanded(
+              child: OutlinedButton(
+                onPressed: _isSubmitting
+                    ? null
+                    : () {
+                        setState(() {
+                          _currentIndex -= 1;
+                          _selectedDescription = null;
+                        });
+                      },
+                child: const Text('Previous'),
+              ),
+            ),
+          if (_currentIndex > 0) const SizedBox(width: 12),
+          Expanded(
+            flex: 2,
+            child: ElevatedButton(
+              onPressed: _isSubmitting ? null : _nextOrSubmit,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFC85A7A),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: _isSubmitting
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.4,
+                        color: Colors.white,
+                      ),
+                    )
+                  : Text(isLast ? 'Submit & Generate Report' : 'Next Question'),
+            ),
+          ),
+        ],
+      ),
+    );
   }
-
-  @override
-  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
 }
