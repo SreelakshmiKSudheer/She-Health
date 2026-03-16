@@ -7,8 +7,6 @@ router = APIRouter(prefix="/response", tags=["Response"])
 
 
 def _get_service() -> ResponseService:
-    if MongoDB.db is None:
-        raise HTTPException(status_code=500, detail="Database not connected")
     return ResponseService(MongoDB.db)
 
 

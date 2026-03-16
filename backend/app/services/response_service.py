@@ -1,15 +1,33 @@
+from copy import deepcopy
+from typing import Optional
+
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from app.schemas.response import SubmitResponse
 from fastapi import HTTPException
 from datetime import datetime
+from app.services.questionnaire_service import _OFFLINE_QUESTIONS
 
 _NO_ID = {"_id": 0}
 
 
 class ResponseService:
-    def __init__(self, db: AsyncIOMotorDatabase):
-        self.collection = db.get_collection("user_responses")
-        self.questions_collection = db.get_collection("questions")
+    _memory_responses: dict[str, dict] = {}
+
+    def __init__(self, db: Optional[AsyncIOMotorDatabase]):
+        self.collection = db.get_collection("user_responses") if db is not None else None
+        self.questions_collection = db.get_collection("questions") if db is not None else None
+
+    async def _get_question_docs(self) -> list[dict]:
+        if self.questions_collection is None:
+            return deepcopy(_OFFLINE_QUESTIONS)
+
+        cursor = self.questions_collection.find({}, _NO_ID)
+        return [doc async for doc in cursor]
+
+    async def _get_user_record(self, user_id: str) -> Optional[dict]:
+        if self.collection is None:
+            return self._memory_responses.get(user_id)
+        return await self.collection.find_one({"user_id": user_id}, _NO_ID)
 
     async def _validate_responses(self, responses: list) -> None:
         """Ensure all questionnaire questions are answered and options are valid."""
@@ -21,8 +39,8 @@ class ResponseService:
                 detail="Duplicate question_id entries found in submission",
             )
 
-        required_cursor = self.questions_collection.find({}, {"_id": 0, "id": 1})
-        required_question_ids = {doc["id"] async for doc in required_cursor}
+        question_docs = await self._get_question_docs()
+        required_question_ids = {doc["id"] for doc in question_docs}
         if not required_question_ids:
             raise HTTPException(
                 status_code=400,
@@ -37,10 +55,7 @@ class ResponseService:
                 detail=f"Missing answers for question_id(s): {sorted(missing_question_ids)}",
             )
 
-        cursor = self.questions_collection.find(
-            {"id": {"$in": question_ids}}, _NO_ID
-        )
-        found_questions = {q["id"]: q async for q in cursor}
+        found_questions = {q["id"]: q for q in question_docs if q["id"] in question_ids}
 
         missing_qids = set(question_ids) - set(found_questions)
         if missing_qids:
@@ -83,14 +98,14 @@ class ResponseService:
                     )
 
     async def assert_user_completed_questionnaire(self, user_id: str) -> None:
-        record = await self.collection.find_one({"user_id": user_id}, _NO_ID)
+        record = await self._get_user_record(user_id)
         if not record:
             raise HTTPException(
                 status_code=404, detail=f"No responses found for user '{user_id}'"
             )
 
-        required_cursor = self.questions_collection.find({}, {"_id": 0, "id": 1})
-        required_question_ids = {doc["id"] async for doc in required_cursor}
+        question_docs = await self._get_question_docs()
+        required_question_ids = {doc["id"] for doc in question_docs}
         answered_question_ids = {r["question_id"] for r in record.get("responses", [])}
 
         missing_question_ids = required_question_ids - answered_question_ids
@@ -105,6 +120,16 @@ class ResponseService:
 
     async def save_user_responses(self, data: SubmitResponse):
         await self._validate_responses(data.responses)
+        if self.collection is None:
+            existing = self._memory_responses.get(data.user_id, {})
+            self._memory_responses[data.user_id] = {
+                "user_id": data.user_id,
+                "responses": [r.model_dump() for r in data.responses],
+                "updated_at": datetime.utcnow(),
+                "created_at": existing.get("created_at", datetime.utcnow()),
+            }
+            return {"status": "success", "message": "Responses saved"}
+
         await self.collection.update_one(
             {"user_id": data.user_id},
             {
@@ -119,7 +144,7 @@ class ResponseService:
         return {"status": "success", "message": "Responses saved"}
 
     async def get_user_responses(self, user_id: str):
-        record = await self.collection.find_one({"user_id": user_id}, _NO_ID)
+        record = await self._get_user_record(user_id)
         if not record:
             raise HTTPException(
                 status_code=404, detail=f"No responses found for user '{user_id}'"
@@ -127,15 +152,15 @@ class ResponseService:
         return record
 
     async def get_user_answers_as_feature_dict(self, user_id: str) -> dict:
-        record = await self.collection.find_one({"user_id": user_id}, _NO_ID)
+        record = await self._get_user_record(user_id)
         if not record:
             return {}
 
         # Initialize all known questionnaire-mapped features to 0.0 so that
         # non-selected options are treated as valid zero values, not missing values.
         feature_vector = {}
-        all_questions_cursor = self.questions_collection.find({}, _NO_ID)
-        async for question_doc in all_questions_cursor:
+        all_question_docs = await self._get_question_docs()
+        for question_doc in all_question_docs:
             for mapping in question_doc.get("direct_mappings") or []:
                 feature_name = mapping.get("feature_name")
                 if feature_name:
@@ -149,10 +174,11 @@ class ResponseService:
         # Build a question lookup so we can correctly process both option mappings
         # and direct input mappings for each answered question.
         response_question_ids = [r["question_id"] for r in record.get("responses", [])]
-        question_cursor = self.questions_collection.find(
-            {"id": {"$in": response_question_ids}}, _NO_ID
-        )
-        questions = {q["id"]: q async for q in question_cursor}
+        questions = {
+            q["id"]: q
+            for q in all_question_docs
+            if q["id"] in response_question_ids
+        }
 
         def _to_float(value, default=0.0):
             try:

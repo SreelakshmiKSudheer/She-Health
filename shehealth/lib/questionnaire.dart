@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'models/app_models.dart';
 import 'report.dart';
 import 'services/backend_api_service.dart';
+import 'services/groq_service.dart';
 import 'services/local_storage_service.dart';
 
 class SymptomQuestionnaire extends StatefulWidget {
@@ -17,6 +18,7 @@ class SymptomQuestionnaire extends StatefulWidget {
 class _SymptomQuestionnaireState extends State<SymptomQuestionnaire> {
   final BackendApiService _api = BackendApiService();
   final LocalStorageService _localStorage = LocalStorageService.instance;
+  final GroqService _groqService = GroqService();
 
   List<QuestionnaireQuestion> _questions = [];
   final Map<String, List<String>> _answers = {};
@@ -154,6 +156,7 @@ class _SymptomQuestionnaireState extends State<SymptomQuestionnaire> {
 
       final prediction = await _api.runPrediction(widget.userId);
       final localUser = await _localStorage.findByUserId(widget.userId);
+      final llmReport = await _generateLlmReport(prediction, localUser);
 
       if (!mounted) {
         return;
@@ -166,6 +169,7 @@ class _SymptomQuestionnaireState extends State<SymptomQuestionnaire> {
             userId: widget.userId,
             predictionData: prediction,
             localUser: localUser,
+            reportText: llmReport,
           ),
         ),
       );
@@ -186,6 +190,124 @@ class _SymptomQuestionnaireState extends State<SymptomQuestionnaire> {
         });
       }
     }
+  }
+
+  Future<String?> _generateLlmReport(
+    Map<String, dynamic> prediction,
+    LocalUserProfile? localUser,
+  ) async {
+    try {
+      final raw = prediction['predictions'];
+      if (raw is! Map<String, dynamic> || raw.isEmpty) {
+        return null;
+      }
+
+      final ranked = raw.entries.map((entry) {
+        final data = entry.value is Map<String, dynamic>
+            ? entry.value as Map<String, dynamic>
+            : <String, dynamic>{};
+        final probability = (data['probability'] as num? ?? 0).toDouble();
+        final label = data['label'] as String? ?? 'Unknown';
+        return {
+          'condition': entry.key,
+          'probability': probability,
+          'label': label,
+        };
+      }).toList()
+        ..sort((a, b) => ((b['probability'] as double)
+            .compareTo(a['probability'] as double)));
+
+      final top = ranked.take(3).map((item) {
+        final probability = (item['probability'] as double).toStringAsFixed(2);
+        return '${item['condition']}: $probability (${item['label']})';
+      }).join('; ');
+
+      final userSnapshot = [
+        if (localUser?.fullName != null) 'Name: ${localUser!.fullName}',
+        if (localUser?.activityLevel != null)
+          'Activity level: ${localUser!.activityLevel}',
+        if (localUser?.maritalStatus != null)
+          'Marital status: ${localUser!.maritalStatus}',
+      ].join(', ');
+
+      final prompt =
+          '''Create a detailed women's health assessment explanation based on prediction output.
+    Write 220-320 words in clear, supportive language.
+    Use these exact section headers:
+    Summary:
+    What the risk scores mean:
+    Possible contributing factors from current profile:
+    Action plan for next 2 weeks:
+    When to seek medical review:
+    Medical disclaimer:
+    Under "What the risk scores mean", explain top 3 risks with one line each.
+    Avoid diagnosis, avoid fear-based language, and avoid mentioning model limitations.
+    Top risk summary: $top.
+    User context: ${userSnapshot.isEmpty ? 'Not available' : userSnapshot}.''';
+
+      final result = await _groqService.sendSimpleMessage(prompt);
+      final cleaned = result.trim();
+      if (cleaned.isEmpty ||
+          cleaned
+              .startsWith('I apologize, but I\'m having trouble connecting')) {
+        return _buildDetailedFallbackReport(ranked, localUser);
+      }
+      return cleaned;
+    } catch (_) {
+      return _buildDetailedFallbackReport(
+          const <Map<String, dynamic>>[], localUser);
+    }
+  }
+
+  String _buildDetailedFallbackReport(
+    List<Map<String, dynamic>> ranked,
+    LocalUserProfile? localUser,
+  ) {
+    final top = ranked.take(3).toList();
+    String topLine(int index) {
+      if (index >= top.length) {
+        return '- Not enough scored conditions available yet.';
+      }
+      final item = top[index];
+      final condition = item['condition'] as String? ?? 'Condition';
+      final probability = (item['probability'] as num? ?? 0).toDouble();
+      final label = item['label'] as String? ?? 'Unknown';
+      return '- $condition: score ${probability.toStringAsFixed(2)} ($label). This indicates relative priority for monitoring, not a diagnosis.';
+    }
+
+    final profileFactors = <String>[
+      if ((localUser?.activityLevel ?? '').isNotEmpty)
+        'Activity level: ${localUser!.activityLevel}',
+      if ((localUser?.maritalStatus ?? '').isNotEmpty)
+        'Marital status: ${localUser!.maritalStatus}',
+      if (localUser?.hasChronicConditions == true)
+        'History of chronic conditions reported',
+      if (localUser?.hasAllergies == true) 'Allergy history reported',
+    ];
+
+    return '''Summary:
+Your assessment suggests a mixed risk profile, with some conditions needing closer follow-up than others. These scores help prioritize preventive actions and discussions with a clinician.
+
+What the risk scores mean:
+${topLine(0)}
+${topLine(1)}
+${topLine(2)}
+
+Possible contributing factors from current profile:
+${profileFactors.isEmpty ? '- Limited profile data is available, so this explanation is conservative.' : profileFactors.map((f) => '- $f').join('\n')}
+
+Action plan for next 2 weeks:
+- Track key symptoms daily (pain, cycle pattern, mood, fatigue) in one place.
+- Maintain hydration, regular sleep, and consistent meals with fewer processed foods.
+- Add light-to-moderate physical activity most days if comfortable.
+- Bring this report and symptom trends to your next healthcare consultation.
+
+When to seek medical review:
+- Seek timely review if symptoms worsen, become persistent, or affect daily functioning.
+- Seek urgent care for severe pain, heavy bleeding, dizziness, fainting, or new alarming symptoms.
+
+Medical disclaimer:
+This report is a screening-oriented interpretation and is not a medical diagnosis. Clinical examination and professional medical advice are required for decisions about tests or treatment.''';
   }
 
   @override
@@ -362,7 +484,8 @@ class _SymptomQuestionnaireState extends State<SymptomQuestionnaire> {
             color: selected ? const Color(0xFFFCE7F3) : Colors.white,
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: selected ? const Color(0xFFC85A7A) : const Color(0xFFF5D7E3),
+              color:
+                  selected ? const Color(0xFFC85A7A) : const Color(0xFFF5D7E3),
               width: selected ? 2 : 1.4,
             ),
           ),

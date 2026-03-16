@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 
@@ -13,9 +14,22 @@ class BackendApiService {
   String get _baseUrl {
     final configured = dotenv.env['BACKEND_BASE_URL']?.trim();
     if (configured != null && configured.isNotEmpty) {
-      return configured;
+      return configured.endsWith('/')
+          ? configured.substring(0, configured.length - 1)
+          : configured;
     }
-    return 'http://10.0.2.2:8000';
+
+    if (kIsWeb) {
+      final host = Uri.base.host;
+      final resolvedHost = host == 'localhost' ? '127.0.0.1' : host;
+      return '${Uri.base.scheme}://$resolvedHost:8000';
+    }
+
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      return 'http://10.0.2.2:8000';
+    }
+
+    return 'http://localhost:8000';
   }
 
   Uri _uri(String path) => Uri.parse('$_baseUrl$path');
@@ -49,7 +63,8 @@ class BackendApiService {
       return;
     }
 
-    if (response.statusCode == 400 && response.body.contains('already registered')) {
+    if (response.statusCode == 400 &&
+        response.body.contains('already registered')) {
       final updateResponse = await _client.put(
         _uri('/users/$userId'),
         headers: {'Content-Type': 'application/json'},

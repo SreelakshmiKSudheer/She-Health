@@ -54,7 +54,8 @@ class _AuthPageState extends State<AuthPage> {
     }
 
     if (isLogin) {
-      if (emailController.text.trim().isEmpty || passwordController.text.isEmpty) {
+      if (emailController.text.trim().isEmpty ||
+          passwordController.text.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Please enter email and password.'),
@@ -154,6 +155,17 @@ class _AuthPageState extends State<AuthPage> {
               phone: localUser.phone,
               password: localUser.password,
             ),
+          ),
+        );
+      } catch (e) {
+        if (!mounted) {
+          return;
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Unable to create account: $e'),
+            backgroundColor: Colors.red,
           ),
         );
       } finally {
@@ -256,7 +268,7 @@ class _AuthPageState extends State<AuthPage> {
                   color: Colors.white,
                   fontSize: 28,
                   fontWeight: FontWeight.bold)),
-          Text("Women's Health Predictive System",
+          Text("Women's Health Assistance System",
               style: TextStyle(color: Colors.white, fontSize: 14)),
         ],
       ),

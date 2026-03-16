@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'auth_page.dart';
+import 'models/app_models.dart';
+import 'services/local_storage_service.dart';
+import 'services/session_service.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -16,10 +19,31 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _healthTipNotifications = false;
   bool _dataSync = true;
 
-  final TextEditingController _nameController =
-      TextEditingController(text: 'Sarah Anderson');
-  final TextEditingController _emailController =
-      TextEditingController(text: 'sarah@example.com');
+  final LocalStorageService _localStorage = LocalStorageService.instance;
+  final SessionService _sessionService = SessionService();
+
+  LocalUserProfile? _localUser;
+
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUser();
+  }
+
+  Future<void> _loadUser() async {
+    final userId = await _sessionService.getCurrentUserId();
+    if (userId == null) return;
+    final user = await _localStorage.findByUserId(userId);
+    if (!mounted || user == null) return;
+    setState(() {
+      _localUser = user;
+      _nameController.text = user.fullName;
+      _emailController.text = user.email;
+    });
+  }
 
   @override
   void dispose() {
@@ -259,9 +283,15 @@ class _SettingsPageState extends State<SettingsPage> {
                   style: const TextStyle(color: Colors.grey, fontSize: 13),
                 ),
                 const SizedBox(height: 2),
-                const Text(
-                  'ID: SH2024001',
-                  style: TextStyle(color: Colors.grey, fontSize: 12),
+                if (_localUser?.phone != null)
+                  Text(
+                    _localUser!.phone,
+                    style: const TextStyle(color: Colors.grey, fontSize: 12),
+                ),
+                if (_localUser?.dob != null)
+                  Text(
+                    'DOB: ${_localUser!.dob}',
+                    style: const TextStyle(color: Colors.grey, fontSize: 12),
                 ),
               ],
             ),
@@ -381,8 +411,10 @@ class _SettingsPageState extends State<SettingsPage> {
                       style: TextStyle(color: Colors.grey)),
                 ),
                 ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async {
                     Navigator.pop(ctx);
+                    await _sessionService.clearCurrentUser();
+                    if (!mounted) return;
                     Navigator.pushAndRemoveUntil(
                       context,
                       MaterialPageRoute(

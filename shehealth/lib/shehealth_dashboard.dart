@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
 import 'report.dart';
 import 'questionnaire.dart';
 import 'chatbot.dart';
@@ -33,6 +34,10 @@ class _DashboardPageState extends State<DashboardPage> {
   String _dailyTip = "Loading today's health tip...";
   bool _isTipLoading = true;
   bool _isDashboardLoading = true;
+
+  // Period card state
+  String _nextPeriodDateText = '--';
+  String _daysUntilPeriodText = '--';
 
   LocalUserProfile? _localUser;
   Map<String, dynamic>? _latestPrediction;
@@ -80,6 +85,8 @@ class _DashboardPageState extends State<DashboardPage> {
           builder: (context) => const PeriodCalendarWidget(),
         ),
       );
+      // Reload period data so the dashboard card refreshes
+      if (mounted) await _loadDashboardData();
     }
 
     if (index == 3) {
@@ -128,6 +135,73 @@ class _DashboardPageState extends State<DashboardPage> {
         prediction = null;
       }
 
+      // Load period data and compute next period
+      String nextPeriodText = '--';
+      String daysUntilText = '--';
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final raw = prefs.getString(kPeriodDataPrefsKey);
+        if (raw != null) {
+          final data = jsonDecode(raw) as Map<String, dynamic>;
+          final year = data['year'] as int?;
+          final month = data['month'] as int?;
+          final rawDays = data['days'];
+          final days = rawDays is List
+              ? rawDays
+                  .map((e) {
+                    if (e is num) {
+                      return e.toInt();
+                    }
+                    if (e is String) {
+                      return int.tryParse(e);
+                    }
+                    return null;
+                  })
+                  .whereType<int>()
+                  .toList()
+              : <int>[];
+          if (year != null && month != null && days.isNotEmpty) {
+            final lastDayOfMonth = DateTime(year, month + 1, 0).day;
+            final validDays = days
+                .where((d) => d >= 1 && d <= lastDayOfMonth)
+                .toSet()
+                .toList()
+              ..sort();
+            if (validDays.isEmpty) {
+              throw Exception('No valid saved period days');
+            }
+
+            final periodStart = DateTime(year, month, validDays.first);
+            final today = DateTime.now();
+            final todayDate = DateTime(today.year, today.month, today.day);
+
+            var nextPeriod = periodStart.add(const Duration(days: 28));
+            while (nextPeriod.isBefore(todayDate)) {
+              nextPeriod = nextPeriod.add(const Duration(days: 28));
+            }
+
+            final diff = nextPeriod.difference(todayDate).inDays;
+            const monthNames = [
+              'Jan',
+              'Feb',
+              'Mar',
+              'Apr',
+              'May',
+              'Jun',
+              'Jul',
+              'Aug',
+              'Sep',
+              'Oct',
+              'Nov',
+              'Dec'
+            ];
+            nextPeriodText =
+                '${monthNames[nextPeriod.month - 1]} ${nextPeriod.day}, ${nextPeriod.year}';
+            daysUntilText = diff > 0 ? '$diff days' : 'Today';
+          }
+        }
+      } catch (_) {}
+
       if (!mounted) {
         return;
       }
@@ -136,6 +210,8 @@ class _DashboardPageState extends State<DashboardPage> {
         _localUser = localUser;
         _latestPrediction = prediction;
         _isDashboardLoading = false;
+        _nextPeriodDateText = nextPeriodText;
+        _daysUntilPeriodText = daysUntilText;
       });
     } catch (_) {
       if (!mounted) {
@@ -148,9 +224,15 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Future<void> _openLatestReport() async {
-    final userId = _localUser?.userId ?? await _sessionService.getCurrentUserId();
+    final userId =
+        _localUser?.userId ?? await _sessionService.getCurrentUserId();
     if (!mounted) {
       return;
+    }
+
+    String? llmReport;
+    if (_latestPrediction != null) {
+      llmReport = await _generateLlmReportForPrediction(_latestPrediction!);
     }
 
     await Navigator.push(
@@ -162,10 +244,106 @@ class _DashboardPageState extends State<DashboardPage> {
           localUser: _localUser,
           reportText: _latestPrediction == null
               ? 'No report available yet. Complete the questionnaire to generate your first assessment.'
-              : null,
+              : llmReport,
         ),
       ),
     );
+  }
+
+  Future<String?> _generateLlmReportForPrediction(
+    Map<String, dynamic> prediction,
+  ) async {
+    try {
+      final raw = prediction['predictions'];
+      if (raw is! Map<String, dynamic> || raw.isEmpty) {
+        return null;
+      }
+
+      final ranked = raw.entries.map((entry) {
+        final value = entry.value is Map<String, dynamic>
+            ? entry.value as Map<String, dynamic>
+            : <String, dynamic>{};
+        final probability = (value['probability'] as num? ?? 0).toDouble();
+        final label = value['label'] as String? ?? 'Unknown';
+        return {
+          'condition': entry.key,
+          'probability': probability,
+          'label': label,
+        };
+      }).toList()
+        ..sort((a, b) => ((b['probability'] as double)
+            .compareTo(a['probability'] as double)));
+
+      final top = ranked.take(3).map((item) {
+        final probability = (item['probability'] as double).toStringAsFixed(2);
+        return '${item['condition']}: $probability (${item['label']})';
+      }).join('; ');
+
+      final prompt =
+          '''Create a detailed women's health report from model predictions.
+    Write 220-320 words in clear, supportive language.
+    Use these exact section headers:
+    Summary:
+    What the risk scores mean:
+    Possible contributing factors from current profile:
+    Action plan for next 2 weeks:
+    When to seek medical review:
+    Medical disclaimer:
+    Under "What the risk scores mean", explain top 3 risks with one line each.
+    Avoid diagnosis and avoid fear-based language.
+    Prediction summary: $top.''';
+
+      final result = await _groqService.sendSimpleMessage(prompt);
+      final cleaned = result.trim();
+      if (cleaned.isEmpty ||
+          cleaned
+              .startsWith('I apologize, but I\'m having trouble connecting')) {
+        return _buildDetailedFallbackReport(ranked);
+      }
+      return cleaned;
+    } catch (_) {
+      return _buildDetailedFallbackReport(const <Map<String, dynamic>>[]);
+    }
+  }
+
+  String _buildDetailedFallbackReport(List<Map<String, dynamic>> ranked) {
+    final top = ranked.take(3).toList();
+    String topLine(int index) {
+      if (index >= top.length) {
+        return '- Not enough scored conditions available yet.';
+      }
+      final item = top[index];
+      final condition = item['condition'] as String? ?? 'Condition';
+      final probability = (item['probability'] as num? ?? 0).toDouble();
+      final label = item['label'] as String? ?? 'Unknown';
+      return '- $condition: score ${probability.toStringAsFixed(2)} ($label). This score shows relative monitoring priority and is not a diagnosis.';
+    }
+
+    return '''Summary:
+Your current assessment indicates areas to monitor more closely while continuing daily preventive care. These results are intended to support planning and early action.
+
+What the risk scores mean:
+${topLine(0)}
+${topLine(1)}
+${topLine(2)}
+
+Possible contributing factors from current profile:
+- Symptoms and lifestyle patterns can influence relative risk scores.
+- Incomplete or changing symptom history can shift scores over time.
+- Regular tracking improves the reliability of trend interpretation.
+
+Action plan for next 2 weeks:
+- Record cycle details, pain level, mood, energy, and sleep each day.
+- Maintain hydration, balanced meals, and consistent rest schedule.
+- Include regular light exercise and stress-management practices.
+- Review this summary with a healthcare professional for personalized advice.
+
+When to seek medical review:
+- Seek timely review if symptoms become more frequent, severe, or persistent.
+- Seek urgent care for severe pain, heavy bleeding, fainting, or sudden worsening.
+
+Medical disclaimer:
+This report is a screening-oriented interpretation and not a clinical diagnosis. A qualified healthcare professional should guide testing and treatment decisions.''';
   }
 
   Future<void> _fetchDailyTip() async {
@@ -337,7 +515,8 @@ class _DashboardPageState extends State<DashboardPage> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => SymptomQuestionnaire(userId: userId),
+                          builder: (context) =>
+                              SymptomQuestionnaire(userId: userId),
                         ),
                       );
                     },
@@ -586,7 +765,7 @@ class _DashboardPageState extends State<DashboardPage> {
                         ),
                       ),
                       Text(
-                        'Women\'s Health Predictive System',
+                        'Women\'s Health Assistance System',
                         style: TextStyle(color: Colors.white70, fontSize: 12),
                       ),
                     ],
@@ -621,9 +800,10 @@ class _DashboardPageState extends State<DashboardPage> {
                             email: user.email,
                             phone: user.phone,
                             password: user.password,
+                            existingProfile: user,
                           ),
                         ),
-                      );
+                      ).then((_) => _loadDashboardData());
                     },
                     child: Container(
                       padding: const EdgeInsets.symmetric(
@@ -637,9 +817,18 @@ class _DashboardPageState extends State<DashboardPage> {
                           CircleAvatar(
                             radius: 16,
                             backgroundColor: Colors.white,
-                            child: const Text(
-                              'SA',
-                              style: TextStyle(
+                            child: Text(
+                              _localUser != null
+                                  ? _localUser!.fullName
+                                      .trim()
+                                      .split(' ')
+                                      .where((e) => e.isNotEmpty)
+                                      .map((e) => e[0])
+                                      .take(2)
+                                      .join()
+                                      .toUpperCase()
+                                  : '?',
+                              style: const TextStyle(
                                 color: Color(0xFFE59393),
                                 fontWeight: FontWeight.bold,
                                 fontSize: 12,
@@ -772,7 +961,9 @@ class _DashboardPageState extends State<DashboardPage> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      _latestPrediction == null ? 'Last updated: --' : 'Last updated: Recent',
+                      _latestPrediction == null
+                          ? 'Last updated: --'
+                          : 'Last updated: Recent',
                       style: const TextStyle(color: Colors.grey, fontSize: 12),
                     ),
                   ],
@@ -831,9 +1022,9 @@ class _DashboardPageState extends State<DashboardPage> {
                               color: Colors.white.withOpacity(0.2),
                               borderRadius: BorderRadius.circular(20),
                             ),
-                            child: const Text(
-                              '5 days',
-                              style: TextStyle(
+                            child: Text(
+                              _daysUntilPeriodText,
+                              style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 12,
@@ -848,18 +1039,21 @@ class _DashboardPageState extends State<DashboardPage> {
                         style: TextStyle(color: Colors.white70, fontSize: 14),
                       ),
                       const SizedBox(height: 4),
-                      const Text(
-                        'Oct 17, 2025',
-                        style: TextStyle(
+                      Text(
+                        _nextPeriodDateText,
+                        style: const TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
                         ),
                       ),
                       const SizedBox(height: 4),
-                      const Text(
-                        'Predicted date',
-                        style: TextStyle(color: Colors.white70, fontSize: 12),
+                      Text(
+                        _nextPeriodDateText == '--'
+                            ? 'Log a period to predict'
+                            : 'Predicted date (+28 days)',
+                        style: const TextStyle(
+                            color: Colors.white70, fontSize: 12),
                       ),
                     ],
                   ),

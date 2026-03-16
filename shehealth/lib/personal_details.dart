@@ -13,6 +13,9 @@ class PersonalDetailsPage extends StatefulWidget {
   final String phone;
   final String password;
 
+  /// When non-null the page opens in edit/view mode with fields pre-filled.
+  final LocalUserProfile? existingProfile;
+
   const PersonalDetailsPage({
     super.key,
     required this.userId,
@@ -20,6 +23,7 @@ class PersonalDetailsPage extends StatefulWidget {
     required this.email,
     required this.phone,
     required this.password,
+    this.existingProfile,
   });
 
   @override
@@ -78,6 +82,26 @@ class _PersonalDetailsPageState extends State<PersonalDetailsPage> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    final p = widget.existingProfile;
+    if (p != null) {
+      _dobController.text = p.dob ?? '';
+      _heightController.text =
+          p.heightCm != null ? p.heightCm!.toStringAsFixed(1) : '';
+      _weightController.text =
+          p.weightKg != null ? p.weightKg!.toStringAsFixed(1) : '';
+      _emergencyContactController.text = p.emergencyContact ?? '';
+      _selectedBloodGroup = p.bloodGroup;
+      _selectedMaritalStatus = p.maritalStatus;
+      _selectedActivityLevel = p.activityLevel;
+      _hasAllergies = p.hasAllergies;
+      _hasChronicConditions = p.hasChronicConditions;
+      _isOnMedication = p.isOnMedication;
+    }
+  }
+
+  @override
   void dispose() {
     _dobController.dispose();
     _weightController.dispose();
@@ -128,6 +152,18 @@ class _PersonalDetailsPageState extends State<PersonalDetailsPage> {
     }
   }
 
+  String _friendlySaveError(Object error) {
+    final message = error.toString();
+    if (message.contains('Failed to fetch') ||
+        message.contains('ClientException')) {
+      return 'Unable to connect to the SheHealth server. Please make sure the backend is running.';
+    }
+    if (message.startsWith('Exception: ')) {
+      return message.substring('Exception: '.length);
+    }
+    return 'Failed to save profile. Please try again.';
+  }
+
   Future<void> _submitDetails() async {
     if (_isSaving) {
       return;
@@ -143,7 +179,8 @@ class _PersonalDetailsPageState extends State<PersonalDetailsPage> {
         _selectedMaritalStatus == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please complete date of birth, height, weight, and marital status.'),
+          content: Text(
+              'Please complete date of birth, height, weight, and marital status.'),
           backgroundColor: Colors.red,
         ),
       );
@@ -200,12 +237,23 @@ class _PersonalDetailsPageState extends State<PersonalDetailsPage> {
         return;
       }
 
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => SymptomQuestionnaire(userId: widget.userId),
-        ),
-      );
+      if (widget.existingProfile != null) {
+        // Edit mode: just go back with success message
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Profile updated successfully.'),
+            backgroundColor: Color(0xFF4CAF50),
+          ),
+        );
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => SymptomQuestionnaire(userId: widget.userId),
+          ),
+        );
+      }
     } catch (e) {
       if (!mounted) {
         return;
@@ -213,7 +261,7 @@ class _PersonalDetailsPageState extends State<PersonalDetailsPage> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Failed to save profile: $e'),
+          content: Text(_friendlySaveError(e)),
           backgroundColor: Colors.red,
         ),
       );
@@ -238,8 +286,8 @@ class _PersonalDetailsPageState extends State<PersonalDetailsPage> {
       final now = DateTime.now();
 
       var age = now.year - birthDate.year;
-      final hasBirthdayPassed =
-          now.month > birthDate.month || (now.month == birthDate.month && now.day >= birthDate.day);
+      final hasBirthdayPassed = now.month > birthDate.month ||
+          (now.month == birthDate.month && now.day >= birthDate.day);
       if (!hasBirthdayPassed) {
         age -= 1;
       }

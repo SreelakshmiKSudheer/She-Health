@@ -8,8 +8,6 @@ router = APIRouter(prefix="/users", tags=["Users"])
 
 # This ensures the service always has the latest MongoDB connection
 async def get_user_service():
-    if MongoDB.db is None:
-        raise HTTPException(status_code=500, detail="Database not initialized")
     return UserService(MongoDB.db)
 
 @router.post("/", response_model=UserResponse)

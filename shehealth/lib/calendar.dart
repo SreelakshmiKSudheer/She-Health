@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
 import 'dart:math' as math;
+import 'package:shared_preferences/shared_preferences.dart';
+
+/// Shared key so the dashboard can also read saved period data.
+const String kPeriodDataPrefsKey = 'period_days_v1';
 
 class PeriodCalendarWidget extends StatefulWidget {
   const PeriodCalendarWidget({Key? key}) : super(key: key);
@@ -30,6 +35,7 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
   @override
   void initState() {
     super.initState();
+    _loadPeriodData();
     _pulseController = AnimationController(
       duration: const Duration(seconds: 2),
       vsync: this,
@@ -43,6 +49,40 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
   void dispose() {
     _pulseController.dispose();
     super.dispose();
+  }
+
+  // ── Period persistence ───────────────────────────────────────────────────
+
+  Future<void> _loadPeriodData() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(kPeriodDataPrefsKey);
+      if (raw == null) return;
+      final data = jsonDecode(raw) as Map<String, dynamic>;
+      final year = data['year'] as int?;
+      final month = data['month'] as int?;
+      final days = (data['days'] as List?)?.cast<int>() ?? [];
+      if (year == null || month == null) return;
+      if (!mounted) return;
+      setState(() {
+        selectedDate = DateTime(year, month, 1);
+        periodDays = days;
+      });
+    } catch (_) {}
+  }
+
+  Future<void> _savePeriodData() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(
+        kPeriodDataPrefsKey,
+        jsonEncode({
+          'year': selectedDate.year,
+          'month': selectedDate.month,
+          'days': List<int>.from(periodDays),
+        }),
+      );
+    } catch (_) {}
   }
 
   void _changeMonth(int months) {
@@ -104,6 +144,7 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
                 periodDays.add(day);
               }
             });
+            _savePeriodData();
           },
           onMonthChanged: (date) {
             setState(() {
@@ -935,6 +976,7 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
               setState(() {
                 if (isPeriodDay) { periodDays.remove(day); } else { periodDays.add(day); }
               });
+              _savePeriodData();
             },
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 300),

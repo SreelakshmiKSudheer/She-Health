@@ -1,3 +1,4 @@
 {
-  "terminal.integrated.cwd": "${workspaceFolder}/shehealth"
+  "terminal.integrated.cwd": "${workspaceFolder}/shehealth",
+  "cmake.sourceDirectory": "C:/major project/She-Health/shehealth/linux"
 }
