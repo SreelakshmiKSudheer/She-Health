@@ -162,7 +162,10 @@ class QuestionnaireService:
 
     async def list_all_questions(self):
         if self.collection is None:
-            return deepcopy(_OFFLINE_QUESTIONS)
+            raise HTTPException(
+                status_code=503,
+                detail="MongoDB is not connected. Questionnaire must be fetched from database.",
+            )
 
         cursor = self.collection.find({}, _NO_ID).sort("priority", 1)
         questions = await cursor.to_list(length=200)
@@ -173,10 +176,10 @@ class QuestionnaireService:
 
     async def get_question(self, q_id: str):
         if self.collection is None:
-            for question in _OFFLINE_QUESTIONS:
-                if question["id"] == q_id:
-                    return deepcopy(question)
-            return None
+            raise HTTPException(
+                status_code=503,
+                detail="MongoDB is not connected. Questionnaire must be fetched from database.",
+            )
 
         q = await self.collection.find_one({"id": q_id}, _NO_ID)
         if q and q.get("options") is None:

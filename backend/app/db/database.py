@@ -1,5 +1,6 @@
 import os
 import motor.motor_asyncio
+import certifi
 from pymongo.server_api import ServerApi
 from dotenv import load_dotenv
 
@@ -13,6 +14,10 @@ class MongoDB:
     async def connect_to_mongo(cls):
         mongodb_url = os.getenv("MONGODB_URL")
         db_name = os.getenv("DB_NAME", "She_Health")
+        allow_invalid_tls = (
+            os.getenv("MONGODB_TLS_ALLOW_INVALID_CERTS", "false").strip().lower()
+            in {"1", "true", "yes", "y"}
+        )
         if not mongodb_url:
             cls.client = None
             cls.db = None
@@ -23,6 +28,9 @@ class MongoDB:
             cls.client = motor.motor_asyncio.AsyncIOMotorClient(
                 mongodb_url,
                 server_api=ServerApi(version="1", strict=True, deprecation_errors=True),
+                tls=True,
+                tlsCAFile=certifi.where(),
+                tlsAllowInvalidCertificates=allow_invalid_tls,
                 serverSelectionTimeoutMS=5000,
                 connectTimeoutMS=5000,
                 socketTimeoutMS=5000,
