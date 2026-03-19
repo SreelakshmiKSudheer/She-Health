@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException
-from app.schemas.response import SubmitResponse, UserResponsesOut
+from app.schemas.response import PartialSubmitResponse, SubmitResponse, UserResponsesOut
 from app.services.response_service import ResponseService
 from app.db.database import MongoDB
 
@@ -13,6 +13,11 @@ def _get_service() -> ResponseService:
 @router.post("/submit")
 async def submit_user_responses(data: SubmitResponse):
     return await _get_service().save_user_responses(data)
+
+
+@router.patch("/update")
+async def update_user_responses(data: PartialSubmitResponse):
+    return await _get_service().update_user_responses(data)
 
 
 @router.get("/{user_id}", response_model=UserResponsesOut)

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'report.dart';
-import 'questionnaire.dart';
+import 'symptom_update_page.dart';
 import 'chatbot.dart';
 import 'calendar.dart';
 import 'dietplan.dart';
@@ -515,8 +515,7 @@ This report is a screening-oriented interpretation and not a clinical diagnosis.
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) =>
-                              SymptomQuestionnaire(userId: userId),
+                          builder: (context) => SymptomUpdatePage(userId: userId),
                         ),
                       );
                     },

@@ -2,7 +2,7 @@ from copy import deepcopy
 from typing import Optional
 
 from motor.motor_asyncio import AsyncIOMotorDatabase
-from app.schemas.response import SubmitResponse
+from app.schemas.response import PartialSubmitResponse, SubmitResponse
 from fastapi import HTTPException
 from datetime import datetime
 from app.services.questionnaire_service import _OFFLINE_QUESTIONS
@@ -17,20 +17,38 @@ class ResponseService:
         self.collection = db.get_collection("user_responses") if db is not None else None
         self.questions_collection = db.get_collection("questions") if db is not None else None
 
+    @staticmethod
+    def _save_to_memory(user_id: str, responses: list[dict], existing: Optional[dict] = None) -> None:
+        existing = existing or {}
+        ResponseService._memory_responses[user_id] = {
+            "user_id": user_id,
+            "responses": responses,
+            "updated_at": datetime.utcnow(),
+            "created_at": existing.get("created_at", datetime.utcnow()),
+        }
+
     async def _get_question_docs(self) -> list[dict]:
         if self.questions_collection is None:
             return deepcopy(_OFFLINE_QUESTIONS)
 
-        cursor = self.questions_collection.find({}, _NO_ID)
-        return [doc async for doc in cursor]
+        try:
+            cursor = self.questions_collection.find({}, _NO_ID)
+            return [doc async for doc in cursor]
+        except Exception:
+            # Keep response flows available even when DB connectivity drops.
+            return deepcopy(_OFFLINE_QUESTIONS)
 
     async def _get_user_record(self, user_id: str) -> Optional[dict]:
         if self.collection is None:
             return self._memory_responses.get(user_id)
-        return await self.collection.find_one({"user_id": user_id}, _NO_ID)
 
-    async def _validate_responses(self, responses: list) -> None:
-        """Ensure all questionnaire questions are answered and options are valid."""
+        try:
+            return await self.collection.find_one({"user_id": user_id}, _NO_ID)
+        except Exception:
+            return self._memory_responses.get(user_id)
+
+    async def _validate_responses(self, responses: list, require_complete: bool = True) -> None:
+        """Validate submitted responses; can enforce full questionnaire completion."""
         question_ids = [r.question_id for r in responses]
 
         if len(set(question_ids)) != len(question_ids):
@@ -47,13 +65,14 @@ class ResponseService:
                 detail="Questionnaire is not configured yet",
             )
 
-        submitted_question_ids = set(question_ids)
-        missing_question_ids = required_question_ids - submitted_question_ids
-        if missing_question_ids:
-            raise HTTPException(
-                status_code=422,
-                detail=f"Missing answers for question_id(s): {sorted(missing_question_ids)}",
-            )
+        if require_complete:
+            submitted_question_ids = set(question_ids)
+            missing_question_ids = required_question_ids - submitted_question_ids
+            if missing_question_ids:
+                raise HTTPException(
+                    status_code=422,
+                    detail=f"Missing answers for question_id(s): {sorted(missing_question_ids)}",
+                )
 
         found_questions = {q["id"]: q for q in question_docs if q["id"] in question_ids}
 
@@ -67,7 +86,6 @@ class ResponseService:
         for r in responses:
             q = found_questions[r.question_id]
             q_type = q.get("q_type")
-            valid_opt_ids = {opt["id"] for opt in q.get("options", [])}
 
             if q_type == "yes_no" and len(r.selected_option_ids) != 1:
                 raise HTTPException(
@@ -88,6 +106,9 @@ class ResponseService:
                 )
 
             if q_type in ("yes_no", "single_select", "multi_select"):
+                valid_opt_ids = {
+                    opt["id"] for opt in (q.get("options") or []) if opt.get("id")
+                }
                 bad_opts = [
                     oid for oid in r.selected_option_ids if oid not in valid_opt_ids
                 ]
@@ -119,29 +140,82 @@ class ResponseService:
             )
 
     async def save_user_responses(self, data: SubmitResponse):
-        await self._validate_responses(data.responses)
+        await self._validate_responses(data.responses, require_complete=True)
+        responses_payload = [r.model_dump() for r in data.responses]
+
         if self.collection is None:
             existing = self._memory_responses.get(data.user_id, {})
-            self._memory_responses[data.user_id] = {
-                "user_id": data.user_id,
-                "responses": [r.model_dump() for r in data.responses],
-                "updated_at": datetime.utcnow(),
-                "created_at": existing.get("created_at", datetime.utcnow()),
-            }
+            self._save_to_memory(data.user_id, responses_payload, existing)
             return {"status": "success", "message": "Responses saved"}
 
-        await self.collection.update_one(
-            {"user_id": data.user_id},
-            {
-                "$set": {
-                    "responses": [r.model_dump() for r in data.responses],
-                    "updated_at": datetime.utcnow(),
+        try:
+            await self.collection.update_one(
+                {"user_id": data.user_id},
+                {
+                    "$set": {
+                        "responses": responses_payload,
+                        "updated_at": datetime.utcnow(),
+                    },
+                    "$setOnInsert": {"created_at": datetime.utcnow()},
                 },
-                "$setOnInsert": {"created_at": datetime.utcnow()},
-            },
-            upsert=True,
-        )
+                upsert=True,
+            )
+        except Exception:
+            existing = self._memory_responses.get(data.user_id, {})
+            self._save_to_memory(data.user_id, responses_payload, existing)
+
         return {"status": "success", "message": "Responses saved"}
+
+    async def update_user_responses(self, data: PartialSubmitResponse):
+        await self._validate_responses(data.responses, require_complete=False)
+
+        existing_record = await self._get_user_record(data.user_id) or {
+            "user_id": data.user_id,
+            "responses": [],
+        }
+
+        merged_by_qid = {
+            r.get("question_id"): r
+            for r in existing_record.get("responses", [])
+            if r.get("question_id")
+        }
+
+        for response in data.responses:
+            payload = response.model_dump()
+            merged_by_qid[payload["question_id"]] = payload
+
+        merged_responses = list(merged_by_qid.values())
+
+        if self.collection is None:
+            self._save_to_memory(data.user_id, merged_responses, existing_record)
+            return {
+                "status": "success",
+                "message": "Responses updated",
+                "updated_count": len(data.responses),
+                "total_responses": len(merged_responses),
+            }
+
+        try:
+            await self.collection.update_one(
+                {"user_id": data.user_id},
+                {
+                    "$set": {
+                        "responses": merged_responses,
+                        "updated_at": datetime.utcnow(),
+                    },
+                    "$setOnInsert": {"created_at": datetime.utcnow()},
+                },
+                upsert=True,
+            )
+        except Exception:
+            self._save_to_memory(data.user_id, merged_responses, existing_record)
+
+        return {
+            "status": "success",
+            "message": "Responses updated",
+            "updated_count": len(data.responses),
+            "total_responses": len(merged_responses),
+        }
 
     async def get_user_responses(self, user_id: str):
         record = await self._get_user_record(user_id)
