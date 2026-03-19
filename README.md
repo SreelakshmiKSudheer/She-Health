@@ -4,8 +4,7 @@
 cd backend
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-copy .env.example .env
-# edit backend/.env and set MONGODB_URL + DB_NAME
+
 python -m pip install --upgrade pip
 echo "*" > .venv\.gitignore
 pip install "fastapi[standard]"
