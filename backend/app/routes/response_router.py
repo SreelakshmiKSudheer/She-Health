@@ -1,7 +1,10 @@
 from fastapi import APIRouter, HTTPException
 from app.schemas.response import SubmitResponse, UserResponsesOut
 from app.services.response_service import ResponseService
-from app.db.database import MongoDB
+try:
+    from app.db.database import MongoDB
+except ModuleNotFoundError:
+    from ..db.database import MongoDB
 
 router = APIRouter(prefix="/response", tags=["Response"])
 

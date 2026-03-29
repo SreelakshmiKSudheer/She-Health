@@ -3,11 +3,14 @@ import 'dart:convert';
 import 'dart:math' as math;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'services/backend_api_service.dart';
+import 'services/session_service.dart';
+
 /// Shared key so the dashboard can also read saved period data.
 const String kPeriodDataPrefsKey = 'period_days_v1';
 
 class PeriodCalendarWidget extends StatefulWidget {
-  const PeriodCalendarWidget({Key? key}) : super(key: key);
+  const PeriodCalendarWidget({super.key});
 
   @override
   State<PeriodCalendarWidget> createState() => _PeriodCalendarWidgetState();
@@ -17,6 +20,13 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
     with TickerProviderStateMixin {
   DateTime selectedDate = DateTime.now();
   int selectedTab = 0;
+
+  final BackendApiService _backendApi = BackendApiService();
+  final SessionService _sessionService = SessionService();
+
+  String _currentPhase = "Follicular Phase";
+  final int _daysUntilPeriod = 5;
+  final List<String> _selectedSymptoms = [];
 
   List<int> periodDays = [1, 2, 3, 4, 5];
   List<int> fertileDays = [13];
@@ -82,12 +92,33 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
           'days': List<int>.from(periodDays),
         }),
       );
+
+      final userId = await _sessionService.getCurrentUserId();
+      if (userId != null && userId.isNotEmpty) {
+        final day = selectedDay ?? selectedDate.day;
+        final dateString = DateTime(selectedDate.year, selectedDate.month, day)
+            .toIso8601String()
+            .split('T')
+            .first;
+
+        try {
+          await _backendApi.logCycle(
+            userId: userId,
+            date: dateString,
+            symptoms: List<String>.from(_selectedSymptoms),
+            flow: 'normal',
+          );
+        } catch (_) {
+          // optional: handle network failure gracefully, offline mode etc.
+        }
+      }
     } catch (_) {}
   }
 
   void _changeMonth(int months) {
     setState(() {
-      selectedDate = DateTime(selectedDate.year, selectedDate.month + months, 1);
+      selectedDate =
+          DateTime(selectedDate.year, selectedDate.month + months, 1);
       selectedDay = null;
     });
   }
@@ -99,18 +130,59 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
     });
   }
 
+  void _updateCycleInsights(int dayOfCycle) {
+    setState(() {
+      if (dayOfCycle <= 5) {
+        _currentPhase = "Menstrual Phase";
+        // Update notifications/tips
+      } else if (dayOfCycle <= 13) {
+        _currentPhase = "Follicular Phase";
+      } else if (dayOfCycle <= 16) {
+        _currentPhase = "Ovulation Phase";
+      } else {
+        _currentPhase = "Luteal Phase";
+      }
+    });
+  }
+
   int _getDaysInMonth([DateTime? date]) {
     date ??= selectedDate;
     return DateTime(date.year, date.month + 1, 0).day;
   }
 
   String _getMonthName(int month) {
-    const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const months = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December'
+    ];
     return months[month - 1];
   }
 
   String _getShortMonthName(int month) {
-    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
+    ];
     return months[month - 1];
   }
 
@@ -144,6 +216,7 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
                 periodDays.add(day);
               }
             });
+            _updateCycleInsights(day);
             _savePeriodData();
           },
           onMonthChanged: (date) {
@@ -206,7 +279,8 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
                 color: value ? color.withOpacity(0.06) : Colors.white,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: value ? color.withOpacity(0.25) : const Color(0xFFFCE7F3),
+                  color:
+                      value ? color.withOpacity(0.25) : const Color(0xFFFCE7F3),
                   width: 1.5,
                 ),
               ),
@@ -229,7 +303,9 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w700,
-                              color: value ? const Color(0xFF2D1B2E) : Colors.grey.shade500,
+                              color: value
+                                  ? const Color(0xFF2D1B2E)
+                                  : Colors.grey.shade500,
                               decoration: TextDecoration.none,
                             )),
                         const SizedBox(height: 2),
@@ -248,7 +324,7 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
                       onChanged(v);
                       setModalState(() {});
                     },
-                    activeColor: color,
+                    activeThumbColor: color,
                     activeTrackColor: color.withOpacity(0.25),
                     inactiveThumbColor: Colors.grey.shade300,
                     inactiveTrackColor: Colors.grey.shade100,
@@ -264,7 +340,8 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
               color: Color(0xFFFFF5F8),
               borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
             ),
-            padding: EdgeInsets.fromLTRB(20, 0, 20, MediaQuery.of(context).padding.bottom + 24),
+            padding: EdgeInsets.fromLTRB(
+                20, 0, 20, MediaQuery.of(context).padding.bottom + 24),
             child: SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -302,7 +379,8 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
                             ),
                           ],
                         ),
-                        child: const Icon(Icons.notifications_rounded, color: Colors.white, size: 20),
+                        child: const Icon(Icons.notifications_rounded,
+                            color: Colors.white, size: 20),
                       ),
                       const SizedBox(width: 12),
                       const Column(
@@ -333,7 +411,8 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
                             color: const Color(0xFFF5EEF5),
                             borderRadius: BorderRadius.circular(10),
                           ),
-                          child: const Icon(Icons.close_rounded, color: Color(0xFFBB8FAE), size: 18),
+                          child: const Icon(Icons.close_rounded,
+                              color: Color(0xFFBB8FAE), size: 18),
                         ),
                       ),
                     ],
@@ -357,7 +436,8 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: const Color(0xFFFCE7F3), width: 1.5),
+                          border: Border.all(
+                              color: const Color(0xFFFCE7F3), width: 1.5),
                           boxShadow: [
                             BoxShadow(
                               color: const Color(0xFFC85A7A).withOpacity(0.05),
@@ -371,10 +451,12 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
                             Container(
                               padding: const EdgeInsets.all(9),
                               decoration: BoxDecoration(
-                                color: (item['color'] as Color).withOpacity(0.12),
+                                color:
+                                    (item['color'] as Color).withOpacity(0.12),
                                 borderRadius: BorderRadius.circular(10),
                               ),
-                              child: Icon(item['icon'] as IconData, color: item['color'] as Color, size: 18),
+                              child: Icon(item['icon'] as IconData,
+                                  color: item['color'] as Color, size: 18),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
@@ -400,9 +482,11 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
                             ),
                             const SizedBox(width: 8),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
-                                color: (item['color'] as Color).withOpacity(0.10),
+                                color:
+                                    (item['color'] as Color).withOpacity(0.10),
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: Text(
@@ -431,21 +515,37 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
                       )),
                   const SizedBox(height: 12),
 
-                  notifToggle('Period Reminder', 'Alert 2 days before expected period',
-                      Icons.water_drop_rounded, const Color(0xFFC85A7A),
-                      _notifPeriodReminder, (v) => setState(() => _notifPeriodReminder = v)),
+                  notifToggle(
+                      'Period Reminder',
+                      'Alert 2 days before expected period',
+                      Icons.water_drop_rounded,
+                      const Color(0xFFC85A7A),
+                      _notifPeriodReminder,
+                      (v) => setState(() => _notifPeriodReminder = v)),
 
-                  notifToggle('Fertile Window Alert', 'Notify when fertile days are approaching',
-                      Icons.favorite_rounded, const Color(0xFF9B84D4),
-                      _notifFertileWindow, (v) => setState(() => _notifFertileWindow = v)),
+                  notifToggle(
+                      'Fertile Window Alert',
+                      'Notify when fertile days are approaching',
+                      Icons.favorite_rounded,
+                      const Color(0xFF9B84D4),
+                      _notifFertileWindow,
+                      (v) => setState(() => _notifFertileWindow = v)),
 
-                  notifToggle('Medicine Reminder', 'Daily reminder to take supplements/pills',
-                      Icons.medication_rounded, const Color(0xFF6DBFB0),
-                      _notifMedReminder, (v) => setState(() => _notifMedReminder = v)),
+                  notifToggle(
+                      'Medicine Reminder',
+                      'Daily reminder to take supplements/pills',
+                      Icons.medication_rounded,
+                      const Color(0xFF6DBFB0),
+                      _notifMedReminder,
+                      (v) => setState(() => _notifMedReminder = v)),
 
-                  notifToggle('Cycle Insights', 'Weekly summary of your cycle health',
-                      Icons.insights_rounded, const Color(0xFFE8A838),
-                      _notifCycleInsights, (v) => setState(() => _notifCycleInsights = v)),
+                  notifToggle(
+                      'Cycle Insights',
+                      'Weekly summary of your cycle health',
+                      Icons.insights_rounded,
+                      const Color(0xFFE8A838),
+                      _notifCycleInsights,
+                      (v) => setState(() => _notifCycleInsights = v)),
 
                   const SizedBox(height: 8),
 
@@ -500,7 +600,12 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFFFFF0F7), Color(0xFFFDE8F5), Color(0xFFF5E6FF), Color(0xFFFFFFFF)],
+          colors: [
+            Color(0xFFFFF0F7),
+            Color(0xFFFDE8F5),
+            Color(0xFFF5E6FF),
+            Color(0xFFFFFFFF)
+          ],
           stops: [0.0, 0.3, 0.6, 1.0],
         ),
       ),
@@ -554,7 +659,8 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
               Stack(
                 clipBehavior: Clip.none,
                 children: [
-                  _buildIconButton(Icons.notifications_none_rounded, onTap: _showNotificationPanel),
+                  _buildIconButton(Icons.notifications_none_rounded,
+                      onTap: _showNotificationPanel),
                   if (_hasUnread)
                     Positioned(
                       top: -2,
@@ -572,7 +678,8 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
                 ],
               ),
               const SizedBox(width: 10),
-              _buildIconButton(Icons.calendar_month_rounded, onTap: _showCalendarModal, isHighlighted: true),
+              _buildIconButton(Icons.calendar_month_rounded,
+                  onTap: _showCalendarModal, isHighlighted: true),
             ],
           ),
         ],
@@ -580,7 +687,8 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
     );
   }
 
-  Widget _buildIconButton(IconData icon, {required VoidCallback onTap, bool isHighlighted = false}) {
+  Widget _buildIconButton(IconData icon,
+      {required VoidCallback onTap, bool isHighlighted = false}) {
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
@@ -592,13 +700,17 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
           borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
-              color: isHighlighted ? const Color(0xFFC85A7A).withOpacity(0.35) : Colors.black.withOpacity(0.08),
+              color: isHighlighted
+                  ? const Color(0xFFC85A7A).withOpacity(0.35)
+                  : Colors.black.withOpacity(0.08),
               blurRadius: isHighlighted ? 12 : 8,
               offset: const Offset(0, 3),
             ),
           ],
         ),
-        child: Icon(icon, color: isHighlighted ? Colors.white : const Color(0xFFC85A7A), size: 22),
+        child: Icon(icon,
+            color: isHighlighted ? Colors.white : const Color(0xFFC85A7A),
+            size: 22),
       ),
     );
   }
@@ -620,7 +732,10 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: RadialGradient(
-                colors: [const Color(0xFFFFD6E8).withOpacity(0.6), Colors.transparent],
+                colors: [
+                  const Color(0xFFFFD6E8).withOpacity(0.6),
+                  Colors.transparent
+                ],
               ),
             ),
           ),
@@ -640,30 +755,57 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
             return Transform.translate(
               offset: Offset(x, y),
               child: GestureDetector(
-                onTap: () => setState(() => selectedDay = day),
+                onTap: () {
+                  setState(() {
+                    selectedDay = day;
+                  });
+                  _updateCycleInsights(day);
+                },
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
                   width: isSelected ? 42 : 36,
                   height: isSelected ? 42 : 36,
                   decoration: BoxDecoration(
                     gradient: isPeriod
-                        ? const LinearGradient(colors: [Color(0xFFE87DAB), Color(0xFFC85A7A)], begin: Alignment.topLeft, end: Alignment.bottomRight)
+                        ? const LinearGradient(
+                            colors: [Color(0xFFE87DAB), Color(0xFFC85A7A)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight)
                         : isFertile
-                            ? const LinearGradient(colors: [Color(0xFFB5A4E0), Color(0xFF9B84D4)], begin: Alignment.topLeft, end: Alignment.bottomRight)
+                            ? const LinearGradient(
+                                colors: [Color(0xFFB5A4E0), Color(0xFF9B84D4)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight)
                             : null,
                     color: !isPeriod && !isFertile
-                        ? isToday ? const Color(0xFFFFD6E8) : const Color(0xFFF5E6F5).withOpacity(0.6)
+                        ? isToday
+                            ? const Color(0xFFFFD6E8)
+                            : const Color(0xFFF5E6F5).withOpacity(0.6)
                         : null,
                     shape: BoxShape.circle,
                     border: isSelected
                         ? Border.all(color: const Color(0xFFC85A7A), width: 2.5)
                         : isToday && !isPeriod
-                            ? Border.all(color: const Color(0xFFE87DAB).withOpacity(0.5), width: 1.5)
+                            ? Border.all(
+                                color: const Color(0xFFE87DAB).withOpacity(0.5),
+                                width: 1.5)
                             : null,
                     boxShadow: isPeriod
-                        ? [BoxShadow(color: const Color(0xFFC85A7A).withOpacity(0.35), blurRadius: 6, offset: const Offset(0, 2))]
+                        ? [
+                            BoxShadow(
+                                color:
+                                    const Color(0xFFC85A7A).withOpacity(0.35),
+                                blurRadius: 6,
+                                offset: const Offset(0, 2))
+                          ]
                         : isFertile
-                            ? [BoxShadow(color: const Color(0xFF9B84D4).withOpacity(0.35), blurRadius: 6, offset: const Offset(0, 2))]
+                            ? [
+                                BoxShadow(
+                                    color: const Color(0xFF9B84D4)
+                                        .withOpacity(0.35),
+                                    blurRadius: 6,
+                                    offset: const Offset(0, 2))
+                              ]
                             : null,
                   ),
                   child: Center(
@@ -672,9 +814,13 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
                       style: TextStyle(
                         color: isPeriod || isFertile
                             ? Colors.white
-                            : isToday ? const Color(0xFFC85A7A) : const Color(0xFFCCA8C0),
+                            : isToday
+                                ? const Color(0xFFC85A7A)
+                                : const Color(0xFFCCA8C0),
                         fontSize: 11,
-                        fontWeight: isPeriod || isFertile || isToday ? FontWeight.w700 : FontWeight.w500,
+                        fontWeight: isPeriod || isFertile || isToday
+                            ? FontWeight.w700
+                            : FontWeight.w500,
                         decoration: TextDecoration.none, // ✅
                       ),
                     ),
@@ -694,63 +840,71 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
-          _getDayName(selectedDate),
-          style: const TextStyle(
+          "PERIOD IN",
+          style: TextStyle(
             color: Color(0xFFBB8FAE),
             fontSize: 12,
             fontWeight: FontWeight.w600,
-            letterSpacing: 2,
-            decoration: TextDecoration.none, // ✅
+            decoration: TextDecoration.none,
           ),
         ),
-        const SizedBox(height: 6),
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildNavArrow(Icons.chevron_left_rounded, () => _changeMonth(-1)),
-            const SizedBox(width: 8),
-            Column(
-              children: [
-                ScaleTransition(
-                  scale: _pulseAnimation,
-                  child: Text(
-                    '${selectedDay ?? selectedDate.day}',
-                    style: const TextStyle(
-                      color: Color(0xFFC85A7A),
-                      fontSize: 52,
-                      fontWeight: FontWeight.w900,
-                      height: 1,
-                      letterSpacing: -2,
-                      decoration: TextDecoration.none, // ✅
-                    ),
-                  ),
-                ),
-                Text(
-                  '${_getShortMonthName(selectedDate.month)} ${selectedDate.year}',
-                  style: const TextStyle(
-                    color: Color(0xFFE087A8),
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.5,
-                    decoration: TextDecoration.none, // ✅
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(width: 8),
-            _buildNavArrow(Icons.chevron_right_rounded, () => _changeMonth(1)),
-          ],
+        Text(
+          "$_daysUntilPeriod Days",
+          style: TextStyle(
+            color: Color(0xFFC85A7A),
+            fontSize: 40,
+            fontWeight: FontWeight.w900,
+            decoration: TextDecoration.none,
+          ),
         ),
-        const SizedBox(height: 10),
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildBadge('${periodDays.length}d period', const Color(0xFFC85A7A)),
-            const SizedBox(width: 8),
-            _buildBadge('day ${selectedDay ?? selectedDate.day}', const Color(0xFF9B84D4)),
-          ],
+        Text(
+          _currentPhase,
+          style: TextStyle(
+            color: Color(0xFFE087A8),
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            decoration: TextDecoration.none,
+          ),
         ),
       ],
+    );
+  }
+
+  Widget _buildSymptomsLogger() {
+    final symptoms = ['Cramps', 'Headache', 'Bloating', 'Acne', 'Tired'];
+    return Container(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            "How are you feeling?",
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            children: symptoms
+                .map(
+                  (s) => FilterChip(
+                    label: Text(s),
+                    selected: _selectedSymptoms.contains(s),
+                    onSelected: (val) {
+                      setState(() {
+                        if (val) {
+                          _selectedSymptoms.add(s);
+                        } else {
+                          _selectedSymptoms.remove(s);
+                        }
+                      });
+                      // Call your FastAPI /cycle/log here
+                    },
+                  ),
+                )
+                .toList(),
+          ),
+        ],
+      ),
     );
   }
 
@@ -799,7 +953,8 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          _buildYearNavButton(Icons.keyboard_double_arrow_left_rounded, 'Prev year', () => _changeYear(-1)),
+          _buildYearNavButton(Icons.keyboard_double_arrow_left_rounded,
+              'Prev year', () => _changeYear(-1)),
           Row(
             children: [
               _buildLegendDot(const Color(0xFFC85A7A), 'Period'),
@@ -807,13 +962,15 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
               _buildLegendDot(const Color(0xFF9B84D4), 'Fertile'),
             ],
           ),
-          _buildYearNavButton(Icons.keyboard_double_arrow_right_rounded, 'Next year', () => _changeYear(1)),
+          _buildYearNavButton(Icons.keyboard_double_arrow_right_rounded,
+              'Next year', () => _changeYear(1)),
         ],
       ),
     );
   }
 
-  Widget _buildYearNavButton(IconData icon, String tooltip, VoidCallback onTap) {
+  Widget _buildYearNavButton(
+      IconData icon, String tooltip, VoidCallback onTap) {
     return Tooltip(
       message: tooltip,
       child: GestureDetector(
@@ -823,7 +980,12 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(10),
-            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 6, offset: const Offset(0, 2))],
+            boxShadow: [
+              BoxShadow(
+                  color: Colors.black.withOpacity(0.06),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2))
+            ],
           ),
           child: Icon(icon, color: const Color(0xFFC85A7A), size: 20),
         ),
@@ -840,7 +1002,9 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
           decoration: BoxDecoration(
             color: color,
             shape: BoxShape.circle,
-            boxShadow: [BoxShadow(color: color.withOpacity(0.4), blurRadius: 4)],
+            boxShadow: [
+              BoxShadow(color: color.withOpacity(0.4), blurRadius: 4)
+            ],
           ),
         ),
         const SizedBox(width: 5),
@@ -888,18 +1052,29 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
             color: isSelected ? Colors.white : Colors.transparent,
             borderRadius: BorderRadius.circular(13),
             boxShadow: isSelected
-                ? [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 8, offset: const Offset(0, 2))]
+                ? [
+                    BoxShadow(
+                        color: Colors.black.withOpacity(0.08),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2))
+                  ]
                 : null,
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, color: isSelected ? const Color(0xFFC85A7A) : const Color(0xFFBBAACE), size: 18),
+              Icon(icon,
+                  color: isSelected
+                      ? const Color(0xFFC85A7A)
+                      : const Color(0xFFBBAACE),
+                  size: 18),
               const SizedBox(width: 6),
               Text(
                 label,
                 style: TextStyle(
-                  color: isSelected ? const Color(0xFFC85A7A) : const Color(0xFFBBAACE),
+                  color: isSelected
+                      ? const Color(0xFFC85A7A)
+                      : const Color(0xFFBBAACE),
                   fontSize: 14,
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                   decoration: TextDecoration.none, // ✅
@@ -922,9 +1097,15 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(24),
-          boxShadow: [BoxShadow(color: const Color(0xFFC85A7A).withOpacity(0.06), blurRadius: 20, offset: const Offset(0, 4))],
+          boxShadow: [
+            BoxShadow(
+                color: const Color(0xFFC85A7A).withOpacity(0.06),
+                blurRadius: 20,
+                offset: const Offset(0, 4))
+          ],
         ),
-        child: selectedTab == 0 ? _buildLogDayContent() : _buildHistoryContent(),
+        child:
+            selectedTab == 0 ? _buildLogDayContent() : _buildHistoryContent(),
       ),
     );
   }
@@ -941,8 +1122,11 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
             children: [
               Container(
                 padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(color: const Color(0xFFFFEEF5), borderRadius: BorderRadius.circular(10)),
-                child: const Icon(Icons.water_drop_rounded, color: Color(0xFFC85A7A), size: 18),
+                decoration: BoxDecoration(
+                    color: const Color(0xFFFFEEF5),
+                    borderRadius: BorderRadius.circular(10)),
+                child: const Icon(Icons.water_drop_rounded,
+                    color: Color(0xFFC85A7A), size: 18),
               ),
               const SizedBox(width: 10),
               Column(
@@ -960,7 +1144,9 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
                   Text(
                     isPeriodDay ? 'Period day tracked ✓' : 'No period logged',
                     style: TextStyle(
-                      color: isPeriodDay ? const Color(0xFFC85A7A) : const Color(0xFFBBAABB),
+                      color: isPeriodDay
+                          ? const Color(0xFFC85A7A)
+                          : const Color(0xFFBBAABB),
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
                       decoration: TextDecoration.none, // ✅
@@ -974,7 +1160,11 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
           GestureDetector(
             onTap: () {
               setState(() {
-                if (isPeriodDay) { periodDays.remove(day); } else { periodDays.add(day); }
+                if (isPeriodDay) {
+                  periodDays.remove(day);
+                } else {
+                  periodDays.add(day);
+                }
               });
               _savePeriodData();
             },
@@ -984,19 +1174,34 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
               padding: const EdgeInsets.symmetric(vertical: 16),
               decoration: BoxDecoration(
                 gradient: isPeriodDay
-                    ? const LinearGradient(colors: [Color(0xFFE87DAB), Color(0xFFC85A7A)], begin: Alignment.topLeft, end: Alignment.bottomRight)
-                    : const LinearGradient(colors: [Color(0xFFFFF0F7), Color(0xFFFDE8F0)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+                    ? const LinearGradient(
+                        colors: [Color(0xFFE87DAB), Color(0xFFC85A7A)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight)
+                    : const LinearGradient(
+                        colors: [Color(0xFFFFF0F7), Color(0xFFFDE8F0)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight),
                 borderRadius: BorderRadius.circular(18),
-                border: isPeriodDay ? null : Border.all(color: const Color(0xFFEEC4D6), width: 1.5),
+                border: isPeriodDay
+                    ? null
+                    : Border.all(color: const Color(0xFFEEC4D6), width: 1.5),
                 boxShadow: isPeriodDay
-                    ? [BoxShadow(color: const Color(0xFFC85A7A).withOpacity(0.3), blurRadius: 12, offset: const Offset(0, 4))]
+                    ? [
+                        BoxShadow(
+                            color: const Color(0xFFC85A7A).withOpacity(0.3),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4))
+                      ]
                     : null,
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(
-                    isPeriodDay ? Icons.check_circle_rounded : Icons.water_drop_outlined,
+                    isPeriodDay
+                        ? Icons.check_circle_rounded
+                        : Icons.water_drop_outlined,
                     color: isPeriodDay ? Colors.white : const Color(0xFFC85A7A),
                     size: 22,
                   ),
@@ -1004,7 +1209,8 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
                   Text(
                     isPeriodDay ? 'Period tracked!' : 'Mark as period day',
                     style: TextStyle(
-                      color: isPeriodDay ? Colors.white : const Color(0xFFC85A7A),
+                      color:
+                          isPeriodDay ? Colors.white : const Color(0xFFC85A7A),
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
                       decoration: TextDecoration.none, // ✅
@@ -1024,7 +1230,8 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
             ),
             child: Row(
               children: [
-                const Icon(Icons.lightbulb_outline_rounded, color: Color(0xFF9B84D4), size: 18),
+                const Icon(Icons.lightbulb_outline_rounded,
+                    color: Color(0xFF9B84D4), size: 18),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
@@ -1043,17 +1250,27 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
           const SizedBox(height: 16),
           Row(
             children: [
-              Expanded(child: _buildStatCard('${periodDays.length}', 'Days this month', const Color(0xFFC85A7A), Icons.calendar_today_rounded)),
+              Expanded(
+                  child: _buildStatCard(
+                      '${periodDays.length}',
+                      'Days this month',
+                      const Color(0xFFC85A7A),
+                      Icons.calendar_today_rounded)),
               const SizedBox(width: 12),
-              Expanded(child: _buildStatCard('${fertileDays.length}', 'Fertile days', const Color(0xFF9B84D4), Icons.favorite_rounded)),
+              Expanded(
+                  child: _buildStatCard('${fertileDays.length}', 'Fertile days',
+                      const Color(0xFF9B84D4), Icons.favorite_rounded)),
             ],
           ),
+          const SizedBox(height: 16),
+          _buildSymptomsLogger(),
         ],
       ),
     );
   }
 
-  Widget _buildStatCard(String value, String label, Color color, IconData icon) {
+  Widget _buildStatCard(
+      String value, String label, Color color, IconData icon) {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -1091,9 +1308,24 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
 
   Widget _buildHistoryContent() {
     final history = [
-      {'month': 'January 2026', 'days': 'Days: 1, 2, 3, 4, 5', 'duration': '5 days', 'cycle': '28d cycle'},
-      {'month': 'December 2025', 'days': 'Days: 3, 4, 5, 6', 'duration': '4 days', 'cycle': '27d cycle'},
-      {'month': 'November 2025', 'days': 'Days: 5, 6, 7, 8, 9', 'duration': '5 days', 'cycle': '29d cycle'},
+      {
+        'month': 'January 2026',
+        'days': 'Days: 1, 2, 3, 4, 5',
+        'duration': '5 days',
+        'cycle': '28d cycle'
+      },
+      {
+        'month': 'December 2025',
+        'days': 'Days: 3, 4, 5, 6',
+        'duration': '4 days',
+        'cycle': '27d cycle'
+      },
+      {
+        'month': 'November 2025',
+        'days': 'Days: 5, 6, 7, 8, 9',
+        'duration': '5 days',
+        'cycle': '29d cycle'
+      },
     ];
 
     return Column(
@@ -1113,7 +1345,9 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
             ),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              decoration: BoxDecoration(color: const Color(0xFFFFEEF5), borderRadius: BorderRadius.circular(20)),
+              decoration: BoxDecoration(
+                  color: const Color(0xFFFFEEF5),
+                  borderRadius: BorderRadius.circular(20)),
               child: const Text(
                 '3 months',
                 style: TextStyle(
@@ -1152,11 +1386,20 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
             width: 46,
             height: 46,
             decoration: BoxDecoration(
-              gradient: const LinearGradient(colors: [Color(0xFFE87DAB), Color(0xFFC85A7A)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+              gradient: const LinearGradient(
+                  colors: [Color(0xFFE87DAB), Color(0xFFC85A7A)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight),
               borderRadius: BorderRadius.circular(14),
-              boxShadow: [BoxShadow(color: const Color(0xFFC85A7A).withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 3))],
+              boxShadow: [
+                BoxShadow(
+                    color: const Color(0xFFC85A7A).withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3))
+              ],
             ),
-            child: const Icon(Icons.water_drop_rounded, color: Colors.white, size: 22),
+            child: const Icon(Icons.water_drop_rounded,
+                color: Colors.white, size: 22),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -1189,7 +1432,9 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
             children: [
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(color: const Color(0xFFC85A7A), borderRadius: BorderRadius.circular(8)),
+                decoration: BoxDecoration(
+                    color: const Color(0xFFC85A7A),
+                    borderRadius: BorderRadius.circular(8)),
                 child: Text(
                   item['duration']!,
                   style: const TextStyle(
@@ -1255,11 +1500,26 @@ class _FullCalendarModalState extends State<_FullCalendarModal> {
     _fertileDays = List.from(widget.fertileDays);
   }
 
-  int get _daysInMonth => DateTime(_currentDate.year, _currentDate.month + 1, 0).day;
-  int get _firstWeekday => DateTime(_currentDate.year, _currentDate.month, 1).weekday;
+  int get _daysInMonth =>
+      DateTime(_currentDate.year, _currentDate.month + 1, 0).day;
+  int get _firstWeekday =>
+      DateTime(_currentDate.year, _currentDate.month, 1).weekday;
 
   String _getMonthName(int month) {
-    const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const months = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December'
+    ];
     return months[month - 1];
   }
 
@@ -1281,7 +1541,9 @@ class _FullCalendarModalState extends State<_FullCalendarModal> {
               margin: const EdgeInsets.only(top: 12, bottom: 4),
               width: 44,
               height: 5,
-              decoration: BoxDecoration(color: const Color(0xFFE0C8D8), borderRadius: BorderRadius.circular(3)),
+              decoration: BoxDecoration(
+                  color: const Color(0xFFE0C8D8),
+                  borderRadius: BorderRadius.circular(3)),
             ),
           ),
 
@@ -1293,11 +1555,20 @@ class _FullCalendarModalState extends State<_FullCalendarModal> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(colors: [Color(0xFFE87DAB), Color(0xFFC85A7A)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+                    gradient: const LinearGradient(
+                        colors: [Color(0xFFE87DAB), Color(0xFFC85A7A)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight),
                     borderRadius: BorderRadius.circular(12),
-                    boxShadow: [BoxShadow(color: const Color(0xFFC85A7A).withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 3))],
+                    boxShadow: [
+                      BoxShadow(
+                          color: const Color(0xFFC85A7A).withOpacity(0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3))
+                    ],
                   ),
-                  child: const Icon(Icons.calendar_month_rounded, color: Colors.white, size: 20),
+                  child: const Icon(Icons.calendar_month_rounded,
+                      color: Colors.white, size: 20),
                 ),
                 const SizedBox(width: 12),
                 const Column(
@@ -1328,8 +1599,11 @@ class _FullCalendarModalState extends State<_FullCalendarModal> {
                   onTap: () => Navigator.pop(context),
                   child: Container(
                     padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(color: const Color(0xFFF5EEF5), borderRadius: BorderRadius.circular(10)),
-                    child: const Icon(Icons.close_rounded, color: Color(0xFFBB8FAE), size: 18),
+                    decoration: BoxDecoration(
+                        color: const Color(0xFFF5EEF5),
+                        borderRadius: BorderRadius.circular(10)),
+                    child: const Icon(Icons.close_rounded,
+                        color: Color(0xFFBB8FAE), size: 18),
                   ),
                 ),
               ],
@@ -1344,7 +1618,8 @@ class _FullCalendarModalState extends State<_FullCalendarModal> {
               children: [
                 _navButton(Icons.chevron_left_rounded, () {
                   setState(() {
-                    _currentDate = DateTime(_currentDate.year, _currentDate.month - 1, 1);
+                    _currentDate =
+                        DateTime(_currentDate.year, _currentDate.month - 1, 1);
                     _selectedDay = null;
                   });
                 }),
@@ -1374,7 +1649,8 @@ class _FullCalendarModalState extends State<_FullCalendarModal> {
                 ),
                 _navButton(Icons.chevron_right_rounded, () {
                   setState(() {
-                    _currentDate = DateTime(_currentDate.year, _currentDate.month + 1, 1);
+                    _currentDate =
+                        DateTime(_currentDate.year, _currentDate.month + 1, 1);
                     _selectedDay = null;
                   });
                 }),
@@ -1392,7 +1668,9 @@ class _FullCalendarModalState extends State<_FullCalendarModal> {
                           child: Text(
                             d,
                             style: TextStyle(
-                              color: (d == 'Sat' || d == 'Sun') ? const Color(0xFFE087A8) : const Color(0xFFBBAACC),
+                              color: (d == 'Sat' || d == 'Sun')
+                                  ? const Color(0xFFE087A8)
+                                  : const Color(0xFFBBAACC),
                               fontSize: 11,
                               fontWeight: FontWeight.w700,
                               letterSpacing: 0.3,
@@ -1441,7 +1719,8 @@ class _FullCalendarModalState extends State<_FullCalendarModal> {
 
           // Done button
           Padding(
-            padding: EdgeInsets.fromLTRB(20, 0, 20, MediaQuery.of(context).padding.bottom + 20),
+            padding: EdgeInsets.fromLTRB(
+                20, 0, 20, MediaQuery.of(context).padding.bottom + 20),
             child: GestureDetector(
               onTap: () {
                 widget.onMonthChanged(_currentDate);
@@ -1451,9 +1730,17 @@ class _FullCalendarModalState extends State<_FullCalendarModal> {
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(colors: [Color(0xFFE87DAB), Color(0xFFC85A7A)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+                  gradient: const LinearGradient(
+                      colors: [Color(0xFFE87DAB), Color(0xFFC85A7A)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight),
                   borderRadius: BorderRadius.circular(18),
-                  boxShadow: [BoxShadow(color: const Color(0xFFC85A7A).withOpacity(0.35), blurRadius: 14, offset: const Offset(0, 5))],
+                  boxShadow: [
+                    BoxShadow(
+                        color: const Color(0xFFC85A7A).withOpacity(0.35),
+                        blurRadius: 14,
+                        offset: const Offset(0, 5))
+                  ],
                 ),
                 child: const Center(
                   child: Text(
@@ -1482,7 +1769,9 @@ class _FullCalendarModalState extends State<_FullCalendarModal> {
       ...List<int?>.filled(startOffset, null),
       ...List<int?>.generate(totalDays, (i) => i + 1),
     ];
-    while (cells.length % 7 != 0) cells.add(null);
+    while (cells.length % 7 != 0) {
+      cells.add(null);
+    }
     final int rowCount = cells.length ~/ 7;
 
     return Column(
@@ -1514,7 +1803,11 @@ class _FullCalendarModalState extends State<_FullCalendarModal> {
       onTap: () {
         setState(() {
           _selectedDay = day;
-          if (_periodDays.contains(day)) { _periodDays.remove(day); } else { _periodDays.add(day); }
+          if (_periodDays.contains(day)) {
+            _periodDays.remove(day);
+          } else {
+            _periodDays.add(day);
+          }
         });
         widget.onDayTap(day);
       },
@@ -1524,23 +1817,45 @@ class _FullCalendarModalState extends State<_FullCalendarModal> {
         height: 44,
         decoration: BoxDecoration(
           gradient: isPeriod
-              ? const LinearGradient(colors: [Color(0xFFE87DAB), Color(0xFFC85A7A)], begin: Alignment.topLeft, end: Alignment.bottomRight)
+              ? const LinearGradient(
+                  colors: [Color(0xFFE87DAB), Color(0xFFC85A7A)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight)
               : isFertile
-                  ? const LinearGradient(colors: [Color(0xFFB5A4E0), Color(0xFF9B84D4)], begin: Alignment.topLeft, end: Alignment.bottomRight)
+                  ? const LinearGradient(
+                      colors: [Color(0xFFB5A4E0), Color(0xFF9B84D4)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight)
                   : null,
           color: (!isPeriod && !isFertile)
-              ? isToday ? const Color(0xFFFFD6E8) : isSelected ? const Color(0xFFEED8F0) : Colors.transparent
+              ? isToday
+                  ? const Color(0xFFFFD6E8)
+                  : isSelected
+                      ? const Color(0xFFEED8F0)
+                      : Colors.transparent
               : null,
           borderRadius: BorderRadius.circular(12),
           border: isSelected && !isPeriod
               ? Border.all(color: const Color(0xFFC85A7A), width: 2)
               : isToday && !isPeriod
-                  ? Border.all(color: const Color(0xFFE87DAB).withOpacity(0.5), width: 1.5)
+                  ? Border.all(
+                      color: const Color(0xFFE87DAB).withOpacity(0.5),
+                      width: 1.5)
                   : null,
           boxShadow: isPeriod
-              ? [BoxShadow(color: const Color(0xFFC85A7A).withOpacity(0.28), blurRadius: 6, offset: const Offset(0, 3))]
+              ? [
+                  BoxShadow(
+                      color: const Color(0xFFC85A7A).withOpacity(0.28),
+                      blurRadius: 6,
+                      offset: const Offset(0, 3))
+                ]
               : isFertile
-                  ? [BoxShadow(color: const Color(0xFF9B84D4).withOpacity(0.28), blurRadius: 6, offset: const Offset(0, 3))]
+                  ? [
+                      BoxShadow(
+                          color: const Color(0xFF9B84D4).withOpacity(0.28),
+                          blurRadius: 6,
+                          offset: const Offset(0, 3))
+                    ]
                   : null,
         ),
         child: Center(
@@ -1549,9 +1864,15 @@ class _FullCalendarModalState extends State<_FullCalendarModal> {
             style: TextStyle(
               color: isPeriod || isFertile
                   ? Colors.white
-                  : isToday ? const Color(0xFFC85A7A) : isWeekend ? const Color(0xFFE087A8) : const Color(0xFF2D1B2E),
+                  : isToday
+                      ? const Color(0xFFC85A7A)
+                      : isWeekend
+                          ? const Color(0xFFE087A8)
+                          : const Color(0xFF2D1B2E),
               fontSize: 14,
-              fontWeight: isPeriod || isFertile || isToday || isSelected ? FontWeight.w700 : FontWeight.w500,
+              fontWeight: isPeriod || isFertile || isToday || isSelected
+                  ? FontWeight.w700
+                  : FontWeight.w500,
               decoration: TextDecoration.none, // ✅
             ),
           ),
@@ -1585,7 +1906,9 @@ class _FullCalendarModalState extends State<_FullCalendarModal> {
           decoration: BoxDecoration(
             color: color,
             borderRadius: BorderRadius.circular(4),
-            boxShadow: [BoxShadow(color: color.withOpacity(0.4), blurRadius: 4)],
+            boxShadow: [
+              BoxShadow(color: color.withOpacity(0.4), blurRadius: 4)
+            ],
           ),
         ),
         const SizedBox(width: 6),

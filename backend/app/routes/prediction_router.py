@@ -1,6 +1,10 @@
 from fastapi import APIRouter, HTTPException
-from app.db.database import MongoDB
-from app.services.prediction_service import PredictionService
+try:
+    from app.db.database import MongoDB
+    from app.services.prediction_service import PredictionService
+except ModuleNotFoundError:
+    from ..db.database import MongoDB
+    from ..services.prediction_service import PredictionService
 
 router = APIRouter(prefix="/predict", tags=["Predictions"])
 

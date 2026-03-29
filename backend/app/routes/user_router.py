@@ -1,8 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from typing import List
-from app.db.database import MongoDB
+try:
+    from app.db.database import MongoDB
+    from app.services.user_service import UserService
+except ModuleNotFoundError:
+    from ..db.database import MongoDB
+    from ..services.user_service import UserService
 from app.schemas.user import UserCreate, UserResponse, UserUpdate
-from app.services.user_service import UserService
 
 router = APIRouter(prefix="/users", tags=["Users"])
 

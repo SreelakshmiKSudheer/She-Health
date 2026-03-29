@@ -1,7 +1,11 @@
 from fastapi import APIRouter, HTTPException
 from typing import List
-from app.db.database import MongoDB
-from app.services.questionnaire_service import QuestionnaireService
+try:
+    from app.db.database import MongoDB
+    from app.services.questionnaire_service import QuestionnaireService
+except ModuleNotFoundError:
+    from ..db.database import MongoDB
+    from ..services.questionnaire_service import QuestionnaireService
 from app.schemas.questionnaire import QuestionCreate, QuestionUpdate, QuestionResponse
 
 router = APIRouter(prefix="/questionnaire", tags=["Questionnaire"])

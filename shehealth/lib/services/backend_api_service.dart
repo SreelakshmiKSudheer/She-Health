@@ -155,4 +155,35 @@ class BackendApiService {
     }
     return jsonDecode(response.body) as Map<String, dynamic>;
   }
+
+  Future<void> logCycle({
+    required String userId,
+    required String date,
+    List<String>? symptoms,
+    String flow = 'normal',
+  }) async {
+    final response = await _client.post(
+      _uri('/cycle/log'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'user_id': userId,
+        'date': date,
+        'symptoms': symptoms ?? [],
+        'flow': flow,
+      }),
+    );
+
+    if (response.statusCode >= 400) {
+      throw Exception('Failed to log cycle entry: ${response.body}');
+    }
+  }
+
+  Future<Map<String, dynamic>> getCyclePredictions(String userId) async {
+    final response = await _client.get(_uri('/cycle/predictions/$userId'));
+    if (response.statusCode >= 400) {
+      throw Exception('Failed to fetch cycle predictions: ${response.body}');
+    }
+    return jsonDecode(response.body) as Map<String, dynamic>;
+  }
 }
+
