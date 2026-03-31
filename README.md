@@ -4,7 +4,6 @@
 cd backend
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-
 python -m pip install --upgrade pip
 echo "*" > .venv\.gitignore
 pip install "fastapi[standard]"
