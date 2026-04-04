@@ -1,0 +1,1385 @@
+[{
+  "_id": {
+    "$oid": "69ab285a75c41a1ee86b3c12"
+  },
+  "id": "Q_AGE",
+  "text": "What is your age?",
+  "category": "General",
+  "q_type": "input",
+  "is_initial": true,
+  "priority": 1,
+  "options": null,
+  "direct_mappings": [
+    {
+      "feature_name": "Age_cervical_cancer",
+      "feature_value": 1
+    },
+    {
+      "feature_name": "Age_pcos",
+      "feature_value": 1
+    }
+  ]
+},
+{
+  "_id": {
+    "$oid": "69ab2abfb65af84d471231fb"
+  },
+  "id": "Q_CYCLE_DESC",
+  "text": "How would you describe your menstrual cycle?",
+  "category": "Menstrual",
+  "q_type": "single_select",
+  "is_initial": true,
+  "priority": 2,
+  "options": [
+    {
+      "id": "OPT_CYCLE_REG",
+      "text": "Regular",
+      "mappings": [
+        {
+          "feature_name": "irregular_missed_periods_pcos",
+          "feature_value": 0
+        },
+        {
+          "feature_name": "irregular_missed_periods_endo",
+          "feature_value": 0
+        }
+      ]
+    },
+    {
+      "id": "OPT_CYCLE_IRREG",
+      "text": "Irregular",
+      "mappings": [
+        {
+          "feature_name": "irregular_missed_periods_pcos",
+          "feature_value": 1
+        },
+        {
+          "feature_name": "irregular_missed_periods_endo",
+          "feature_value": 1
+        }
+      ]
+    },
+    {
+      "id": "OPT_CYCLE_MISSED",
+      "text": "Frequently missed",
+      "mappings": [
+        {
+          "feature_name": "irregular_missed_periods_pcos",
+          "feature_value": 1
+        },
+        {
+          "feature_name": "irregular_missed_periods_endo",
+          "feature_value": 1
+        }
+      ]
+    }
+  ],
+  "direct_mappings": null
+},
+{
+  "_id": {
+    "$oid": "69ab2d6eb65af84d471231fc"
+  },
+  "id": "Q_CYCLE_LENGTH",
+  "text": "What is your average menstrual cycle length (in days)?",
+  "category": "Menstrual",
+  "q_type": "input",
+  "is_initial": true,
+  "priority": 3,
+  "options": [],
+  "direct_mappings": [
+    {
+      "feature_name": "Period_Length_pcos",
+      "feature_value": 1
+    }
+  ]
+},
+{
+  "_id": {
+    "$oid": "69ab2d88b65af84d471231fd"
+  },
+  "id": "Q_PERIOD_DURATION",
+  "text": "What is your average period duration (in days)?",
+  "category": "Menstrual",
+  "q_type": "input",
+  "is_initial": true,
+  "priority": 4,
+  "options": [],
+  "direct_mappings": [
+    {
+      "feature_name": "Cycle_Length_pcos",
+      "feature_value": 1
+    }
+  ]
+},
+{
+  "_id": {
+    "$oid": "69ab303c575f30cd36e5f9c3"
+  },
+  "id": "Q_BLEEDING_PATTERNS",
+  "text": "Have you experienced any of the following bleeding patterns?",
+  "category": "Menstrual",
+  "q_type": "multi_select",
+  "is_initial": true,
+  "priority": 5,
+  "options": [
+    {
+      "id": "OPT_HEAVY_BLEED",
+      "text": "Heavy/ Excessive bleeding",
+      "description": "Soaking through one or more pads or tampons every hour for several hours.",
+      "mappings": [
+        {
+          "feature_name": "heavy_extreme_bleeding_endo",
+          "feature_value": 1
+        }
+      ]
+    },
+    {
+      "id": "OPT_CONST_BLEED",
+      "text": "Constant bleeding",
+      "description": "Bleeding that occurs nearly every day throughout your cycle.",
+      "mappings": [
+        {
+          "feature_name": "constant_bleeding_endo",
+          "feature_value": 1
+        }
+      ]
+    },
+    {
+      "id": "OPT_NONE_BLEED",
+      "text": "None of the above",
+      "description": "My bleeding patterns are normal.",
+      "mappings": [
+        {
+          "feature_name": "heavy_extreme_bleeding_endo",
+          "feature_value": 0
+        }
+      ]
+    }
+  ],
+  "direct_mappings": null
+},
+{
+  "_id": {
+    "$oid": "69abde5b3200f9f11f06b427"
+  },
+  "id": "Q_PAIN_TYPES",
+  "text": "Do you experience any of the following types of pain?",
+  "category": "Pain",
+  "q_type": "multi_select",
+  "is_initial": true,
+  "priority": 6,
+  "options": [
+    {
+      "id": "OPT_DYSMENORRHEA",
+      "text": "Menstrual pain (Dysmenorrhea)",
+      "description": "Severe, throbbing or cramping pains in the lower abdomen during periods.",
+      "mappings": [
+        {
+          "feature_name": "Menstrual_pain_Dysmenorrhea_endometriosis",
+          "feature_value": 1
+        }
+      ]
+    },
+    {
+      "id": "OPT_CRAMPS",
+      "text": "Period Cramps",
+      "description": "General cramping sensations associated with your menstrual cycle.",
+      "mappings": [
+        {
+          "feature_name": "Cramping_endometriosis",
+          "feature_value": 1
+        }
+      ]
+    },
+    {
+      "id": "OPT_PELVIC_PAIN",
+      "text": "Pelvic pain",
+      "description": "Persistent pain in the area below your belly button and between your hips.",
+      "mappings": [
+        {
+          "feature_name": "Pelvic_pain_endometriosis",
+          "feature_value": 1
+        }
+      ]
+    },
+    {
+      "id": "OPT_SEVERE_PAIN",
+      "text": "Extreme / Severe pain",
+      "description": "Pain so intense that it interferes with daily activities or requires bed rest.",
+      "mappings": [
+        {
+          "feature_name": "Extreme_Severe_pain_endometriosis",
+          "feature_value": 1
+        }
+      ]
+    },
+    {
+      "id": "OPT_PAIN_NONE",
+      "text": "None",
+      "description": "I do not experience these types of pain.",
+      "mappings": [
+        {
+          "feature_name": "Menstrual_pain_Dysmenorrhea_endometriosis",
+          "feature_value": 0
+        },
+        {
+          "feature_name": "Cramping_endometriosis",
+          "feature_value": 0
+        },
+        {
+          "feature_name": "Pelvic_pain_endometriosis",
+          "feature_value": 0
+        },
+        {
+          "feature_name": "Extreme_Severe_pain_endometriosis",
+          "feature_value": 0
+        }
+      ]
+    }
+  ],
+  "direct_mappings": null
+},
+{
+  "_id": {
+    "$oid": "69abde763200f9f11f06b428"
+  },
+  "id": "Q_PAIN_TIMING",
+  "text": "When do you experience pain?",
+  "category": "Pain",
+  "q_type": "multi_select",
+  "is_initial": true,
+  "priority": 7,
+  "options": [
+    {
+      "id": "OPT_PAIN_PERIODS",
+      "text": "During periods",
+      "description": "Pain specifically linked to the days of active bleeding.",
+      "mappings": [
+        {
+          "feature_name": "Painful_cramps_during_period_endometriosis",
+          "feature_value": 1
+        }
+      ]
+    },
+    {
+      "id": "OPT_PAIN_OVULATION",
+      "text": "During ovulation",
+      "description": "Sharp or dull pain mid-cycle (usually around day 14).",
+      "mappings": [
+        {
+          "feature_name": "Painful_ovulation_endometriosis",
+          "feature_value": 1
+        }
+      ]
+    },
+    {
+      "id": "OPT_PAIN_SEX",
+      "text": "During or after sexual intercourse",
+      "description": "Also known as Dyspareunia; a burning or deep aching sensation.",
+      "mappings": [
+        {
+          "feature_name": "Painful_Burning_pain_during_sex_Dyspareunia_endometriosis",
+          "feature_value": 1
+        }
+      ]
+    },
+    {
+      "id": "OPT_PAIN_BOWEL",
+      "text": "During bowel movements",
+      "description": "Pain while passing stool, often worsening during your period.",
+      "mappings": [
+        {
+          "feature_name": "Painful_bowel_movements_endometriosis",
+          "feature_value": 1
+        }
+      ]
+    },
+    {
+      "id": "OPT_PAIN_CHRONIC",
+      "text": "Chronic / recurring pain",
+      "description": "Pain that occurs frequently outside of your menstrual window.",
+      "mappings": [
+        {
+          "feature_name": "Pain_Chronic_pain_endometriosis",
+          "feature_value": 1
+        }
+      ]
+    },
+    {
+      "id": "OPT_TIMING_NONE",
+      "text": "None",
+      "description": "None of these situations trigger my pain.",
+      "mappings": [
+        {
+          "feature_name": "Painful_cramps_during_period_endometriosis",
+          "feature_value": 0
+        },
+        {
+          "feature_name": "Painful_ovulation_endometriosis",
+          "feature_value": 0
+        },
+        {
+          "feature_name": "Painful_Burning_pain_during_sex_Dyspareunia_endometriosis",
+          "feature_value": 0
+        },
+        {
+          "feature_name": "Painful_bowel_movements_endometriosis",
+          "feature_value": 0
+        },
+        {
+          "feature_name": "Pain_Chronic_pain_endometriosis",
+          "feature_value": 0
+        }
+      ]
+    }
+  ],
+  "direct_mappings": null
+},
+{
+  "_id": {
+    "$oid": "69abde843200f9f11f06b429"
+  },
+  "id": "Q_DIGESTIVE_SYMPTOMS",
+  "text": "Do you experience digestive or gastrointestinal symptoms?",
+  "category": "Digestive",
+  "q_type": "multi_select",
+  "is_initial": true,
+  "priority": 8,
+  "options": [
+    {
+      "id": "OPT_BLOATING",
+      "text": "Bloating",
+      "description": "Feeling of fullness or swelling in the abdomen, often called 'Endo belly'.",
+      "mappings": [
+        {
+          "feature_name": "Bloating_endometriosis",
+          "feature_value": 1
+        }
+      ]
+    },
+    {
+      "id": "OPT_IBS",
+      "text": "IBS or IBS-like symptoms",
+      "description": "Irritable Bowel Syndrome symptoms like cramping, gas, diarrhea, or constipation.",
+      "mappings": [
+        {
+          "feature_name": "IBS-like_symptoms_endometriosis",
+          "feature_value": 1
+        }
+      ]
+    },
+    {
+      "id": "OPT_BOWEL_PAIN",
+      "text": "Bowel pain",
+      "description": "Pain specifically felt in the intestinal area, especially during your cycle.",
+      "mappings": [
+        {
+          "feature_name": "Bowel_pain_endometriosis",
+          "feature_value": 1
+        }
+      ]
+    },
+    {
+      "id": "OPT_DIGESTIVE_NONE",
+      "text": "None",
+      "description": "I do not experience these digestive symptoms.",
+      "mappings": [
+        {
+          "feature_name": "Bloating_endometriosis",
+          "feature_value": 0
+        },
+        {
+          "feature_name": "IBS-like_symptoms_endometriosis",
+          "feature_value": 0
+        },
+        {
+          "feature_name": "Bowel_pain_endometriosis",
+          "feature_value": 0
+        }
+      ]
+    }
+  ],
+  "direct_mappings": null
+},
+{
+  "_id": {
+    "$oid": "69abde993200f9f11f06b42a"
+  },
+  "id": "Q_SYSTEMIC_SYMPTOMS",
+  "text": "Do you experience any of the following symptoms?",
+  "category": "Systemic",
+  "q_type": "multi_select",
+  "is_initial": true,
+  "priority": 9,
+  "options": [
+    {
+      "id": "OPT_FATIGUE",
+      "text": "Fatigue / Chronic Fatigue",
+      "description": "Extreme tiredness that doesn't go away with sleep or rest.",
+      "mappings": [
+        {
+          "feature_name": "Fatigue_Chronic_fatigue_endometriosis",
+          "feature_value": 1
+        }
+      ]
+    },
+    {
+      "id": "OPT_MALAISE",
+      "text": "Feeling sick / malaise",
+      "description": "A general feeling of discomfort, illness, or lack of well-being.",
+      "mappings": [
+        {
+          "feature_name": "Feeling_sick",
+          "feature_value": 1
+        },
+        {
+          "feature_name": "Malaise_Sickness_endometriosis",
+          "feature_value": 1
+        }
+      ]
+    },
+    {
+      "id": "OPT_APPETITE_LOSS",
+      "text": "Loss of appetite",
+      "description": "Finding yourself significantly less interested in food than usual.",
+      "mappings": [
+        {
+          "feature_name": "Loss_of_appetite_endometriosis",
+          "feature_value": 1
+        }
+      ]
+    },
+    {
+      "id": "OPT_FEVER",
+      "text": "Fever",
+      "description": "Low-grade fever often occurring during period flares.",
+      "mappings": [
+        {
+          "feature_name": "Fever_endometriosis",
+          "feature_value": 1
+        }
+      ]
+    },
+    {
+      "id": "OPT_MOOD_SWINGS",
+      "text": "Mood Swings",
+      "description": "Rapid and intense changes in your emotional state.",
+      "mappings": [
+        {
+          "feature_name": "more_Mood_Swings_pcos",
+          "feature_value": 1
+        }
+      ]
+    },
+    {
+      "id": "OPT_ALWAYS_TIRED",
+      "text": "Always Tired",
+      "description": "Persistent lack of energy throughout the day, common in PCOS.",
+      "mappings": [
+        {
+          "feature_name": "always_tired_pcos",
+          "feature_value": 1
+        }
+      ]
+    },
+    {
+      "id": "OPT_SYSTEMIC_NONE",
+      "text": "None",
+      "description": "I do not experience any of these symptoms.",
+      "mappings": [
+        {
+          "feature_name": "Fatigue_Chronic_fatigue_endometriosis",
+          "feature_value": 0
+        },
+        {
+          "feature_name": "Feeling_sick",
+          "feature_value": 0
+        },
+        {
+          "feature_name": "Malaise_Sickness_endometriosis",
+          "feature_value": 0
+        },
+        {
+          "feature_name": "Loss_of_appetite_endometriosis",
+          "feature_value": 0
+        },
+        {
+          "feature_name": "Fever_endometriosis",
+          "feature_value": 0
+        },
+        {
+          "feature_name": "more_Mood_Swings_pcos",
+          "feature_value": 0
+        },
+        {
+          "feature_name": "always_tired_pcos",
+          "feature_value": 0
+        }
+      ]
+    }
+  ],
+  "direct_mappings": null
+},
+{
+  "_id": {
+    "$oid": "69abe39c3200f9f11f06b42b"
+  },
+  "id": "Q_HORMONAL_PROBLEMS",
+  "text": "Have you been diagnosed with or suspect hormonal problems?",
+  "category": "Hormonal",
+  "q_type": "yes_no",
+  "is_initial": true,
+  "priority": 10,
+  "options": [
+    {
+      "id": "OPT_Q_HORMONAL_PROBLEMS_YES",
+      "text": "Yes",
+      "description": "Select if this applies to you",
+      "mappings": [
+        {
+          "feature_name": "Hormonal_problems_endometriosis",
+          "feature_value": 1
+        }
+      ]
+    }
+  ],
+  "direct_mappings": [
+    {
+      "feature_name": "Hormonal_problems_endometriosis",
+      "feature_value": 1
+    }
+  ]
+},
+{
+  "_id": {
+    "$oid": "69abe3b33200f9f11f06b42c"
+  },
+  "id": "Q_FERTILITY_ISSUES",
+  "text": "Have you experienced any of the following reproductive health issues?",
+  "category": "Reproductive",
+  "q_type": "multi_select",
+  "is_initial": true,
+  "priority": 11,
+  "options": [
+    {
+      "id": "OPT_CONCEIVING",
+      "text": "Difficulty conceiving",
+      "description": "Trying to get pregnant for 12 months or more without success.",
+      "mappings": [
+        {
+          "feature_name": "Difficulty_in_conceiving_pcos",
+          "feature_value": 1
+        }
+      ]
+    },
+    {
+      "id": "OPT_FERTILITY",
+      "text": "Fertility issues",
+      "description": "Diagnosed conditions affecting reproductive capability.",
+      "mappings": [
+        {
+          "feature_name": "Fertility_Issues_endometriosis",
+          "feature_value": 1
+        }
+      ]
+    },
+    {
+      "id": "OPT_CYSTS",
+      "text": "Ovarian or reproductive cysts",
+      "description": "Fluid-filled sacs in an ovary or on its surface.",
+      "mappings": [
+        {
+          "feature_name": "Ovarian_cysts_endometriosis",
+          "feature_value": 1
+        }
+      ]
+    },
+    {
+      "id": "OPT_FERTILITY_NONE",
+      "text": "None",
+      "description": "I have not experienced these issues.",
+      "mappings": [
+        {
+          "feature_name": "Difficulty_in_conceiving_pcos",
+          "feature_value": 0
+        },
+        {
+          "feature_name": "Fertility_Issues_endometriosis",
+          "feature_value": 0
+        },
+        {
+          "feature_name": "Ovarian_cysts_endometriosis",
+          "feature_value": 0
+        }
+      ]
+    }
+  ],
+  "direct_mappings": null
+},
+{
+  "_id": {
+    "$oid": "69abe3bc3200f9f11f06b42d"
+  },
+  "id": "Q_NUM_PREGNANCIES",
+  "text": "How many times have you been pregnant?",
+  "category": "Reproductive",
+  "q_type": "input",
+  "is_initial": true,
+  "priority": 12,
+  "options": [],
+  "direct_mappings": [
+    {
+      "feature_name": "Num_of_pregnancies_cervical",
+      "feature_value": 1
+    }
+  ]
+},
+{
+  "_id": {
+    "$oid": "69abe3c63200f9f11f06b42e"
+  },
+  "id": "Q_HAIR_GROWTH",
+  "text": "Have you noticed excess hair growth in any of the following areas?",
+  "category": "PCOS Indicators",
+  "q_type": "multi_select",
+  "is_initial": true,
+  "priority": 13,
+  "options": [
+    {
+      "id": "OPT_CHIN",
+      "text": "Chin",
+      "description": null,
+      "mappings": [
+        {
+          "feature_name": "Hair_growth_on_Chin",
+          "feature_value": 1
+        }
+      ]
+    },
+    {
+      "id": "OPT_CHEEKS",
+      "text": "Cheeks",
+      "description": null,
+      "mappings": [
+        {
+          "feature_name": "Hair_growth_on_Cheeks",
+          "feature_value": 1
+        }
+      ]
+    },
+    {
+      "id": "OPT_UPPER_LIP",
+      "text": "Upper lip",
+      "description": null,
+      "mappings": [
+        {
+          "feature_name": "Hair_growth_on_Upper_lips",
+          "feature_value": 1
+        }
+      ]
+    },
+    {
+      "id": "OPT_BREASTS",
+      "text": "Between breasts",
+      "description": null,
+      "mappings": [
+        {
+          "feature_name": "Hair_growth_Between_breasts",
+          "feature_value": 1
+        }
+      ]
+    },
+    {
+      "id": "OPT_ARMS",
+      "text": "Arms",
+      "description": null,
+      "mappings": [
+        {
+          "feature_name": "Hair_growth_in_Arms",
+          "feature_value": 1
+        }
+      ]
+    },
+    {
+      "id": "OPT_THIGHS",
+      "text": "Inner thighs",
+      "description": null,
+      "mappings": [
+        {
+          "feature_name": "Hair_growth_on_Inner_thighs",
+          "feature_value": 1
+        }
+      ]
+    },
+    {
+      "id": "OPT_HAIR_NONE",
+      "text": "None",
+      "description": null,
+      "mappings": [
+        {
+          "feature_name": "Hair_growth_on_Chin",
+          "feature_value": 0
+        },
+        {
+          "feature_name": "Hair_growth_on_Cheeks",
+          "feature_value": 0
+        },
+        {
+          "feature_name": "Hair_growth_on_Upper_lips",
+          "feature_value": 0
+        },
+        {
+          "feature_name": "Hair_growth_Between_breasts",
+          "feature_value": 0
+        },
+        {
+          "feature_name": "Hair_growth_in_Arms",
+          "feature_value": 0
+        },
+        {
+          "feature_name": "Hair_growth_on_Inner_thighs",
+          "feature_value": 0
+        }
+      ]
+    }
+  ],
+  "direct_mappings": null
+},
+{
+  "_id": {
+    "$oid": "69abe3d13200f9f11f06b42f"
+  },
+  "id": "Q_PCOS_SKIN_WEIGHT",
+  "text": "Do you experience any of the following skin or weight changes?",
+  "category": "PCOS Indicators",
+  "q_type": "multi_select",
+  "is_initial": true,
+  "priority": 14,
+  "options": [
+    {
+      "id": "OPT_ACNE",
+      "text": "Acne / pimples / Skin tags",
+      "description": null,
+      "mappings": [
+        {
+          "feature_name": "Acne_or_skin_tags",
+          "feature_value": 1
+        }
+      ]
+    },
+    {
+      "id": "OPT_PATCHES",
+      "text": "Dark patches",
+      "description": "Velvety dark skin in body creases (Acanthosis nigricans).",
+      "mappings": [
+        {
+          "feature_name": "Dark_patches",
+          "feature_value": 1
+        }
+      ]
+    },
+    {
+      "id": "OPT_THINNING",
+      "text": "Hair thinning or hair loss",
+      "description": null,
+      "mappings": [
+        {
+          "feature_name": "Hair_thinning_or_hair_loss",
+          "feature_value": 1
+        }
+      ]
+    },
+    {
+      "id": "OPT_WEIGHT_SUDDEN",
+      "text": "Sudden weight gain/ weight loss",
+      "description": null,
+      "mappings": [
+        {
+          "feature_name": "loss_weight_gain_weight_loss",
+          "feature_value": 1
+        }
+      ]
+    },
+    {
+      "id": "OPT_BMI_OVER",
+      "text": "Overweight (BMI)",
+      "description": "BMI specifically impacting hormone balance.",
+      "mappings": [
+        {
+          "feature_name": "Overweight",
+          "feature_value": 1
+        }
+      ]
+    },
+    {
+      "id": "OPT_PCOS_SW_NONE",
+      "text": "None",
+      "description": null,
+      "mappings": [
+        {
+          "feature_name": "Acne_or_skin_tags",
+          "feature_value": 0
+        },
+        {
+          "feature_name": "Dark_patches",
+          "feature_value": 0
+        },
+        {
+          "feature_name": "Hair_thinning_or_hair_loss",
+          "feature_value": 0
+        },
+        {
+          "feature_name": "loss_weight_gain_weight_loss",
+          "feature_value": 0
+        },
+        {
+          "feature_name": "Overweight",
+          "feature_value": 0
+        }
+      ]
+    }
+  ],
+  "direct_mappings": null
+},
+{
+  "_id": {
+    "$oid": "69abe6043200f9f11f06b430"
+  },
+  "id": "Q_EXERCISE_FREQ",
+  "text": "How many days per week do you exercise?",
+  "category": "Lifestyle",
+  "q_type": "input",
+  "is_initial": true,
+  "priority": 15,
+  "options": [],
+  "direct_mappings": [
+    {
+      "feature_name": "exercise_per_week_pcos",
+      "feature_value": 1
+    }
+  ]
+},
+{
+  "_id": {
+    "$oid": "69abe60b3200f9f11f06b431"
+  },
+  "id": "Q_EAT_OUTSIDE",
+  "text": "How many times per week do you consume outside or processed food?",
+  "category": "Lifestyle",
+  "q_type": "input",
+  "is_initial": true,
+  "priority": 16,
+  "options": [],
+  "direct_mappings": [
+    {
+      "feature_name": "eat_outside_per_week_pcos",
+      "feature_value": 1
+    }
+  ]
+},
+{
+  "_id": {
+    "$oid": "69abe6143200f9f11f06b432"
+  },
+  "id": "Q_CANNED_FOOD",
+  "text": "Do you frequently consume canned or packaged food?",
+  "category": "Lifestyle",
+  "q_type": "yes_no",
+  "is_initial": true,
+  "priority": 17,
+  "options": [
+    {
+      "id": "OPT_Q_CANNED_FOOD_YES",
+      "text": "Yes",
+      "description": "Select if this applies to you",
+      "mappings": [
+        {
+          "feature_name": "canned_food_often_pcos",
+          "feature_value": 1
+        }
+      ]
+    }
+  ],
+  "direct_mappings": [
+    {
+      "feature_name": "canned_food_often_pcos",
+      "feature_value": 1
+    }
+  ]
+},
+{
+  "_id": {
+    "$oid": "69abe61e3200f9f11f06b433"
+  },
+  "id": "Q_SEXUAL_PARTNERS",
+  "text": "How many sexual partners have you had?",
+  "category": "Sexual Health",
+  "q_type": "input",
+  "is_initial": true,
+  "priority": 18,
+  "options": [],
+  "direct_mappings": [
+    {
+      "feature_name": "Number_of_sexual_partners_cervical",
+      "feature_value": 1
+    }
+  ]
+},
+{
+  "_id": {
+    "$oid": "69abe6233200f9f11f06b434"
+  },
+  "id": "Q_FIRST_INTERCOURSE",
+  "text": "At what age did you have your first sexual intercourse?",
+  "category": "Sexual Health",
+  "q_type": "input",
+  "is_initial": true,
+  "priority": 19,
+  "options": [],
+  "direct_mappings": [
+    {
+      "feature_name": "First_sexual_intercourse_cervical",
+      "feature_value": 1
+    }
+  ]
+},
+{
+  "_id": {
+    "$oid": "69abe6623200f9f11f06b435"
+  },
+  "id": "Q_SMOKING_STATS",
+  "text": "Smoking Habits: Please provide the following details (Enter 0 if not applicable).",
+  "category": "Lifestyle",
+  "q_type": "input",
+  "is_initial": true,
+  "priority": 20,
+  "options": [
+    {
+      "id": "OPT_SMOKE_YEARS",
+      "text": "Years of smoking",
+      "description": null,
+      "mappings": [
+        {
+          "feature_name": "Smokes_years_cervical",
+          "feature_value": 1
+        }
+      ]
+    },
+    {
+      "id": "OPT_SMOKE_PACKS",
+      "text": "Packs per year",
+      "description": null,
+      "mappings": [
+        {
+          "feature_name": "Packs_per_year_cervical",
+          "feature_value": 1
+        }
+      ]
+    }
+  ],
+  "direct_mappings": null
+},
+{
+  "_id": {
+    "$oid": "69abe9dc3200f9f11f06b436"
+  },
+  "id": "Q_CONTRACEPTIVES_YEARS",
+  "text": "How many years have you used hormonal contraceptives?",
+  "category": "Contraception",
+  "q_type": "input",
+  "is_initial": true,
+  "priority": 21,
+  "options": [],
+  "direct_mappings": [
+    {
+      "feature_name": "Hormonal_Contraceptives_years_cervical",
+      "feature_value": 1
+    }
+  ]
+},
+{
+  "_id": {
+    "$oid": "69abe9e93200f9f11f06b437"
+  },
+  "id": "Q_IUD_YEARS",
+  "text": "How many years have you used an IUD (Copper or Hormonal)?",
+  "category": "Contraception",
+  "q_type": "input",
+  "is_initial": true,
+  "priority": 22,
+  "options": [],
+  "direct_mappings": [
+    {
+      "feature_name": "IUD_years_cervical",
+      "feature_value": 1
+    }
+  ]
+},
+{
+  "_id": {
+    "$oid": "69abea043200f9f11f06b438"
+  },
+  "id": "Q_STD_HISTORY",
+  "text": "Have you ever been diagnosed with a sexually transmitted disease (STD)?",
+  "category": "STD History",
+  "q_type": "yes_no",
+  "is_initial": true,
+  "priority": 23,
+  "options": [
+    {
+      "id": "OPT_Q_STD_HISTORY_YES",
+      "text": "Yes",
+      "description": "Select if this applies to you",
+      "mappings": [
+        {
+          "feature_name": "STDs_cervical",
+          "feature_value": 1
+        }
+      ]
+    }
+  ],
+  "direct_mappings": [
+    {
+      "feature_name": "STDs_cervical",
+      "feature_value": 1
+    }
+  ]
+},
+{
+  "_id": {
+    "$oid": "69abea4f3200f9f11f06b439"
+  },
+  "id": "Q_STD_COUNT",
+  "text": "How many times have you been diagnosed with an STD?",
+  "category": "STD History",
+  "q_type": "input",
+  "is_initial": false,
+  "priority": 24,
+  "options": [],
+  "direct_mappings": [
+    {
+      "feature_name": "STDs_number_cervical",
+      "feature_value": 1
+    },
+    {
+      "feature_name": "STDs: Number of diagnosis",
+      "feature_value": 1
+    }
+  ]
+},
+{
+  "_id": {
+    "$oid": "69abea653200f9f11f06b43a"
+  },
+  "id": "Q_STD_TYPES",
+  "text": "Which of the following have you been diagnosed with?",
+  "category": "STD History",
+  "q_type": "multi_select",
+  "is_initial": false,
+  "priority": 25,
+  "options": [
+    {
+      "id": "OPT_HPV",
+      "text": "HPV",
+      "description": null,
+      "mappings": [
+        {
+          "feature_name": "STDs:HPV",
+          "feature_value": 1
+        }
+      ]
+    },
+    {
+      "id": "OPT_HIV_AIDS",
+      "text": "HIV / AIDS",
+      "description": null,
+      "mappings": [
+        {
+          "feature_name": "STDs:AIDS",
+          "feature_value": 1
+        },
+        {
+          "feature_name": "STDs:HIV",
+          "feature_value": 1
+        }
+      ]
+    },
+    {
+      "id": "OPT_HEPB",
+      "text": "Hepatitis B",
+      "description": null,
+      "mappings": [
+        {
+          "feature_name": "STDs:Hepatitis_B",
+          "feature_value": 1
+        }
+      ]
+    },
+    {
+      "id": "OPT_SYPHILIS",
+      "text": "Syphilis",
+      "description": null,
+      "mappings": [
+        {
+          "feature_name": "STDs:syphilis",
+          "feature_value": 1
+        }
+      ]
+    },
+    {
+      "id": "OPT_HERPES",
+      "text": "Genital herpes",
+      "description": null,
+      "mappings": [
+        {
+          "feature_name": "STDs:genital_herpes",
+          "feature_value": 1
+        }
+      ]
+    },
+    {
+      "id": "OPT_PID",
+      "text": "Pelvic inflammatory disease",
+      "description": null,
+      "mappings": [
+        {
+          "feature_name": "STDs:pelvic_inflammatory_disease",
+          "feature_value": 1
+        }
+      ]
+    },
+    {
+      "id": "OPT_CONDY",
+      "text": "Condylomatosis",
+      "description": null,
+      "mappings": [
+        {
+          "feature_name": "STDs:condylomatosis",
+          "feature_value": 1
+        }
+      ]
+    },
+    {
+      "id": "OPT_VAG_CONDY",
+      "text": "Vaginal Condylomatosis",
+      "description": null,
+      "mappings": [
+        {
+          "feature_name": "STDs:vaginal_condylomatosis",
+          "feature_value": 1
+        }
+      ]
+    },
+    {
+      "id": "OPT_VULVO_CONDY",
+      "text": "Vulvo-perineal Condylomatosis",
+      "description": null,
+      "mappings": [
+        {
+          "feature_name": "STDs:vulvo-perineal_condylomatosis",
+          "feature_value": 1
+        }
+      ]
+    },
+    {
+      "id": "OPT_CERV_CONDY",
+      "text": "Cervical Condylomatosis",
+      "description": null,
+      "mappings": [
+        {
+          "feature_name": "STDs:cervical_condylomatosis",
+          "feature_value": 1
+        }
+      ]
+    },
+    {
+      "id": "OPT_MOLLUSCUM",
+      "text": "Molluscum contagiosum",
+      "description": null,
+      "mappings": [
+        {
+          "feature_name": "STDs:molluscum_contagiosum",
+          "feature_value": 1
+        }
+      ]
+    }
+  ],
+  "direct_mappings": null
+},
+{
+  "_id": {
+    "$oid": "69abea793200f9f11f06b43b"
+  },
+  "id": "Q_STD_TOTAL_DIAGNOSIS",
+  "text": "Total number of STD diagnoses:",
+  "category": "STD History",
+  "q_type": "input",
+  "is_initial": false,
+  "priority": 26,
+  "options": [],
+  "direct_mappings": [
+    {
+      "feature_name": "STDs:Number_of_diagnosis",
+      "feature_value": 1
+    }
+  ]
+},
+{
+  "_id": {
+    "$oid": "69abea843200f9f11f06b43c"
+  },
+  "id": "Q_STD_FIRST_TIME",
+  "text": "Years since your first STD diagnosis:",
+  "category": "STD History",
+  "q_type": "input",
+  "is_initial": false,
+  "priority": 27,
+  "options": [],
+  "direct_mappings": [
+    {
+      "feature_name": "STDs:Time_since_first_diagnosis",
+      "feature_value": 1
+    }
+  ]
+},
+{
+  "_id": {
+    "$oid": "69abebab3200f9f11f06b43d"
+  },
+  "id": "Q_CERVICAL_DX",
+  "text": "Have you ever been diagnosed with any of the following cervical conditions?",
+  "category": "Cervical Health",
+  "q_type": "multi_select",
+  "is_initial": true,
+  "priority": 29,
+  "options": [
+    {
+      "id": "OPT_DX_CANCER",
+      "text": "Cervical cancer",
+      "description": "A diagnosis of malignant cells in the cervix.",
+      "mappings": [
+        {
+          "feature_name": "Dx:Cancer",
+          "feature_value": 1
+        },
+        {
+          "feature_name": "Dx",
+          "feature_value": 1
+        }
+      ]
+    },
+    {
+      "id": "OPT_DX_CIN",
+      "text": "CIN",
+      "description": "Cervical Intraepithelial Neoplasia; abnormal growth of cells on the surface of the cervix.",
+      "mappings": [
+        {
+          "feature_name": "Dx:CIN",
+          "feature_value": 1
+        }
+      ]
+    },
+    {
+      "id": "OPT_DX_HPV",
+      "text": "HPV-related disease",
+      "description": "Other conditions specifically linked to a high-risk HPV infection.",
+      "mappings": [
+        {
+          "feature_name": "Dx:HPV",
+          "feature_value": 1
+        }
+      ]
+    },
+    {
+      "id": "OPT_DX_NONE",
+      "text": "None",
+      "description": "I have no previous cervical diagnoses.",
+      "mappings": [
+        {
+          "feature_name": "Dx:Cancer",
+          "feature_value": 0
+        },
+        {
+          "feature_name": "Dx",
+          "feature_value": 0
+        },
+        {
+          "feature_name": "Dx:CIN",
+          "feature_value": 0
+        },
+        {
+          "feature_name": "Dx:HPV",
+          "feature_value": 0
+        }
+      ]
+    }
+  ],
+  "direct_mappings": null
+},
+{
+  "_id": {
+    "$oid": "69abebb83200f9f11f06b43e"
+  },
+  "id": "Q_CERVICAL_TESTS",
+  "text": "Have you undergone any of the following tests?",
+  "category": "Cervical Health",
+  "q_type": "multi_select",
+  "is_initial": true,
+  "priority": 30,
+  "options": [
+    {
+      "id": "OPT_TEST_PAP",
+      "text": "Pap smear (Cytology)",
+      "description": "A procedure to test for cervical cancer in women.",
+      "mappings": [
+        {
+          "feature_name": "Citology",
+          "feature_value": 1
+        }
+      ]
+    },
+    {
+      "id": "OPT_TEST_HINSELMANN",
+      "text": "Hinselmann test",
+      "description": "Colposcopic inspection of the cervix.",
+      "mappings": [
+        {
+          "feature_name": "Hinselmann",
+          "feature_value": 1
+        }
+      ]
+    },
+    {
+      "id": "OPT_TEST_SCHILLER",
+      "text": "Schiller test",
+      "description": "A medical test in which iodine solution is applied to the cervix.",
+      "mappings": [
+        {
+          "feature_name": "Schiller",
+          "feature_value": 1
+        }
+      ]
+    },
+    {
+      "id": "OPT_TEST_NONE",
+      "text": "None",
+      "description": "I have not undergone these specific tests.",
+      "mappings": [
+        {
+          "feature_name": "Citology",
+          "feature_value": 0
+        },
+        {
+          "feature_name": "Hinselmann",
+          "feature_value": 0
+        },
+        {
+          "feature_name": "Schiller",
+          "feature_value": 0
+        }
+      ]
+    }
+  ],
+  "direct_mappings": null
+}]

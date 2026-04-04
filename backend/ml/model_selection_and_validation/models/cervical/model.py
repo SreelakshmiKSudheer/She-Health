@@ -317,7 +317,6 @@ def random_forest_with_tuning_and_calibration(
 
     return calibrated, grid
 
-
 # ---------------- XGBOOST MODEL WITH TUNING & CALIBRATION ----------------
 def xgboost_with_tuning_and_calibration(
     x_train, y_train,

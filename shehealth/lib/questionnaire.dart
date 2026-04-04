@@ -22,6 +22,7 @@ class _SymptomQuestionnaireState extends State<SymptomQuestionnaire> {
 
   List<QuestionnaireQuestion> _questions = [];
   final Map<String, List<String>> _answers = {};
+  final Map<String, TextEditingController> _inputControllers = {};
   int _currentIndex = 0;
 
   bool _isLoadingQuestions = true;
@@ -32,6 +33,14 @@ class _SymptomQuestionnaireState extends State<SymptomQuestionnaire> {
   void initState() {
     super.initState();
     _loadQuestionnaire();
+  }
+
+  @override
+  void dispose() {
+    for (final controller in _inputControllers.values) {
+      controller.dispose();
+    }
+    super.dispose();
   }
 
   Future<void> _loadQuestionnaire() async {
@@ -49,6 +58,10 @@ class _SymptomQuestionnaireState extends State<SymptomQuestionnaire> {
         _questions = loaded;
         _isLoadingQuestions = false;
       });
+
+      for (final question in loaded.where((question) => _isInputQuestion(question))) {
+        _getInputController(question);
+      }
     } catch (e) {
       if (!mounted) {
         return;
@@ -69,13 +82,52 @@ class _SymptomQuestionnaireState extends State<SymptomQuestionnaire> {
 
   List<String> get _currentAnswer => _answers[_currentQuestion.id] ?? const [];
 
-  bool get _isCurrentAnswered => _currentAnswer.isNotEmpty;
+  bool get _isCurrentAnswered {
+    if (_isInputQuestion(_currentQuestion)) {
+      return _getInputController(_currentQuestion).text.trim().isNotEmpty;
+    }
+    return _currentAnswer.isNotEmpty;
+  }
 
   double get _progress {
     if (_questions.isEmpty) {
       return 0;
     }
     return ((_currentIndex + 1) / _questions.length).clamp(0.0, 1.0);
+  }
+
+  bool _isInputQuestion(QuestionnaireQuestion question) =>
+      question.qType == 'input';
+
+  TextEditingController _getInputController(QuestionnaireQuestion question) {
+    return _inputControllers.putIfAbsent(question.id, () {
+      final existingValue = _decodeInputAnswer(_answers[question.id]);
+      return TextEditingController(text: existingValue);
+    });
+  }
+
+  String _decodeInputAnswer(List<String>? answer) {
+    if (answer == null || answer.isEmpty) {
+      return '';
+    }
+
+    final raw = answer.first;
+    if (raw.startsWith('INPUT::')) {
+      return raw.substring('INPUT::'.length);
+    }
+    return raw;
+  }
+
+  void _onInputChanged(String value) {
+    final trimmed = value.trim();
+    setState(() {
+      if (trimmed.isEmpty) {
+        _answers.remove(_currentQuestion.id);
+      } else {
+        _answers[_currentQuestion.id] = ['INPUT::$trimmed'];
+      }
+      _selectedDescription = null;
+    });
   }
 
   void _onOptionTap(QuestionnaireOption option) {
@@ -96,14 +148,20 @@ class _SymptomQuestionnaireState extends State<SymptomQuestionnaire> {
 
     setState(() {
       _answers[question.id] = current;
-      _selectedDescription = option.description;
     });
+  }
+
+  String _optionDescriptionFromDb(QuestionnaireOption option) {
+    final description = option.description?.trim();
+    if (description == null || description.isEmpty) {
+      return 'No additional description is available for this option.';
+    }
+    return description;
   }
 
   void _showDescription(QuestionnaireOption option) {
     setState(() {
-      _selectedDescription = option.description ??
-          'No additional description is available for this option.';
+      _selectedDescription = _optionDescriptionFromDb(option);
     });
   }
 
@@ -464,9 +522,11 @@ This report is a screening-oriented interpretation and is not a medical diagnosi
           ),
           const SizedBox(height: 8),
           Text(
-            _currentQuestion.isMultiSelect
-                ? 'Select one or more options.'
-                : 'Select one option.',
+            _isInputQuestion(_currentQuestion)
+                ? 'Enter a numeric value to continue.'
+                : _currentQuestion.isMultiSelect
+                    ? 'Select one or more options.'
+                    : 'Select one option.',
             style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
           ),
         ],
@@ -475,6 +535,28 @@ This report is a screening-oriented interpretation and is not a medical diagnosi
   }
 
   Widget _buildOptionsList() {
+    if (_isInputQuestion(_currentQuestion)) {
+      final controller = _getInputController(_currentQuestion);
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: const Color(0xFFF5D7E3)),
+        ),
+        child: TextField(
+          controller: controller,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          onChanged: _onInputChanged,
+          decoration: const InputDecoration(
+            labelText: 'Enter value',
+            hintText: 'Type your answer here',
+            prefixIcon: Icon(Icons.edit_outlined),
+          ),
+        ),
+      );
+    }
+
     return Column(
       children: _currentQuestion.options.map((option) {
         final selected = _currentAnswer.contains(option.id);
@@ -532,6 +614,35 @@ This report is a screening-oriented interpretation and is not a medical diagnosi
   }
 
   Widget _buildDescriptionPanel() {
+    if (_isInputQuestion(_currentQuestion)) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFF0F3),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFF5D7E3)),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Icon(Icons.tune, color: Color(0xFFC85A7A), size: 20),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'This question expects a typed numeric value. Enter the best matching number before continuing.',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.grey.shade700,
+                  height: 1.4,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     final text = (_selectedDescription == null || _selectedDescription!.isEmpty)
         ? 'Tap an info icon to view option details here.'
         : _selectedDescription!;

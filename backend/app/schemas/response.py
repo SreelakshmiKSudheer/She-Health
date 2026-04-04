@@ -27,6 +27,20 @@ class SubmitResponse(BaseModel):
         return v
 
 
+class PartialSubmitResponse(BaseModel):
+    user_id: str
+    responses: List[SingleResponse]
+
+    @field_validator("responses")
+    @classmethod
+    def partial_responses_must_not_be_empty(
+        cls, v: List[SingleResponse]
+    ) -> List[SingleResponse]:
+        if not v:
+            raise ValueError("responses list must not be empty")
+        return v
+
+
 class SingleResponseOut(BaseModel):
     question_id: str
     selected_option_ids: List[str]

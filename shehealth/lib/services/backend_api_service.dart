@@ -34,6 +34,103 @@ class BackendApiService {
 
   Uri _uri(String path) => Uri.parse('$_baseUrl$path');
 
+  Uri _uriForBase(String baseUrl, String path) => Uri.parse('$baseUrl$path');
+
+  List<String> _submitBaseUrlCandidates() {
+    final primary = _baseUrl;
+    final candidates = <String>[primary];
+
+    if (!kIsWeb) {
+      return candidates;
+    }
+
+    final parsed = Uri.tryParse(primary);
+    if (parsed == null || parsed.host.isEmpty) {
+      return candidates;
+    }
+
+    void addHostVariant(String host) {
+      final normalized = parsed
+          .replace(host: host)
+          .toString()
+          .replaceAll(RegExp(r'/$'), '');
+      if (!candidates.contains(normalized)) {
+        candidates.add(normalized);
+      }
+    }
+
+    if (parsed.host == '127.0.0.1') {
+      addHostVariant('localhost');
+    } else if (parsed.host == 'localhost') {
+      addHostVariant('127.0.0.1');
+    }
+
+    final browserHost = Uri.base.host;
+    if (browserHost == 'localhost' || browserHost == '127.0.0.1') {
+      addHostVariant(browserHost);
+    }
+
+    return candidates;
+  }
+
+  Future<http.Response> _postWithLoopbackFallback(
+    String path,
+    Map<String, dynamic> payload,
+  ) async {
+    Object? lastError;
+    final candidates = _submitBaseUrlCandidates();
+
+    for (final baseUrl in candidates) {
+      try {
+        return await _client.post(
+          _uriForBase(baseUrl, path),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode(payload),
+        );
+      } catch (e) {
+        lastError = e;
+      }
+    }
+
+    throw Exception(
+      'Unable to reach backend at port 8000. Tried: ${candidates.join(', ')}. '
+      'Please ensure the FastAPI backend is running. Last error: $lastError',
+    );
+  }
+
+  Future<http.Response> _requestWithLoopbackFallback({
+    required String method,
+    required String path,
+    Map<String, dynamic>? payload,
+  }) async {
+    Object? lastError;
+    final candidates = _submitBaseUrlCandidates();
+
+    for (final baseUrl in candidates) {
+      try {
+        final uri = _uriForBase(baseUrl, path);
+        final headers = {'Content-Type': 'application/json'};
+        if (method == 'GET') {
+          return await _client.get(uri, headers: headers);
+        }
+        if (method == 'PATCH') {
+          return await _client.patch(
+            uri,
+            headers: headers,
+            body: payload == null ? null : jsonEncode(payload),
+          );
+        }
+      } catch (e) {
+        lastError = e;
+      }
+    }
+
+    throw Exception(
+      'Unable to reach backend at port 8000. Tried: ${candidates.join(', ')}. '
+      'Please ensure the FastAPI backend is running. Last error: $lastError',
+    );
+  }
+
   Future<void> registerUserProfile({
     required String userId,
     required int age,
@@ -111,24 +208,49 @@ class BackendApiService {
     required String userId,
     required Map<String, List<String>> selectedOptionIdsByQuestion,
   }) async {
-    final response = await _client.post(
-      _uri('/response/submit'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'user_id': userId,
-        'responses': selectedOptionIdsByQuestion.entries
-            .map(
-              (entry) => {
-                'question_id': entry.key,
-                'selected_option_ids': entry.value,
-              },
-            )
-            .toList(),
-      }),
-    );
+    final payload = {
+      'user_id': userId,
+      'responses': selectedOptionIdsByQuestion.entries
+          .map(
+            (entry) => {
+              'question_id': entry.key,
+              'selected_option_ids': entry.value,
+            },
+          )
+          .toList(),
+    };
+
+    final response = await _postWithLoopbackFallback('/response/submit', payload);
 
     if (response.statusCode >= 400) {
       throw Exception('Failed to submit responses: ${response.body}');
+    }
+  }
+
+  Future<void> updateResponses({
+    required String userId,
+    required Map<String, List<String>> selectedOptionIdsByQuestion,
+  }) async {
+    final payload = {
+      'user_id': userId,
+      'responses': selectedOptionIdsByQuestion.entries
+          .map(
+            (entry) => {
+              'question_id': entry.key,
+              'selected_option_ids': entry.value,
+            },
+          )
+          .toList(),
+    };
+
+    final response = await _requestWithLoopbackFallback(
+      method: 'PATCH',
+      path: '/response/update',
+      payload: payload,
+    );
+
+    if (response.statusCode >= 400) {
+      throw Exception('Failed to update responses: ${response.body}');
     }
   }
 
@@ -149,7 +271,10 @@ class BackendApiService {
   }
 
   Future<Map<String, dynamic>> getUserResponses(String userId) async {
-    final response = await _client.get(_uri('/response/$userId'));
+    final response = await _requestWithLoopbackFallback(
+      method: 'GET',
+      path: '/response/$userId',
+    );
     if (response.statusCode >= 400) {
       throw Exception('Failed to fetch user responses: ${response.body}');
     }
