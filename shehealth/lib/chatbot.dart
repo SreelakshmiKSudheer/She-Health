@@ -25,16 +25,11 @@ class _HealthChatbotPageState extends State<HealthChatbotPage>
   List<Map<String, dynamic>> conversationHistory = [];
 
   bool _isTyping = false;
+  bool _isQuickSuggestionLocked = false;
 
   final List<String> quickSuggestions = [
     'What is PCOS?',
     'Period irregularities',
-    'Cervical cancer screening',
-    'Endometriosis symptoms',
-    'Fertility tips',
-    'Healthy diet for women',
-    'Exercise for hormonal balance',
-    "Thyroid and women's health",
   ];
 
   @override
@@ -294,8 +289,28 @@ class _HealthChatbotPageState extends State<HealthChatbotPage>
     }
   }
 
-  void _handleQuickSuggestion(String suggestion) =>
-      _handleSendMessage(suggestion);
+  Future<void> _handleQuickSuggestion(String suggestion) async {
+    if (_isTyping || _isQuickSuggestionLocked) {
+      return;
+    }
+
+    setState(() {
+      _isQuickSuggestionLocked = true;
+    });
+
+    try {
+      await _handleSendMessage(suggestion);
+    } finally {
+      Future.delayed(const Duration(milliseconds: 800), () {
+        if (!mounted) {
+          return;
+        }
+        setState(() {
+          _isQuickSuggestionLocked = false;
+        });
+      });
+    }
+  }
 
   // ── Clear conversation ─────────────────────────────────────────────────────
 
@@ -466,12 +481,6 @@ class _HealthChatbotPageState extends State<HealthChatbotPage>
                     icon: const Icon(Icons.menu,
                         color: Colors.white, size: 28),
                   ),
-                ),
-                // ✅ Back button
-                IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.arrow_back,
-                      color: Colors.white, size: 28),
                 ),
                 const SizedBox(width: 4),
                 // Animated pulsing chat icon
@@ -940,24 +949,29 @@ class _HealthChatbotPageState extends State<HealthChatbotPage>
             spacing: 8,
             runSpacing: 8,
             children: quickSuggestions.map((suggestion) {
+              final isDisabled = _isTyping || _isQuickSuggestionLocked;
               return InkWell(
-                onTap: () => _handleQuickSuggestion(suggestion),
+                onTap: isDisabled ? null : () => _handleQuickSuggestion(suggestion),
                 borderRadius: BorderRadius.circular(20),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    border: Border.all(
-                        color: const Color(0xFFE5C4C4), width: 1.5),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    suggestion,
-                    style: const TextStyle(
-                      color: Color(0xFFC85A7A),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
+                child: AnimatedOpacity(
+                  duration: const Duration(milliseconds: 150),
+                  opacity: isDisabled ? 0.55 : 1,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      border: Border.all(
+                          color: const Color(0xFFE5C4C4), width: 1.5),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      suggestion,
+                      style: const TextStyle(
+                        color: Color(0xFFC85A7A),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ),

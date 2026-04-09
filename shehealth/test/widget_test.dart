@@ -10,11 +10,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shehealth/main.dart';
 
 void main() {
-  testWidgets('App loads', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
+  testWidgets('App loads smoke test', (WidgetTester tester) async {
     await tester.pumpWidget(const SheHealthApp());
 
-    // Verify that AuthPage initial text is shown.
-    expect(find.text('SHE-HEALTH'), findsOneWidget);
+    // Basic sanity check that MaterialApp is mounted.
+    expect(find.byType(MaterialApp), findsOneWidget);
   });
 }

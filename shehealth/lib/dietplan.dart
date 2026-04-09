@@ -713,16 +713,36 @@ class _DietPlanPageState extends State<DietPlanPage> with TickerProviderStateMix
           leading: Container(padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(color: accentColor.withOpacity(0.15), borderRadius: BorderRadius.circular(10)),
               child: Text(label.split(' ')[0], style: const TextStyle(fontSize: 20))),
-          title: Text(meal.name, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: accentColor)),
-          subtitle: Row(children: [
-            Text(meal.description, style: TextStyle(fontSize: 12, color: accentColor.withOpacity(0.8))),
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(color: accentColor.withOpacity(0.15), borderRadius: BorderRadius.circular(10)),
-              child: Text(meal.calories, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: accentColor)),
+          title: Text(
+            meal.name,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: accentColor),
+          ),
+          subtitle: Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  meal.description,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 12, color: accentColor.withOpacity(0.8)),
+                ),
+                const SizedBox(height: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(color: accentColor.withOpacity(0.15), borderRadius: BorderRadius.circular(10)),
+                  child: Text(
+                    meal.calories,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: accentColor),
+                  ),
+                ),
+              ],
             ),
-          ]),
+          ),
           children: [
             Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text('Ingredients & Portions:', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: accentColor)),

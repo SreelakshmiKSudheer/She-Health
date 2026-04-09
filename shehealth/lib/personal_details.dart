@@ -98,6 +98,8 @@ class _PersonalDetailsPageState extends State<PersonalDetailsPage> {
       _hasAllergies = p.hasAllergies;
       _hasChronicConditions = p.hasChronicConditions;
       _isOnMedication = p.isOnMedication;
+    } else {
+      _emergencyContactController.text = widget.phone;
     }
   }
 
@@ -250,7 +252,8 @@ class _PersonalDetailsPageState extends State<PersonalDetailsPage> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => SymptomQuestionnaire(userId: widget.userId),
+            builder: (context) =>
+                SymptomQuestionnaire(userId: widget.userId, initialAge: age),
           ),
         );
       }
@@ -748,25 +751,30 @@ class _PersonalDetailsPageState extends State<PersonalDetailsPage> {
     required IconData icon,
     TextInputType keyboardType = TextInputType.text,
   }) {
-    return TextFormField(
-      controller: controller,
-      keyboardType: keyboardType,
-      onChanged: (_) => setState(() {}),
-      decoration: InputDecoration(
-        hintText: label,
-        hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 15),
-        prefixIcon: Icon(icon, color: const Color(0xFFE59393), size: 22),
-        filled: true,
-        fillColor: Colors.white,
-        contentPadding:
-            const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: Color(0xFFFCE7F3), width: 1.5),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: Color(0xFFC85A7A), width: 1.5),
+    return ClipRect(
+      child: TextFormField(
+        controller: controller,
+        keyboardType: keyboardType,
+        maxLines: 1,
+        onChanged: (_) => setState(() {}),
+        decoration: InputDecoration(
+          hintText: label,
+          hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 15),
+          prefixIcon: Icon(icon, color: const Color(0xFFE59393), size: 22),
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding:
+              const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide:
+                const BorderSide(color: Color(0xFFFCE7F3), width: 1.5),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide:
+                const BorderSide(color: Color(0xFFC85A7A), width: 1.5),
+          ),
         ),
       ),
     );
@@ -878,13 +886,15 @@ class _PersonalDetailsPageState extends State<PersonalDetailsPage> {
     return Row(
       children: [
         if (_currentStep > 0) ...[
-          Expanded(
+          SizedBox(
+            width: 96,
             child: OutlinedButton(
               onPressed: _prevStep,
               style: OutlinedButton.styleFrom(
                 foregroundColor: const Color(0xFFC85A7A),
                 side: const BorderSide(color: Color(0xFFC85A7A), width: 1.5),
-                padding: const EdgeInsets.symmetric(vertical: 16),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 16),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16)),
               ),

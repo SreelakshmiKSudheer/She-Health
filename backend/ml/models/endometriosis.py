@@ -62,7 +62,7 @@ def data_split(data, test_size=0.3, random_state=42):
     return x_train, x_valid, x_test, y_train, y_valid, y_test
 
 # Load cleaned data
-endometriosis = pd.read_csv(r'C:\Users\user\SreelakshmiK\personal\Projects\She-Health\backend\dataset\final_dataset\endometriosis.csv')
+endometriosis = pd.read_csv(r'C:\Users\user\SreelakshmiK\personal\Projects\She_Health_Clone\She-Health\backend\dataset\final_dataset\endometriosis.csv')
 endometriosis.columns = endometriosis.columns.str.strip()
 
 # Initial data inspection
