@@ -244,6 +244,47 @@ class _HealthReportPageState extends State<HealthReportPage>
   void _emailReport() => _snack('Email report functionality will be added');
   void _printReport() => _snack('Print report functionality will be added');
 
+  List<Widget> _buildAiSummaryContent(String reportText) {
+    const double baseFontSize = 14;
+    final lines = reportText.split('\n');
+
+    return lines.map((line) {
+      final trimmed = line.trim();
+      if (trimmed.isEmpty) {
+        return const SizedBox(height: 8);
+      }
+
+      if (trimmed.startsWith('##')) {
+        final heading = trimmed.replaceFirst(RegExp(r'^##\s*'), '');
+        return Padding(
+          padding: const EdgeInsets.only(top: 6, bottom: 4),
+          child: Text(
+            heading,
+            style: TextStyle(
+              fontSize: baseFontSize + 2,
+              fontWeight: FontWeight.bold,
+              color: pinkStart,
+              height: 1.5,
+            ),
+          ),
+        );
+      }
+
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 4),
+        child: Text(
+          trimmed,
+          softWrap: true,
+          style: const TextStyle(
+            fontSize: baseFontSize,
+            color: Colors.black87,
+            height: 1.6,
+          ),
+        ),
+      );
+    }).toList();
+  }
+
   // ΓöÇΓöÇ BUILD ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
   @override
   Widget build(BuildContext context) {
@@ -269,10 +310,9 @@ class _HealthReportPageState extends State<HealthReportPage>
                       _buildSectionCard(
                         'AI Health Analysis',
                         Icons.smart_toy,
-                        Text(
-                          widget.reportText!,
-                          style: const TextStyle(
-                              fontSize: 14, color: Colors.black87, height: 1.6),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: _buildAiSummaryContent(widget.reportText!),
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -714,18 +754,29 @@ class _HealthReportPageState extends State<HealthReportPage>
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label,
-              style: const TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey,
-                  fontWeight: FontWeight.w500)),
-          Text(value,
+          Expanded(
+            flex: 2,
+            child: Text(label,
+                style: const TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey,
+                    fontWeight: FontWeight.w500)),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            flex: 3,
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              softWrap: true,
               style: const TextStyle(
                   fontSize: 14,
                   color: Colors.black87,
-                  fontWeight: FontWeight.bold)),
+                  fontWeight: FontWeight.bold),
+            ),
+          ),
         ],
       ),
     );
@@ -859,7 +910,8 @@ class _HealthReportPageState extends State<HealthReportPage>
                     style: const TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
-                        color: Colors.black87)),
+                    color: Colors.black87),
+                  softWrap: true),
               ),
               // Risk label badge
               Container(
@@ -910,6 +962,7 @@ class _HealthReportPageState extends State<HealthReportPage>
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
             padding: const EdgeInsets.all(8),
@@ -927,11 +980,18 @@ class _HealthReportPageState extends State<HealthReportPage>
                     color: Colors.grey,
                     fontWeight: FontWeight.w500)),
           ),
-          Text(value,
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              softWrap: true,
               style: const TextStyle(
                   fontSize: 14,
                   color: Colors.black87,
-                  fontWeight: FontWeight.bold)),
+                  fontWeight: FontWeight.bold),
+            ),
+          ),
         ],
       ),
     );
