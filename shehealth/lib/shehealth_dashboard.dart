@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'report.dart';
 import 'symptom_update_page.dart';
-import 'chatbot.dart';
+import 'chatbot.dart' show HealthChatbotPage;
 import 'calendar.dart';
 import 'dietplan.dart';
 import 'survey.dart';
@@ -86,7 +86,9 @@ class _DashboardPageState extends State<DashboardPage> {
         ),
       );
       // Reload period data so the dashboard card refreshes
-      if (mounted) await _loadDashboardData();
+      if (mounted) {
+        await _loadDashboardData();
+      }
     }
 
     if (index == 3) {
@@ -408,49 +410,52 @@ This report is a screening-oriented interpretation and not a clinical diagnosis.
       key: _scaffoldKey,
       backgroundColor: const Color(0xFFFDF2F8),
       drawer: _buildDrawer(),
-      body: Stack(
+      body: Column(
         children: [
-          SingleChildScrollView(
-            controller: _scrollController,
-            child: Column(
+          _buildHeader(),
+          Expanded(
+            child: Stack(
               children: [
-                _buildHeader(),
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    children: [
-                      _buildWelcomeSection(),
-                      const SizedBox(height: 20),
-                      _buildHealthStatusCards(),
-                      const SizedBox(height: 20),
-                      _buildMainContent(),
-                      const SizedBox(height: 20),
-                      _buildHealthTipBanner(),
-                      const SizedBox(height: 80), // Extra space for bottom nav
-                    ],
+                SingleChildScrollView(
+                  controller: _scrollController,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      children: [
+                        _buildWelcomeSection(),
+                        const SizedBox(height: 20),
+                        _buildHealthStatusCards(),
+                        const SizedBox(height: 20),
+                        _buildMainContent(),
+                        const SizedBox(height: 20),
+                        _buildHealthTipBanner(),
+                        const SizedBox(
+                            height: 80), // Extra space for bottom nav
+                      ],
+                    ),
+                  ),
+                ),
+                // Floating Chat AI Button
+                Positioned(
+                  right: 16,
+                  bottom: 90,
+                  child: FloatingActionButton(
+                    heroTag: 'chatAI',
+                    onPressed: () {
+                      // Navigate to Health Chatbot Page
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const HealthChatbotPage()),
+                      );
+                    },
+                    backgroundColor: const Color(0xFFC85A7A),
+                    elevation: 8,
+                    child: const Icon(Icons.chat_bubble,
+                        color: Colors.white, size: 28),
                   ),
                 ),
               ],
-            ),
-          ),
-          // Floating Chat AI Button
-          Positioned(
-            right: 16,
-            bottom: 90,
-            child: FloatingActionButton(
-              heroTag: 'chatAI',
-              onPressed: () {
-                // Navigate to Health Chatbot Page
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => const HealthChatbotPage()),
-                );
-              },
-              backgroundColor: const Color(0xFFC85A7A),
-              elevation: 8,
-              child:
-                  const Icon(Icons.chat_bubble, color: Colors.white, size: 28),
             ),
           ),
         ],
@@ -498,79 +503,92 @@ This report is a screening-oriented interpretation and not a clinical diagnosis.
                 style: TextStyle(color: Colors.white70, fontSize: 14),
               ),
               const SizedBox(height: 20),
-              Row(
-                children: [
-                  ElevatedButton(
-                    onPressed: () {
-                      final userId = _localUser?.userId;
-                      if (userId == null || userId.isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Please sign in to continue.'),
-                            backgroundColor: Colors.red,
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    ElevatedButton(
+                      onPressed: () {
+                        final userId = _localUser?.userId;
+                        if (userId == null || userId.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Please sign in to continue.'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                          return;
+                        }
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                SymptomUpdatePage(userId: userId),
                           ),
                         );
-                        return;
-                      }
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => SymptomUpdatePage(userId: userId),
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: const Color(0xFFE59393),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 18, vertical: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(18),
                         ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: const Color(0xFFE59393),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 24, vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
                       ),
-                    ),
-                    child: const Text(
-                      'Log Symptoms',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  OutlinedButton(
-                    onPressed: () {
-                      _openLatestReport();
-                    },
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      side: const BorderSide(color: Colors.white30),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 24, vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                    ),
-                    child: const Text('View Report'),
-                  ),
-                  const SizedBox(width: 12),
-                  OutlinedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const DietPlanPage(),
+                      child: const Text(
+                        'Log Symptoms',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
                         ),
-                      );
-                    },
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      side: const BorderSide(color: Colors.white30),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 24, vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
                       ),
                     ),
-                    child: const Text('View Diet Plan'),
-                  ),
-                ],
+                    const SizedBox(width: 8),
+                    OutlinedButton(
+                      onPressed: () {
+                        _openLatestReport();
+                      },
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        side: const BorderSide(color: Colors.white30),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 18, vertical: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                      ),
+                      child: const Text(
+                        'View Reports',
+                        style: TextStyle(fontSize: 12),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    OutlinedButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const DietPlanPage(),
+                          ),
+                        );
+                      },
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        side: const BorderSide(color: Colors.white30),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 18, vertical: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                      ),
+                      child: const Text(
+                        'View Diet Plan',
+                        style: TextStyle(fontSize: 12),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -746,7 +764,7 @@ This report is a screening-oriented interpretation and not a clinical diagnosis.
                           ),
                         ],
                       ),
-                      child: const Icon(Icons.favorite,
+                        child: const Icon(Icons.menu,
                           color: Color(0xFFE59393), size: 28),
                     ),
                   ),
@@ -805,55 +823,31 @@ This report is a screening-oriented interpretation and not a clinical diagnosis.
                       ).then((_) => _loadDashboardData());
                     },
                     child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(20),
+                        shape: BoxShape.circle,
                       ),
-                      child: Row(
-                        children: [
-                          CircleAvatar(
-                            radius: 16,
-                            backgroundColor: Colors.white,
-                            child: Text(
-                              _localUser != null
-                                  ? _localUser!.fullName
-                                      .trim()
-                                      .split(' ')
-                                      .where((e) => e.isNotEmpty)
-                                      .map((e) => e[0])
-                                      .take(2)
-                                      .join()
-                                      .toUpperCase()
-                                  : '?',
-                              style: const TextStyle(
-                                color: Color(0xFFE59393),
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
-                              ),
-                            ),
+                      child: CircleAvatar(
+                        radius: 16,
+                        backgroundColor: Colors.white,
+                        child: Text(
+                          _localUser != null
+                              ? _localUser!.fullName
+                                  .trim()
+                                  .split(' ')
+                                  .where((e) => e.isNotEmpty)
+                                  .map((e) => e[0])
+                                  .take(2)
+                                  .join()
+                                  .toUpperCase()
+                              : '?',
+                          style: const TextStyle(
+                            color: Color(0xFFE59393),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
                           ),
-                          const SizedBox(width: 8),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                _localUser?.fullName ?? 'User',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 12,
-                                ),
-                              ),
-                              Text(
-                                'ID: ${_localUser?.userId ?? 'N/A'}',
-                                style: const TextStyle(
-                                    color: Colors.white70, fontSize: 10),
-                              ),
-                            ],
-                          ),
-                        ],
+                        ),
                       ),
                     ),
                   )
@@ -1069,19 +1063,25 @@ This report is a screening-oriented interpretation and not a clinical diagnosis.
     return Column(
       key: _healthTrendsKey,
       children: [
-        Row(
+        Wrap(
+          spacing: 12,
+          runSpacing: 12,
           children: [
-            Expanded(
-                child: _buildSectionIcon(
-                    'health_trends', Icons.trending_up, 'Health Trends')),
-            const SizedBox(width: 12),
-            Expanded(
-                child: _buildSectionIcon(
-                    'risk_assessment', Icons.monitor_heart, 'Risk Assessment')),
-            const SizedBox(width: 12),
-            Expanded(
-                child: _buildSectionIcon(
-                    'reminders', Icons.notifications, 'Today\'s Reminders')),
+            SizedBox(
+              width: 115,
+              child: _buildSectionIcon(
+                  'health_trends', Icons.trending_up, 'Health Trends'),
+            ),
+            SizedBox(
+              width: 115,
+              child: _buildSectionIcon(
+                  'risk_assessment', Icons.monitor_heart, 'Risk Assessment'),
+            ),
+            SizedBox(
+              width: 115,
+              child: _buildSectionIcon(
+                  'reminders', Icons.notifications, 'Today\'s Reminders'),
+            ),
           ],
         ),
         if (_expandedSection != null) ...[
@@ -1153,6 +1153,8 @@ This report is a screening-oriented interpretation and not a clinical diagnosis.
                 fontWeight: FontWeight.bold,
                 color: isActive ? Colors.white : Colors.black87,
               ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
             ),
           ],
@@ -1322,19 +1324,22 @@ This report is a screening-oriented interpretation and not a clinical diagnosis.
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          alignment: WrapAlignment.spaceBetween,
+          crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             const Text(
               'Health Trends',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
-            Row(
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
               children: [
                 _buildTabButton('Week'),
-                const SizedBox(width: 8),
                 _buildTabButton('Month'),
-                const SizedBox(width: 8),
                 _buildTabButton('Year'),
               ],
             ),
@@ -1501,10 +1506,16 @@ This report is a screening-oriented interpretation and not a clinical diagnosis.
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(label,
-                  style: const TextStyle(color: Colors.grey, fontSize: 14)),
+              Expanded(
+                child: Text(label,
+                    softWrap: true,
+                    style: const TextStyle(color: Colors.grey, fontSize: 14)),
+              ),
+              const SizedBox(width: 10),
               Text(
                 value,
+                textAlign: TextAlign.right,
+                softWrap: true,
                 style: TextStyle(
                   color: color,
                   fontWeight: FontWeight.bold,
@@ -1534,38 +1545,36 @@ This report is a screening-oriented interpretation and not a clinical diagnosis.
         color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold, fontSize: 14),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Last checked: $date',
-                  style: const TextStyle(color: Colors.grey, fontSize: 12),
-                ),
-              ],
-            ),
+          Text(
+            title,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+            softWrap: true,
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Text(
-              status,
-              style: TextStyle(
-                color: color,
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
+          const SizedBox(height: 4),
+          Text(
+            'Last checked: $date',
+            style: const TextStyle(color: Colors.grey, fontSize: 12),
+          ),
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerRight,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                status,
+                softWrap: true,
+                style: TextStyle(
+                  color: color,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
               ),
             ),
           ),
@@ -1602,11 +1611,13 @@ This report is a screening-oriented interpretation and not a clinical diagnosis.
                   title,
                   style: const TextStyle(
                       fontWeight: FontWeight.bold, fontSize: 14),
+                  softWrap: true,
                 ),
                 const SizedBox(height: 4),
                 Text(
                   subtitle,
                   style: const TextStyle(color: Colors.grey, fontSize: 12),
+                  softWrap: true,
                 ),
               ],
             ),
@@ -1635,6 +1646,7 @@ This report is a screening-oriented interpretation and not a clinical diagnosis.
             ],
           ),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
                 padding: const EdgeInsets.all(16),
@@ -1668,24 +1680,27 @@ This report is a screening-oriented interpretation and not a clinical diagnosis.
                         fontSize: 13,
                       ),
                     ),
+                    const SizedBox(height: 12),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: ElevatedButton(
+                        onPressed: _openHealthArticle,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: const Color(0xFFE59393),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 10),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                        ),
+                        child: const Text(
+                          'Learn More',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
                   ],
-                ),
-              ),
-              const SizedBox(width: 12),
-              ElevatedButton(
-                onPressed: _openHealthArticle,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: const Color(0xFFE59393),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                ),
-                child: const Text(
-                  'Learn More',
-                  style: TextStyle(fontWeight: FontWeight.bold),
                 ),
               ),
             ],
