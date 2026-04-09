@@ -8,8 +8,13 @@ import 'services/local_storage_service.dart';
 
 class SymptomQuestionnaire extends StatefulWidget {
   final String userId;
+  final int? initialAge;
 
-  const SymptomQuestionnaire({super.key, required this.userId});
+  const SymptomQuestionnaire({
+    super.key,
+    required this.userId,
+    this.initialAge,
+  });
 
   @override
   State<SymptomQuestionnaire> createState() => _SymptomQuestionnaireState();
@@ -59,6 +64,8 @@ class _SymptomQuestionnaireState extends State<SymptomQuestionnaire> {
         _isLoadingQuestions = false;
       });
 
+      _prefillAgeAnswerIfAvailable();
+
       for (final question in loaded.where((question) => _isInputQuestion(question))) {
         _getInputController(question);
       }
@@ -99,6 +106,38 @@ class _SymptomQuestionnaireState extends State<SymptomQuestionnaire> {
   bool _isInputQuestion(QuestionnaireQuestion question) =>
       question.qType == 'input';
 
+  void _prefillAgeAnswerIfAvailable() {
+    final age = widget.initialAge;
+    if (age == null || age <= 0 || _questions.isEmpty) {
+      return;
+    }
+
+    QuestionnaireQuestion? ageQuestion;
+
+    final firstQuestion = _questions.first;
+    final firstQuestionText = firstQuestion.text.toLowerCase().trim();
+    if (_isInputQuestion(firstQuestion) &&
+        firstQuestionText.contains('age')) {
+      ageQuestion = firstQuestion;
+    } else {
+      for (final question in _questions) {
+        final text = question.text.toLowerCase().trim();
+        if (_isInputQuestion(question) && text.contains('age')) {
+          ageQuestion = question;
+          break;
+        }
+      }
+    }
+
+    if (ageQuestion == null) {
+      return;
+    }
+
+    final ageValue = age.toString();
+    _answers[ageQuestion.id] = ['INPUT::$ageValue'];
+    _getInputController(ageQuestion).text = ageValue;
+  }
+
   TextEditingController _getInputController(QuestionnaireQuestion question) {
     return _inputControllers.putIfAbsent(question.id, () {
       final existingValue = _decodeInputAnswer(_answers[question.id]);
@@ -134,11 +173,37 @@ class _SymptomQuestionnaireState extends State<SymptomQuestionnaire> {
     final question = _currentQuestion;
     final current = List<String>.from(_answers[question.id] ?? const []);
 
+    bool isNoneOption(QuestionnaireOption opt) {
+      final text = opt.text.trim().toLowerCase();
+      return text == 'none' || text == 'none of the above';
+    }
+
     if (question.isMultiSelect) {
-      if (current.contains(option.id)) {
-        current.remove(option.id);
+      final tappedIsNone = isNoneOption(option);
+
+      if (tappedIsNone) {
+        // None/None of the above is exclusive: selecting it clears all others.
+        if (current.contains(option.id)) {
+          current.remove(option.id);
+        } else {
+          current
+            ..clear()
+            ..add(option.id);
+        }
       } else {
-        current.add(option.id);
+        final noneIds = question.options
+            .where(isNoneOption)
+            .map((opt) => opt.id)
+            .toSet();
+
+        // If selecting any regular option, remove None/None of the above.
+        current.removeWhere((id) => noneIds.contains(id));
+
+        if (current.contains(option.id)) {
+          current.remove(option.id);
+        } else {
+          current.add(option.id);
+        }
       }
     } else {
       current
@@ -544,14 +609,17 @@ This report is a screening-oriented interpretation and is not a medical diagnosi
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: const Color(0xFFF5D7E3)),
         ),
-        child: TextField(
-          controller: controller,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          onChanged: _onInputChanged,
-          decoration: const InputDecoration(
-            labelText: 'Enter value',
-            hintText: 'Type your answer here',
-            prefixIcon: Icon(Icons.edit_outlined),
+        child: ClipRect(
+          child: TextField(
+            controller: controller,
+            maxLines: 1,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            onChanged: _onInputChanged,
+            decoration: const InputDecoration(
+              labelText: 'Enter value',
+              hintText: 'Type your answer here',
+              prefixIcon: Icon(Icons.edit_outlined),
+            ),
           ),
         ),
       );

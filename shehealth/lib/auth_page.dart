@@ -30,6 +30,17 @@ class _AuthPageState extends State<AuthPage> {
 
   bool _isSubmitting = false;
 
+  bool _isValidEmail(String email) {
+    final trimmed = email.trim();
+    final emailRegex = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$');
+    return emailRegex.hasMatch(trimmed);
+  }
+
+  bool _hasAtLeastTenDigits(String phone) {
+    final digitsOnly = phone.replaceAll(RegExp(r'\D'), '');
+    return digitsOnly.length >= 10;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -60,6 +71,26 @@ class _AuthPageState extends State<AuthPage> {
           const SnackBar(
             content: Text('Please enter email and password.'),
             backgroundColor: Color(0xFFC85A7A),
+          ),
+        );
+        return;
+      }
+
+      if (!_isValidEmail(emailController.text)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please enter a valid email address.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      if (!_hasAtLeastTenDigits(phoneController.text)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Phone number must contain at least 10 digits.'),
+            backgroundColor: Colors.red,
           ),
         );
         return;
@@ -122,6 +153,16 @@ class _AuthPageState extends State<AuthPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Passwords do not match.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      if (!_isValidEmail(emailController.text)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please enter a valid email address.'),
             backgroundColor: Colors.red,
           ),
         );
@@ -351,15 +392,23 @@ class _AuthPageState extends State<AuthPage> {
       TextEditingController controller, String hint) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 18),
-      child: TextField(
-        controller: controller,
-        decoration: InputDecoration(
-          labelText: label,
-          prefixIcon: Icon(icon, color: const Color(0xFFC85A7A)),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFFC85A7A), width: 1.5),
+      child: ClipRect(
+        child: TextField(
+          controller: controller,
+          maxLines: 1,
+          keyboardType: label == "Email Address"
+              ? TextInputType.emailAddress
+              : TextInputType.text,
+          decoration: InputDecoration(
+            labelText: label,
+            hintText: hint,
+            prefixIcon: Icon(icon, color: const Color(0xFFC85A7A)),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide:
+                  const BorderSide(color: Color(0xFFC85A7A), width: 1.5),
+            ),
           ),
         ),
       ),
@@ -374,21 +423,27 @@ class _AuthPageState extends State<AuthPage> {
   ) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 18),
-      child: TextField(
-        controller: controller,
-        obscureText: !visible,
-        decoration: InputDecoration(
-          labelText: label,
-          prefixIcon: const Icon(Icons.lock_outline, color: Color(0xFFC85A7A)),
-          suffixIcon: IconButton(
-            icon: Icon(visible ? Icons.visibility_off : Icons.visibility,
-                color: const Color(0xFFC85A7A)),
-            onPressed: () => onToggle(!visible),
-          ),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFFC85A7A), width: 1.5),
+      child: ClipRect(
+        child: TextField(
+          controller: controller,
+          obscureText: !visible,
+          maxLines: 1,
+          decoration: InputDecoration(
+            labelText: label,
+            prefixIcon:
+                const Icon(Icons.lock_outline, color: Color(0xFFC85A7A)),
+            suffixIcon: IconButton(
+              icon: Icon(visible ? Icons.visibility_off : Icons.visibility,
+                  color: const Color(0xFFC85A7A)),
+              onPressed: () => onToggle(!visible),
+            ),
+            border:
+                OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide:
+                  const BorderSide(color: Color(0xFFC85A7A), width: 1.5),
+            ),
           ),
         ),
       ),
