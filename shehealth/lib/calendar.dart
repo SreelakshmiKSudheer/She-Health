@@ -426,6 +426,7 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
   String _userId = 'demo_user';
   int _tab = 0;
   DateTime _calMonth = DateTime(DateTime.now().year, DateTime.now().month);
+  DateTime selectedDate = DateTime.now();
   bool _hasUnread = true;
 
   // Notification toggles
@@ -658,25 +659,22 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                _getMonthName(selectedDate.month),
+          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(_getMonthName(selectedDate.month),
                 style: const TextStyle(
-                  color: Color(0xFFC85A7A),
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -.5,
-                  decoration: TextDecoration.none)),
-              Text('${now.year}',
-                  style: const TextStyle(
-                      color: Color(0xFFD4A0B8),
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      letterSpacing: 1.2,
-                      decoration: TextDecoration.none)),
-            ]),
+                    color: Color(0xFFC85A7A),
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -.5,
+                    decoration: TextDecoration.none)),
+            Text('${now.year}',
+                style: const TextStyle(
+                    color: Color(0xFFD4A0B8),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: 1.2,
+                    decoration: TextDecoration.none)),
+          ]),
           _iconBtn(Icons.add_rounded,
               highlighted: true, onTap: () => _showLogSheet()),
           const SizedBox(width: 8),
@@ -695,7 +693,8 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
                       decoration: BoxDecoration(
                           color: _pink,
                           shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 1.5)))),
+                          border:
+                              Border.all(color: Colors.white, width: 1.5)))),
           ]),
         ],
       ),
@@ -2307,6 +2306,8 @@ class _PeriodCalendarWidgetState extends State<PeriodCalendarWidget>
         'November',
         'December'
       ][m - 1];
+
+  String _getMonthName(int month) => _monthName(month);
   String _sm(int m) => const [
         'Jan',
         'Feb',
