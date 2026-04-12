@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'models/app_models.dart';
 import 'report.dart';
@@ -276,6 +278,24 @@ class _SymptomQuestionnaireState extends State<SymptomQuestionnaire> {
         userId: widget.userId,
         selectedOptionIdsByQuestion: _answers,
       );
+
+      // Save questionnaire answers to SharedPreferences for cycle tracking
+      final prefs = await SharedPreferences.getInstance();
+      final cycleAnswers = <String, String>{};
+      
+      for (final question in _questions) {
+        if (question.id == 'Q_CYCLE_LENGTH' || question.id == 'Q_PERIOD_DURATION') {
+          final answer = _answers[question.id];
+          if (answer != null && answer.isNotEmpty) {
+            final decodedAnswer = _decodeInputAnswer(answer);
+            cycleAnswers[question.id] = decodedAnswer;
+          }
+        }
+      }
+      
+      if (cycleAnswers.isNotEmpty) {
+        await prefs.setString('questionnaire_answers', jsonEncode(cycleAnswers));
+      }
 
       final prediction = await _api.runPrediction(widget.userId);
       final localUser = await _localStorage.findByUserId(widget.userId);
