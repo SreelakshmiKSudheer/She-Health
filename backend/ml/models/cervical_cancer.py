@@ -4,6 +4,7 @@ import joblib
 
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
 from sklearn.calibration import CalibratedClassifierCV, calibration_curve
@@ -17,7 +18,6 @@ from sklearn.metrics import (
     brier_score_loss
 )
 from sklearn.model_selection import GridSearchCV, StratifiedKFold
-from xgboost import XGBClassifier
 
 # Load dataset
 cervical = pd.read_csv(
@@ -100,53 +100,88 @@ def tune_threshold_for_recall(model, x_valid, y_valid):
     df = pd.DataFrame(results)
     return df
 
-# ---------------- XGBOOST MODEL WITH TUNING & CALIBRATION ----------------
-def xgboost_with_tuning_and_calibration(
+# ---------------- LOGISTIC REGRESSION MODEL ----------------
+def logistic_regression_model(x_train, y_train, x_valid, y_valid, x_test, y_test):
+
+    pipeline = Pipeline([
+        ("imputer", SimpleImputer(strategy="median")),  
+        ("scaler", StandardScaler()),
+        ("model", LogisticRegression(
+            class_weight="balanced",
+            penalty='l1',
+            solver="liblinear",
+            max_iter=1000,
+            random_state=42
+        ))
+    ])
+
+    # Train
+    pipeline.fit(x_train, y_train)
+
+    # Validation predictions
+    y_valid_prob = pipeline.predict_proba(x_valid)[:, 1]
+    y_valid_pred = (y_valid_prob >= 0.5).astype(int)
+
+    print("\n--- LOGISTIC REGRESSION MODEL METRICS ---")
+    print("\nConfusion Matrix (Validation):")
+    print(confusion_matrix(y_valid, y_valid_pred))
+
+    print("\nClassification Report (Validation):")
+    print(classification_report(y_valid, y_valid_pred, digits=3))
+
+    roc_auc = roc_auc_score(y_valid, y_valid_prob)
+    pr_auc = average_precision_score(y_valid, y_valid_prob)
+    brier = brier_score_loss(y_valid, y_valid_prob)
+
+    print(f"ROC-AUC (Validation): {roc_auc:.3f}")
+    print(f"PR-AUC (Validation): {pr_auc:.3f}")
+    print(f"Brier Score (Validation): {brier:.3f}")
+
+    # Example risk prediction
+    sample_patient = x_test.iloc[[0]]
+    risk = pipeline.predict_proba(sample_patient)[0, 1]
+    print(f"\nPredicted cervical cancer risk (sample): {risk:.2%}")
+    print(f"Actual (sample): {y_test.iloc[0]}")
+
+# ---------------- LOGISTIC REGRESSION WITH CALIBRATION MODEL ----------------
+def logistic_regression_with_calibration(
     x_train, y_train,
     x_valid, y_valid,
     x_test, y_test,
-    method="sigmoid"
+    method="sigmoid",   # or "isotonic"
+    threshold=0.05
 ):
 
+    # Base pipeline (same as before)
     base_pipeline = Pipeline([
         ("imputer", SimpleImputer(strategy="median")),
         ("scaler", StandardScaler()),
-        ("model", XGBClassifier(use_label_encoder=False, random_state=42, n_jobs=-1, verbosity=0))
+        ("model", LogisticRegression(
+            class_weight="balanced",
+            solver="liblinear",
+            max_iter=1000,
+            random_state=42
+        ))
     ])
 
-    param_grid = {
-        'model__n_estimators': [100, 200],
-        'model__max_depth': [3, 6, 10],
-        'model__learning_rate': [0.01, 0.1],
-        'model__subsample': [0.8, 1.0]
-    }
-
-    cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
-
-    grid = GridSearchCV(
+    # Calibrated classifier
+    calibrated_model = CalibratedClassifierCV(
         estimator=base_pipeline,
-        param_grid=param_grid,
-        scoring='roc_auc',
-        cv=cv,
-        n_jobs=-1,
-        verbose=0
+        method=method,
+        cv="prefit"   # we will fit manually
     )
 
-    grid.fit(x_train, y_train)
+    # Step 1: Train base model
+    base_pipeline.fit(x_train, y_train)
 
-    best_pipeline = grid.best_estimator_
-    print('\n--- XGBOOST TUNING ---')
-    print('Best params:', grid.best_params_)
-    print('Best CV ROC-AUC:', grid.best_score_)
+    # Step 2: Calibrate on validation data
+    calibrated_model.fit(x_valid, y_valid)
 
-    calibrated = CalibratedClassifierCV(estimator=best_pipeline, method=method, cv='prefit')
-    calibrated.fit(x_valid, y_valid)
+    # ---------------- VALIDATION METRICS ----------------
+    y_valid_prob = calibrated_model.predict_proba(x_valid)[:, 1]
+    y_valid_pred = (y_valid_prob >= threshold).astype(int)
 
-    # Validation metrics
-    y_valid_prob = calibrated.predict_proba(x_valid)[:, 1]
-    y_valid_pred = (y_valid_prob >= 0.5).astype(int)
-
-    print("\n--- CALIBRATED XGBOOST METRICS (Validation) ---")
+    print("\n--- CALIBRATED LOGISTIC REGRESSION MODEL METRICS ---")
     print("\nConfusion Matrix (Validation - Calibrated):")
     print(confusion_matrix(y_valid, y_valid_pred))
 
@@ -161,43 +196,13 @@ def xgboost_with_tuning_and_calibration(
     print(f"PR-AUC (Validation): {pr_auc:.3f}")
     print(f"Brier Score (Validation): {brier:.3f}")
 
-    prob_true, prob_pred = calibration_curve(y_valid, y_valid_prob, n_bins=10)
-    print('\nCalibration bins (pred, true):')
-    for p_pred, p_true in zip(prob_pred, prob_true):
-        print(f"Predicted: {p_pred:.2f}, True: {p_true:.2f}")
+    # ---------------- TEST SAMPLE RISK ----------------
+    sample_patient = x_test.iloc[[0]]
+    risk = calibrated_model.predict_proba(sample_patient)[0, 1]
+    print(f"\nCalibrated cervical cancer risk (sample): {risk:.2%}")
+    print(f"Applied decision threshold: {threshold:.2f}")
 
-    threshold_results = tune_threshold_for_recall(calibrated, x_valid, y_valid)
-    print('\nThreshold tuning results (validation):')
-    print(threshold_results)
-
-    chosen_threshold = 0.5
-    try:
-        optimal_row = threshold_results[threshold_results["Recall"] >= 0.90].iloc[0]
-        chosen_threshold = optimal_row["Threshold"]
-    except Exception:
-        pass
-
-    chosen_threshold = 0.10
-    print('\n--- TUNED CALIBRATED XGBOOST METRICS ---')
-    print('Chosen Threshold:', chosen_threshold)
-
-    test_probs = calibrated.predict_proba(x_test)[:, 1]
-    test_preds = (test_probs >= chosen_threshold).astype(int)
-
-    print('\nConfusion Matrix (Test):')
-    print(confusion_matrix(y_test, test_preds))
-    print('\nClassification Report (Test):')
-    print(classification_report(y_test, test_preds, digits=3))
-    print('ROC-AUC (Test):', roc_auc_score(y_test, test_probs))
-    print('PR-AUC (Test):', average_precision_score(y_test, test_probs))
-    print('Brier Score (Test):', brier_score_loss(y_test, test_probs))
-
-    risk_labels = [risk_category(p) for p in test_probs]
-    print('\nRisk Categories (Test Samples):')
-    for i in range(min(10, len(test_probs))):
-        print(f"Sample {i+1}: Probability={test_probs[i]:.2%}, Category={risk_labels[i]}")
-
-    return calibrated, grid
+    return calibrated_model
 
 # ----------------RUN DATA SPLITTING ----------------
 # Perform split
@@ -206,27 +211,28 @@ x_train, x_valid, x_test, y_train, y_valid, y_test = cervical_data_split(cervica
 print_positive_counts(y_train, y_valid, y_test)
 
 
-# ----------------RUN XGBOOST WITH TUNING & CALIBRATION ----------------
-calibrated_xgb, xgb_grid = xgboost_with_tuning_and_calibration(
+# ----------------RUN CALIBRATED LOGISTIC REGRESSION ----------------
+calibrated_logistic_model = logistic_regression_with_calibration(
     x_train, y_train,
     x_valid, y_valid,
     x_test, y_test,
-    method="sigmoid"
+    method="sigmoid",
+    threshold=0.05
 )
 
 # ---------------- SAVE FINAL MODEL ----------------
 import os
 
-MODEL_DIR = r"C:\Users\user\SreelakshmiK\personal\Projects\She-Health\backend\app\ml\models"
+MODEL_DIR = r"C:\Users\user\SreelakshmiK\personal\Projects\She_Health_Clone\She-Health\backend\app\ml\models"
 os.makedirs(MODEL_DIR, exist_ok=True)
 
 model_path = os.path.join(MODEL_DIR, "cervical_cancer_model.pkl")
 
 # Save model
 joblib.dump({
-    "model": calibrated_xgb,
+    "model": calibrated_logistic_model,
     "features": x_train.columns.tolist(),
-    "threshold": 0.10  # your chosen threshold
+    "threshold": 0.05
 }, model_path)
 
 print(f"\nModel saved successfully at: {model_path}")
