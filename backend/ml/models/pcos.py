@@ -34,7 +34,52 @@ from sklearn.linear_model import LogisticRegression
 
 # Load cleaned data
 pcos = pd.read_csv(r'C:\Users\user\SreelakshmiK\personal\Projects\She_Health_Clone\She-Health\backend\dataset\final_dataset\pcos.csv')
+# ---------------- CLEANING & FEATURE TYPE FIX ----------------
+
 pcos.columns = pcos.columns.str.strip()
+
+# Replace blank strings with NaN
+pcos = pcos.replace(r'^\s*$', np.nan, regex=True)
+
+# ---------------- ORDINAL FEATURES ----------------
+# These have meaningful order:
+# 0 = none, 1 = mild, 2 = severe
+
+ordinal_features = [
+    'Hair growth on Chin',
+    'Hair growth  on Cheeks',
+    'Hair growth Between breasts',
+    'Hair growth  on Upper lips',
+    'Hair growth in Arms',
+    'Hair growth on Inner thighs'
+]
+
+# Convert ordinal features to numeric
+for col in ordinal_features:
+    if col in pcos.columns:
+        pcos[col] = pd.to_numeric(
+            pcos[col],
+            errors="coerce"
+        )
+
+# ---------------- TRUE CATEGORICAL FEATURES ----------------
+# Only features without ordinal meaning
+
+categorical_cols = [
+    "Overweight",
+    "Difficulty in conceiving",
+    "irregular or missed periods"
+]
+
+# Convert categorical columns to clean strings
+for col in categorical_cols:
+    if col in pcos.columns:
+        pcos[col] = (
+            pcos[col]
+            .fillna("Unknown")
+            .astype(str)
+            .str.strip()
+        )
 
 # Drop specified columns
 pcos = pcos.drop(columns=["City", 'loss weight gain / weight loss', 'more Mood Swings'], errors="ignore")
@@ -138,12 +183,7 @@ def get_selected_feature_names(pipeline, numeric_features, categorical_features)
     # Step 4: Apply SelectKBest mask
     kbest_mask = pipeline.named_steps["feature_selection"]\
         .named_steps["select_kbest"].get_support()
-    features_after_kbest = features_after_var[kbest_mask]
-
-    # Step 5: Apply RFE mask
-    rfe_mask = pipeline.named_steps["feature_selection"]\
-        .named_steps["rfe"].get_support()
-    final_features = features_after_kbest[rfe_mask]
+    final_features = features_after_var[kbest_mask]
 
     return final_features
 
@@ -162,13 +202,21 @@ def pcos_xgboost_with_tuning_and_calibration(
     numeric_features = x_train.select_dtypes(include=["int64", "float64"]).columns
     categorical_features = x_train.select_dtypes(include=["object", "category"]).columns
 
-    # Preprocessing
+    # ---------------- PREPROCESSING ----------------
+
+    numeric_transformer = Pipeline([
+        ("imputer", SimpleImputer(strategy="median")),
+        ("scaler", StandardScaler())
+    ])
+
+    categorical_transformer = Pipeline([
+        ("imputer", SimpleImputer(strategy="most_frequent")),
+        ("encoder", OneHotEncoder(handle_unknown="ignore"))
+    ])
+
     preprocessor = ColumnTransformer([
-        ("num", SimpleImputer(strategy="median"), numeric_features),
-        ("cat", Pipeline([
-            ("imputer", SimpleImputer(strategy="most_frequent")),
-            ("encoder", OneHotEncoder(handle_unknown="ignore"))
-        ]), categorical_features)
+        ("num", numeric_transformer, numeric_features),
+        ("cat", categorical_transformer, categorical_features)
     ])
 
     # FEATURE SELECTION PIPELINE
@@ -178,13 +226,6 @@ def pcos_xgboost_with_tuning_and_calibration(
 
         # Stage B: Select top features statistically
         ("select_kbest", SelectKBest(score_func=f_classif, k=25)),  # adjust k if needed
-        
-        # Stage C: Optimized RFE (wrapper method)
-        ("rfe", RFE(
-            estimator=LogisticRegression(max_iter=1000, solver="liblinear"),
-            n_features_to_select=18,   # final feature count
-            step=2                     # removes 2 features per iteration (faster)
-        ))
     ])
 
     # Pipeline
@@ -203,8 +244,7 @@ def pcos_xgboost_with_tuning_and_calibration(
     # Hyperparameter grid
     param_grid = {
         # Feature Selection tuning
-        "feature_selection__select_kbest__k": [25, 30, 35],
-        "feature_selection__rfe__n_features_to_select": [18, 20, 22],
+        "feature_selection__select_kbest__k": [18, 20, 22, 24, 26],
 
         # XGBoost tuning
         "model__n_estimators": [100, 200],
@@ -312,41 +352,20 @@ def pcos_xgboost_with_tuning_and_calibration(
         )
     return calibrated, grid
 
-pcos["Overweight"] = pcos["Overweight"].fillna("Unknown")
+# ---------------- DATA SPLIT ----------------
+
 x_train, x_valid, x_test, y_train, y_valid, y_test = pcos_data_split(pcos)
+
 print_positive_counts(y_train, y_valid, y_test)
-
-binary_features = [ 'Overweight',  
-         'irregular or missed periods', 
-         'Acne or skin tags', 
-         'Hair thinning or hair loss', 
-         'Dark patches', 
-         'always tired', 
-         'canned food often']
-
-ternary_features = ['Hair growth  on Cheeks', 
-           'Hair growth Between breasts',
-           'Hair growth  on Upper lips',
-           'Hair growth in Arms',
-           'Hair growth on Inner thighs']
 
 numeric_features = x_train.select_dtypes(include=["int64", "float64"]).columns
 categorical_features = x_train.select_dtypes(include=["object", "category"]).columns
 
-numeric_transformer = Pipeline([
-    ("imputer", SimpleImputer(strategy="median")),
-    ("scaler", StandardScaler())
-])
-
-categorical_transformer = Pipeline([
-    ("imputer", SimpleImputer(strategy="most_frequent")),
-    ("encoder", OneHotEncoder(handle_unknown="ignore"))
-])
-
-preprocessor = ColumnTransformer([
-    ("num", numeric_transformer, numeric_features),
-    ("cat", categorical_transformer, categorical_features)
-])
+# FIX: Ensure ALL categorical columns are properly typed (strings, no NaN as float)
+for col in categorical_features:
+    x_train[col] = x_train[col].fillna("Unknown").astype(str).str.strip()
+    x_valid[col] = x_valid[col].fillna("Unknown").astype(str).str.strip()
+    x_test[col] = x_test[col].fillna("Unknown").astype(str).str.strip()
 
 # ----------------RUN XGBOOST WITH TUNING & CALIBRATION ----------------
 calibrated_xgb, xgb_grid = pcos_xgboost_with_tuning_and_calibration(
