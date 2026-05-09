@@ -1,11 +1,12 @@
-./catboost_info/
-./backend/ml/model_selection_and_validation/models/outputs
-./backend/ml/Kaggle dataset trials/Models trained on Kaggle Dataset/outputs
-./backend/ml/model_selection_and_validation/outputs
-./backend/dataset/set_2/pcos.csv
-./backend/dataset/dataset_analysis/
-./backend/dataset/data_cleaning/
-./backend/dataset/set_2/pcos.csv
+catboost_info/
+backend/ml/model_selection_and_validation/models/outputs/
+backend/ml/Kaggle dataset trials/Models trained on Kaggle Dataset/outputs/
+backend/ml/model_selection_and_validation/
+
+backend/dataset/set_2/pcos.csv
+backend/dataset/dataset_analysis/
+backend/dataset/data_cleaning/
+
 .env
 .vscode
 .venv/
