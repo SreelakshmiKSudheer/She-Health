@@ -31,6 +31,57 @@ cervical = cervical.replace(r'\s*\?\s*', np.nan, regex=True)
 for col in cervical.columns:
     cervical[col] = pd.to_numeric(cervical[col], errors='coerce')
 
+
+# ---------------- PREPROCESSING ----------------
+mean_impute_cols = [
+    "Hormonal Contraceptives (years)",
+]
+
+unknown_class_cols = [
+    "Number of sexual partners",
+    "Num of pregnancies",
+    "Smokes",
+    "Smokes (years)",
+    "Smokes (packs/year)",
+    "Hormonal Contraceptives",
+    "IUD",
+    "IUD (years)",
+    "STDs",
+    "STDs (number)",
+    "STDs:condylomatosis",
+    "STDs:cervical condylomatosis",
+    "STDs:vulvo-perineal condylomatosis",
+    "STDs:syphilis",
+    "STDs:HIV",
+]
+
+remove_cols = [
+    "STDs:vaginal condylomatosis",
+    "STDs:pelvic inflammatory disease",
+    "STDs:genital herpes",
+    "STDs:molluscum contagiosum",
+    "STDs:AIDS",
+    "STDs:Hepatitis B",
+    "STDs:HPV",
+    "STDs: Time since first diagnosis",
+    "STDs: Time since last diagnosis",
+    "Dx:Cancer",
+    "Dx:CIN",
+    "Dx:HPV",
+    "Dx",
+]
+
+for col in mean_impute_cols:
+    if col in cervical.columns:
+        cervical[col] = cervical[col].fillna(cervical[col].mean())
+
+for col in unknown_class_cols:
+    if col in cervical.columns:
+        cervical[col] = cervical[col].fillna(-1)
+
+cervical = cervical.drop(columns=remove_cols, errors='ignore')
+
+
 # ---------------- PROBABILITY TO RISK CATEGORY ----------------
 def risk_category(prob):
     if prob >= 0.50:
@@ -100,56 +151,13 @@ def tune_threshold_for_recall(model, x_valid, y_valid):
     df = pd.DataFrame(results)
     return df
 
-# ---------------- LOGISTIC REGRESSION MODEL ----------------
-def logistic_regression_model(x_train, y_train, x_valid, y_valid, x_test, y_test):
-
-    pipeline = Pipeline([
-        ("imputer", SimpleImputer(strategy="median")),  
-        ("scaler", StandardScaler()),
-        ("model", LogisticRegression(
-            class_weight="balanced",
-            penalty='l1',
-            solver="liblinear",
-            max_iter=1000,
-            random_state=42
-        ))
-    ])
-
-    # Train
-    pipeline.fit(x_train, y_train)
-
-    # Validation predictions
-    y_valid_prob = pipeline.predict_proba(x_valid)[:, 1]
-    y_valid_pred = (y_valid_prob >= 0.5).astype(int)
-
-    print("\n--- LOGISTIC REGRESSION MODEL METRICS ---")
-    print("\nConfusion Matrix (Validation):")
-    print(confusion_matrix(y_valid, y_valid_pred))
-
-    print("\nClassification Report (Validation):")
-    print(classification_report(y_valid, y_valid_pred, digits=3))
-
-    roc_auc = roc_auc_score(y_valid, y_valid_prob)
-    pr_auc = average_precision_score(y_valid, y_valid_prob)
-    brier = brier_score_loss(y_valid, y_valid_prob)
-
-    print(f"ROC-AUC (Validation): {roc_auc:.3f}")
-    print(f"PR-AUC (Validation): {pr_auc:.3f}")
-    print(f"Brier Score (Validation): {brier:.3f}")
-
-    # Example risk prediction
-    sample_patient = x_test.iloc[[0]]
-    risk = pipeline.predict_proba(sample_patient)[0, 1]
-    print(f"\nPredicted cervical cancer risk (sample): {risk:.2%}")
-    print(f"Actual (sample): {y_test.iloc[0]}")
-
 # ---------------- LOGISTIC REGRESSION WITH CALIBRATION MODEL ----------------
 def logistic_regression_with_calibration(
     x_train, y_train,
     x_valid, y_valid,
     x_test, y_test,
     method="sigmoid",   # or "isotonic"
-    threshold=0.05
+    threshold=0.10
 ):
 
     # Base pipeline (same as before)
@@ -196,11 +204,43 @@ def logistic_regression_with_calibration(
     print(f"PR-AUC (Validation): {pr_auc:.3f}")
     print(f"Brier Score (Validation): {brier:.3f}")
 
+    # Threshold tuning
+    threshold_results = tune_threshold_for_recall(
+        calibrated_model, x_valid, y_valid
+    )
+    print("\nThreshold Tuning Results:\n", threshold_results)
+
+    chosen_threshold = 0.10
+
+    print("\nChosen Threshold:", chosen_threshold)
+
+    # Step 2: Calibrate on validation data
+    calibrated_model.fit(x_valid, y_valid)
+
+    # ---------------- TEST METRICS ----------------
+    y_test_prob = calibrated_model.predict_proba(x_test)[:, 1]
+    y_test_pred = (y_test_prob >= chosen_threshold).astype(int)
+
+    print("\n--- CALIBRATED LOGISTIC REGRESSION MODEL METRICS ---")
+    print("\nConfusion Matrix (Test - Calibrated):")
+    print(confusion_matrix(y_test, y_test_pred))
+
+    print("\nClassification Report (Test - Calibrated):")
+    print(classification_report(y_test, y_test_pred, digits=3))
+
+    roc_auc = roc_auc_score(y_test, y_test_prob)
+    pr_auc = average_precision_score(y_test, y_test_prob)
+    brier = brier_score_loss(y_test, y_test_prob)
+
+    print(f"ROC-AUC (Test): {roc_auc:.3f}")
+    print(f"PR-AUC (Test): {pr_auc:.3f}")
+    print(f"Brier Score (Test): {brier:.3f}")
+
     # ---------------- TEST SAMPLE RISK ----------------
     sample_patient = x_test.iloc[[0]]
     risk = calibrated_model.predict_proba(sample_patient)[0, 1]
     print(f"\nCalibrated cervical cancer risk (sample): {risk:.2%}")
-    print(f"Applied decision threshold: {threshold:.2f}")
+    print(f"Applied decision threshold: {chosen_threshold:.2f}")
 
     return calibrated_model
 
@@ -210,14 +250,13 @@ x_train, x_valid, x_test, y_train, y_valid, y_test = cervical_data_split(cervica
 # Print positive counts
 print_positive_counts(y_train, y_valid, y_test)
 
-
 # ----------------RUN CALIBRATED LOGISTIC REGRESSION ----------------
 calibrated_logistic_model = logistic_regression_with_calibration(
     x_train, y_train,
     x_valid, y_valid,
     x_test, y_test,
     method="sigmoid",
-    threshold=0.05
+    threshold=0.10
 )
 
 # ---------------- SAVE FINAL MODEL ----------------
@@ -232,7 +271,7 @@ model_path = os.path.join(MODEL_DIR, "cervical_cancer_model.pkl")
 joblib.dump({
     "model": calibrated_logistic_model,
     "features": x_train.columns.tolist(),
-    "threshold": 0.05
+    "threshold": 0.10
 }, model_path)
 
 print(f"\nModel saved successfully at: {model_path}")
