@@ -438,7 +438,7 @@ except Exception:
 to_save = {
     "pipeline": best_estimator if best_estimator is not None else calibrated_ada,
     "features": x_train_ada.columns.tolist(),
-    "threshold": 0.35  # your chosen threshold
+    "threshold": 0.30  # your chosen threshold
 }
 
 # Use a robust protocol and light compression.
