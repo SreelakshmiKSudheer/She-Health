@@ -5,6 +5,7 @@
 ./backend/dataset/set_2/pcos.csv
 ./backend/dataset/dataset_analysis/
 ./backend/dataset/data_cleaning/
+./backend/dataset/set_2/pcos.csv
 .env
 .vscode
 .venv/
