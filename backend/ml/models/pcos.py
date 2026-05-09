@@ -378,19 +378,19 @@ calibrated_xgb, xgb_grid = pcos_xgboost_with_tuning_and_calibration(
 
 
 # ---------------- SAVE FINAL MODEL ----------------
-# import os
-# import joblib
+import os
+import joblib
 
-# MODEL_DIR = r"C:\Users\user\SreelakshmiK\personal\Projects\She_Health_Clone\She-Health\backend\app\ml\models"
-# os.makedirs(MODEL_DIR, exist_ok=True)
+MODEL_DIR = r"C:\Users\user\SreelakshmiK\personal\Projects\She_Health_Clone\She-Health\backend\app\ml\models"
+os.makedirs(MODEL_DIR, exist_ok=True)
 
-# model_path = os.path.join(MODEL_DIR, "pcos_model.pkl")
+model_path = os.path.join(MODEL_DIR, "pcos_model.pkl")
 
-# # Save model
-# joblib.dump({
-#     "model": calibrated_xgb,
-#     "features": x_train.columns.tolist(),
-#     "threshold": 0.10  # your chosen threshold
-# }, model_path)
+# Save model
+joblib.dump({
+    "model": calibrated_xgb,
+    "features": x_train.columns.tolist(),
+    "threshold": 0.10  # your chosen threshold
+}, model_path)
 
-# print(f"\nModel saved successfully at: {model_path}")
+print(f"\nModel saved successfully at: {model_path}")
