@@ -17,7 +17,36 @@ class DayPlan {
   final Meal lunch;
   final Meal dinner;
   final Meal snack;
-  const DayPlan({required this.day, required this.breakfast, required this.lunch, required this.dinner, required this.snack});
+ 
+
+  DayPlan({
+  required this.day,
+  required this.breakfast,
+  required this.lunch,
+  required this.dinner,
+  required this.snack,
+});
+
+  factory DayPlan.fromJson(Map<String, dynamic> json) {
+  Meal parseMeal(dynamic m) {
+    return Meal(
+      name: m['name'] ?? '',
+      description: m['description'] ?? '',
+      calories: m['calories']?.toString() ?? '0',
+      items: (m['items'] is List)
+          ? List<String>.from(m['items'])
+          : [],
+    );
+  }
+
+  return DayPlan(
+    day: json['day'] ?? '',
+    breakfast: parseMeal(json['breakfast']),
+    lunch: parseMeal(json['lunch']),
+    dinner: parseMeal(json['dinner']),
+    snack: parseMeal(json['snack']),
+  );
+}
 }
 
 class Exercise {
@@ -122,6 +151,7 @@ class _DietPlanPageState extends State<DietPlanPage> with TickerProviderStateMix
   int _selectedDayIndex = 0;
   int _selectedWorkoutDayIndex = 0;
   
+  
   Map<String, DiseaseDietPlan> _generatedPlans = {};
   String _errorMessage = '';
   bool _isLoading = false;
@@ -145,6 +175,7 @@ class _DietPlanPageState extends State<DietPlanPage> with TickerProviderStateMix
   _generateCurrentDiseasePlan();
 }
 
+
   void _onDiseaseChanged() {
 
   if (!_tabController.indexIsChanging) {
@@ -162,15 +193,19 @@ class _DietPlanPageState extends State<DietPlanPage> with TickerProviderStateMix
     _generateCurrentDiseasePlan();
   }
 }
-  Future<void> _generateCurrentDiseasePlan() async {
+Future<void> _generateCurrentDiseasePlan() async {
+
   if (_isLoading) return;
+
   final disease = _currentDisease;
 
   // already generated
   if (_generatedPlans.containsKey(disease)) {
     return;
   }
+
   if (!mounted) return;
+
   setState(() {
     _isLoading = true;
     _errorMessage = '';
@@ -178,7 +213,10 @@ class _DietPlanPageState extends State<DietPlanPage> with TickerProviderStateMix
 
   try {
 
+    // =========================
     // METADATA
+    // =========================
+
     AiHealthPlanData aiMetadata;
 
     try {
@@ -187,7 +225,12 @@ class _DietPlanPageState extends State<DietPlanPage> with TickerProviderStateMix
           await _generateMetadataFromGroq(
               disease);
 
-    } catch (_) {
+      print("✓ Metadata generated");
+
+    } catch (e) {
+
+      print("❌ Metadata failed");
+      print(e);
 
       aiMetadata =
           const AiHealthPlanData(
@@ -198,7 +241,9 @@ class _DietPlanPageState extends State<DietPlanPage> with TickerProviderStateMix
             'AI wellness guidance.',
 
         keyNutrients: [],
+
         foodsToAvoid: [],
+
         superfoods: [],
 
         exerciseOverview:
@@ -208,21 +253,30 @@ class _DietPlanPageState extends State<DietPlanPage> with TickerProviderStateMix
       );
     }
 
+    // =========================
     // MEALS
-    List<DayPlan> meals = [];
+    // =========================
 
-    try {
+List<DayPlan> meals = [];
 
-      meals =
-          await _generateMealsFromGroq(
-              disease);
+try {
 
-    } catch (e) {
+  meals = await _generateWeeklyMealsSafe(disease);
 
-      print(e);
-    }
+  print("✓ Weekly meals generated (SAFE)");
 
+} catch (e) {
+
+  print("❌ Weekly meals failed");
+  print(e);
+
+  meals = [];
+}
+
+    // =========================
     // WORKOUTS
+    // =========================
+
     List<WorkoutDay> workouts = [];
 
     try {
@@ -231,31 +285,46 @@ class _DietPlanPageState extends State<DietPlanPage> with TickerProviderStateMix
           await _generateWorkoutFromGroq(
               disease);
 
+      print("✓ Workouts generated");
+
     } catch (e) {
 
+      print("❌ Workouts failed");
       print(e);
+
+      workouts = [];
     }
 
-    _generatedPlans[disease] =
-        _buildPlanWithMeals(
-      disease,
-      aiMetadata,
-      meals,
-      workouts,
-    );
+    // =========================
+    // BUILD FINAL PLAN
+    // =========================
 
+    if (!mounted) return;
+
+setState(() {
+  _generatedPlans[disease] =
+      _buildPlanWithMeals(
+        disease,
+        aiMetadata,
+        meals,
+        workouts,
+      );
+});
   } catch (e) {
+
+    print("❌ MAIN ERROR");
+    print(e);
 
     _errorMessage = e.toString();
 
   } finally {
 
-  if (!mounted) return;
+    if (!mounted) return;
 
-  setState(() {
-    _isLoading = false;
-  });
-}
+    setState(() {
+      _isLoading = false;
+    });
+  }
 }
   
   Future<AiHealthPlanData> _generateMetadataFromGroq(
@@ -264,20 +333,16 @@ class _DietPlanPageState extends State<DietPlanPage> with TickerProviderStateMix
   final userData = await SessionService().getUserData();
 
   final prompt = '''
-You are a JSON API.
+You are a STRICT JSON API.
 
 Return ONLY valid JSON.
 
-Do not explain.
-Do not use markdown.
-Do not write ```json.
-Do not add extra text.
-
-Disease: $disease
-Age: ${userData['age']}
-Symptoms: ${userData['symptoms']}
-Condition: ${userData['condition']}
-Goal: ${userData['goal'] ?? 'general wellness'}
+DO NOT:
+- explain
+- use markdown
+- use ```json
+- add notes
+- add extra text
 
 Generate:
 - subtitle
@@ -288,41 +353,118 @@ Generate:
 - exercise overview
 - exercise tips
 
-Return JSON format:
+Disease: $disease
+Age: ${userData['age']}
+Symptoms: ${userData['symptoms']}
+Condition: ${userData['condition']}
+Goal: ${userData['goal'] ?? 'general wellness'}
+
+Return ONLY this JSON structure:
 
 {
-  "subtitle":"",
-  "description":"",
-  "keyNutrients":[""],
-  "foodsToAvoid":[""],
-  "superfoods":[""],
-  "exerciseOverview":"",
-  "exerciseTips":[""]
+  "subtitle":"PCOS Wellness Plan",
+  "description":"Short disease description",
+  "keyNutrients":["item1","item2"],
+  "foodsToAvoid":["item1","item2"],
+  "superfoods":["item1","item2"],
+  "exerciseOverview":"Short overview",
+  "exerciseTips":["tip1","tip2"]
 }
 ''';
 
   final response =
       await GroqService().sendHealthPlanMessage(prompt);
 
+  print("METADATA RAW RESPONSE:");
+  print(response);
+
   final cleaned = _extractJson(response);
 
-  final data = jsonDecode(cleaned);
+  print("METADATA CLEANED:");
+  print(cleaned);
+
+  Map<String, dynamic> data = {};
+
+  try {
+    final decoded = jsonDecode(cleaned);
+
+if (decoded is! Map<String, dynamic>) {
+  throw Exception("Metadata is not valid JSON object");
+}
+
+data = decoded;
+  } catch (e) {
+
+    print("❌ METADATA JSON ERROR");
+    print(e);
+
+    return const AiHealthPlanData(
+      subtitle: 'Health Plan',
+      description: 'Healthy lifestyle guidance',
+
+      keyNutrients: [],
+      foodsToAvoid: [],
+      superfoods: [],
+
+      exerciseOverview:
+          'Regular exercise recommended.',
+
+      exerciseTips: [],
+    );
+  }
+
+  // SAFETY CHECK
+  if (data == null || data is! Map) {
+
+    print("❌ Metadata is NULL or INVALID");
+
+    return const AiHealthPlanData(
+      subtitle: 'Health Plan',
+      description: 'Healthy lifestyle guidance',
+
+      keyNutrients: [],
+      foodsToAvoid: [],
+      superfoods: [],
+
+      exerciseOverview:
+          'Regular exercise recommended.',
+
+      exerciseTips: [],
+    );
+  }
 
   return AiHealthPlanData(
-    subtitle: data['subtitle'] ?? '',
-    description: data['description'] ?? '',
+    subtitle:
+        (data['subtitle'] ?? 'Health Plan')
+            .toString(),
+
+    description:
+        (data['description'] ??
+                'Healthy lifestyle guidance')
+            .toString(),
+
     keyNutrients:
-        List<String>.from(data['keyNutrients'] ?? []),
+        List<String>.from(
+            data['keyNutrients'] ?? []),
+
     foodsToAvoid:
-        List<String>.from(data['foodsToAvoid'] ?? []),
+        List<String>.from(
+            data['foodsToAvoid'] ?? []),
+
     superfoods:
-        List<String>.from(data['superfoods'] ?? []),
+        List<String>.from(
+            data['superfoods'] ?? []),
+
     exerciseOverview:
-        data['exerciseOverview'] ?? '',
+        (data['exerciseOverview'] ??
+                'Regular exercise recommended.')
+            .toString(),
+
     exerciseTips:
-        List<String>.from(data['exerciseTips'] ?? []),
+        List<String>.from(
+            data['exerciseTips'] ?? []),
   );
-} 
+}
 
   Future<void> fetchAllDietPlans() async {
 
@@ -377,19 +519,10 @@ try {
       List<DayPlan> weeklyMeals = [];
 
       try {
-
-        weeklyMeals =
-            await _generateMealsFromGroq(
-                disease);
-
-        print(
-          '✓ AI meals generated for $disease');
-
+        weeklyMeals = await _generateWeeklyMealsSafe(disease);
+        print('✓ AI meals generated for $disease');
       } catch (e) {
-
-        print(
-          '⚠ Meal generation failed for $disease');
-
+        print('⚠ Meal generation failed for $disease');
         print(e);
 
         weeklyMeals = [];
@@ -414,7 +547,26 @@ try {
 
         print(e);
 
-        weeklyWorkouts = [];
+        weeklyWorkouts = [
+  WorkoutDay(
+    day: 'Monday',
+    focus: 'Light Exercise',
+    exercises: [
+      Exercise(
+        name: 'Walking',
+        duration: '20 mins',
+        intensity: 'Low',
+        benefit: 'Improves circulation',
+        icon: Icons.directions_walk,
+        steps: [
+          'Warm up',
+          'Walk slowly',
+          'Cool down',
+        ],
+      ),
+    ],
+  ),
+];
       }
 
       // BUILD FINAL PLAN
@@ -425,6 +577,10 @@ try {
         weeklyMeals,
         weeklyWorkouts,
       );
+
+      if (disease != _diseases.last) {
+        await Future.delayed(const Duration(seconds: 2));
+      }
     }
 
     setState(() {
@@ -443,91 +599,186 @@ try {
   }
 }
 
- Future<List<DayPlan>> _generateMealsFromGroq(
-    String disease) async {
+Future<List<DayPlan>> _generateWeeklyMealsSafe(String disease) async {
+  const days = [
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday',
+    'Sunday',
+  ];
 
-  final userData =
-      await SessionService().getUserData();
+  final userData = await SessionService().getUserData();
 
   final prompt = '''
-You are a JSON API.
+You are a clinical nutrition expert.
 
 Return ONLY valid JSON.
 
-Generate a 3-day meal plan.
+Generate a medically accurate 7-day meal plan specifically for:
 
-Disease: $disease
+DISEASE: $disease
+
+IMPORTANT RULES:
+- Meals MUST be different based on disease
+- Include foods scientifically beneficial for $disease
+- Avoid foods harmful for $disease
+- Meals must NOT be generic
+- Every disease should produce unique meals
+- Keep meals realistic and healthy
+- Keep descriptions short
+- Use 2 to 3 food items only
+- No markdown
+- No explanation
+- No extra text
+
+USER DETAILS:
 Age: ${userData['age']}
-Condition: ${userData['condition']}
 Symptoms: ${userData['symptoms']}
+Condition: ${userData['condition']}
+Goal: ${userData['goal'] ?? 'general wellness'}
 
-Return EXACTLY this structure:
+DISEASE-SPECIFIC REQUIREMENTS:
+
+For PCOS:
+- low glycemic foods
+- high fiber
+- omega 3 rich foods
+- avoid sugar and refined carbs
+
+For Thyroid:
+- iodine rich foods
+- selenium rich foods
+- avoid excessive soy and processed foods
+
+For Endometriosis:
+- anti inflammatory foods
+- omega 3 foods
+- avoid red meat and processed foods
+
+For Cervical Cancer:
+- antioxidant rich foods
+- vitamin C and folate foods
+- immune boosting foods
+
+Return EXACTLY 7 items from Monday to Sunday.
+
+Return ONLY this JSON array format:
 
 [
   {
-    "day":"Day 1",
+    "day":"Monday",
     "breakfast":{
-      "name":"",
-      "description":"",
-      "calories":"",
-      "items":[]
+      "name":"...",
+      "description":"...",
+      "calories":"...",
+      "items":["...","..."]
     },
     "lunch":{
-      "name":"",
-      "description":"",
-      "calories":"",
-      "items":[]
+      "name":"...",
+      "description":"...",
+      "calories":"...",
+      "items":["...","..."]
     },
     "dinner":{
-      "name":"",
-      "description":"",
-      "calories":"",
-      "items":[]
+      "name":"...",
+      "description":"...",
+      "calories":"...",
+      "items":["...","..."]
     },
     "snack":{
-      "name":"",
-      "description":"",
-      "calories":"",
-      "items":[]
+      "name":"...",
+      "description":"...",
+      "calories":"...",
+      "items":["...","..."]
     }
   }
 ]
 ''';
 
-  final response =
-      await GroqService()
-          .sendHealthPlanMessage(prompt);
+  String response = '';
 
-  final cleaned =
-      _extractJson(response);
+  for (int retry = 0; retry < 3; retry++) {
+    try {
+      response = await GroqService().sendHealthPlanMessage(
+        prompt,
+        maxTokens: 2500,
+      );
+      final cleaned = _extractJson(response);
+      final decoded = jsonDecode(cleaned);
 
-  final dynamic decodedRaw =
-    jsonDecode(cleaned);
+        final List<dynamic> weekData = decoded is Map && decoded['week'] is List
+          ? decoded['week'] as List
+          : decoded is List
+            ? decoded
+            : decoded is Map && decoded.containsKey('day')
+              ? [decoded]
+              : [];
 
-  final List<dynamic> decoded =
-    decodedRaw is List
-      ? decodedRaw
-      : [decodedRaw];
+      Meal parseMeal(dynamic m) {
+        if (m is! Map) {
+          return const Meal(name: 'Unavailable', description: '', calories: '0', items: []);
+        }
+        return Meal(
+          name: (m['name'] ?? '').toString(),
+          description: (m['description'] ?? '').toString(),
+          calories: (m['calories'] ?? '0').toString(),
+          items: (m['items'] is List)
+              ? List<String>.from(m['items'].map((e) => e.toString()))
+              : [],
+        );
+      }
 
-  return decoded.map((meal) {
+      final Map<String, Map<String, dynamic>> mealsByDay = {};
+      for (final item in weekData) {
+        if (item is Map && item['day'] != null) {
+          mealsByDay[item['day'].toString()] = Map<String, dynamic>.from(item);
+        }
+      }
 
-    return DayPlan(
-      day: meal['day'] ?? '',
+      if (mealsByDay.isEmpty) {
+        throw Exception('Weekly meal JSON did not contain any day entries');
+      }
 
-      breakfast:
-          _parseMeal(meal['breakfast']),
+      return days.map((day) {
+        final data = mealsByDay[day];
+        if (data == null) {
+          return DayPlan(
+            day: day,
+            breakfast: const Meal(name: 'Unavailable', description: '', calories: '0', items: []),
+            lunch: const Meal(name: 'Unavailable', description: '', calories: '0', items: []),
+            dinner: const Meal(name: 'Unavailable', description: '', calories: '0', items: []),
+            snack: const Meal(name: 'Unavailable', description: '', calories: '0', items: []),
+          );
+        }
 
-      lunch:
-          _parseMeal(meal['lunch']),
+        return DayPlan(
+          day: data['day']?.toString() ?? day,
+          breakfast: parseMeal(data['breakfast']),
+          lunch: parseMeal(data['lunch']),
+          dinner: parseMeal(data['dinner']),
+          snack: parseMeal(data['snack']),
+        );
+      }).toList();
+    } catch (e) {
+      print('❌ Weekly meal retry ${retry + 1} failed');
+      print(e);
+    }
+  }
 
-      dinner:
-          _parseMeal(meal['dinner']),
-
-      snack:
-          _parseMeal(meal['snack']),
-    );
-
-  }).toList();
+  return days
+      .map(
+        (day) => DayPlan(
+          day: day,
+          breakfast: const Meal(name: 'Unavailable', description: '', calories: '0', items: []),
+          lunch: const Meal(name: 'Unavailable', description: '', calories: '0', items: []),
+          dinner: const Meal(name: 'Unavailable', description: '', calories: '0', items: []),
+          snack: const Meal(name: 'Unavailable', description: '', calories: '0', items: []),
+        ),
+      )
+      .toList();
 }
 
  Future<List<WorkoutDay>> _generateWorkoutFromGroq(
@@ -537,23 +788,35 @@ Return EXACTLY this structure:
       await SessionService().getUserData();
 
   final prompt = '''
-You are a JSON API.
+You are a STRICT JSON API.
 
-Return ONLY valid JSON.
+Return ONLY valid JSON array.
 
-Generate a 3-day workout plan.
+Generate SHORT compact 7-day workout JSON.
+
+Maximum:
+- 2 exercises per day
+- 3 steps only
+- 5 words per field
+
+For rest day use:
+"exercises":[]
+- Keep JSON compact
+- No markdown
+- No explanation
+- No extra text
 
 Disease: $disease
 Age: ${userData['age']}
-Condition: ${userData['condition']}
 Symptoms: ${userData['symptoms']}
+Condition: ${userData['condition']}
 Fitness Level: ${userData['fitnessLevel']}
 
-Return EXACTLY this structure:
+Return ONLY:
 
 [
   {
-    "day":"Day 1",
+    "day":"Monday",
     "focus":"Strength",
     "exercises":[
       {
@@ -563,7 +826,7 @@ Return EXACTLY this structure:
         "benefit":"Improves circulation",
         "steps":[
           "Warm up",
-          "Walk slowly",
+          "Walk",
           "Cool down"
         ]
       }
@@ -572,119 +835,257 @@ Return EXACTLY this structure:
 ]
 ''';
 
-  final response =
-      await GroqService()
-          .sendHealthPlanMessage(prompt);
+  String response = '';
 
-  final cleaned =
-      _extractJson(response);
+  dynamic decodedRaw;
 
-  final dynamic decodedRaw =
-    jsonDecode(cleaned);
+  bool success = false;
 
+  for (int retry = 0; retry < 3; retry++) {
+
+    try {
+
+      response =
+          await GroqService()
+              .sendHealthPlanMessage(prompt);
+
+      print("WORKOUT RAW RESPONSE:");
+      print(response);
+
+      final cleaned =
+          _extractJson(response);
+
+      print("WORKOUT CLEANED JSON:");
+      print(cleaned);
+
+try {
+
+  decodedRaw = jsonDecode(cleaned);
+  if (decodedRaw == null) {
+  throw Exception("Workout JSON is null");
+}
+
+if (decodedRaw is! List &&
+    decodedRaw is! Map) {
+  throw Exception("Workout JSON invalid");
+}
+
+} catch (e) {
+
+  print("❌ WORKOUT JSON ERROR");
+  print(e);
+  print(cleaned);
+
+  return [];
+}
+
+      success = true;
+
+      break;
+
+    } catch (e) {
+
+      print(
+          "❌ Workout retry ${retry + 1}");
+
+      print(e);
+    }
+  }
+
+  if (!success) {
+
+    print(
+        "❌ Workout generation completely failed");
+
+    return [
+  WorkoutDay(
+    day: 'Monday',
+    focus: 'Light Exercise',
+    exercises: [
+      Exercise(
+        name: 'Walking',
+        duration: '20 mins',
+        intensity: 'Low',
+        benefit: 'Improves circulation',
+        icon: Icons.directions_walk,
+        steps: [
+          'Warm up',
+          'Walk',
+          'Cool down',
+        ],
+      ),
+    ],
+  ),
+];
+  }
+  
   final List<dynamic> decoded =
-    decodedRaw is List
-      ? decodedRaw
-      : [decodedRaw];
+      decodedRaw is List
+          ? decodedRaw
+          : [decodedRaw];
 
   List<WorkoutDay> workoutDays = [];
 
   for (var day in decoded) {
 
+    if (day['day'] == null) continue;
+
+if (day['focus'] == null) {
+  day['focus'] = 'General Fitness';
+}
+
+if (day['exercises'] == null) {
+  day['exercises'] = [];
+}
+
+    if (day is! Map) continue;
+
     List<Exercise> exercises = [];
 
-    for (var ex in (day['exercises'] ?? [])) {
+    final exList =
+        day['exercises'];
 
-      exercises.add(
-        Exercise(
-          name: ex['name'] ?? '',
-          duration: ex['duration'] ?? '',
-          intensity: ex['intensity'] ?? '',
-          benefit: ex['benefit'] ?? '',
-          icon: _getExerciseIcon(
-              ex['name'] ?? ''),
-          steps: List<String>.from(
-              ex['steps'] ?? []),
-        ),
-      );
+    if (exList is List) {
+
+      for (var ex in exList) {
+
+        if (ex['name'] == null) continue;
+        if (ex is! Map) continue;
+
+        exercises.add(
+          Exercise(
+            name:
+                (ex['name'] ?? '')
+                    .toString(),
+
+            duration:
+                (ex['duration'] ?? '')
+                    .toString(),
+
+            intensity:
+                (ex['intensity'] ?? '')
+                    .toString(),
+
+            benefit:
+                (ex['benefit'] ?? '')
+                    .toString(),
+
+            icon:
+                _getExerciseIcon(
+                    ex['name'] ?? ''),
+
+            steps:
+                (ex['steps'] is List)
+                    ? List<String>.from(
+                        ex['steps']
+                            .map((e) =>
+                                e.toString()))
+                    : [],
+          ),
+        );
+      }
     }
 
     workoutDays.add(
       WorkoutDay(
-        day: day['day'] ?? '',
-        focus: day['focus'] ?? '',
+        day:
+            (day['day'] ?? '')
+                .toString(),
+
+        focus:
+            (day['focus'] ?? '')
+                .toString(),
+
         exercises: exercises,
       ),
     );
   }
+  const allDays = [
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+  'Sunday',
+];
 
+for (String d in allDays) {
+
+  final exists =
+      workoutDays.any((w) => w.day == d);
+
+  if (!exists) {
+
+    workoutDays.add(
+      WorkoutDay(
+        day: d,
+        focus: 'Recovery',
+        exercises: [],
+      ),
+    );
+  }
+}
+
+workoutDays.sort(
+  (a, b) =>
+      allDays.indexOf(a.day)
+          .compareTo(
+              allDays.indexOf(b.day)),
+);
   return workoutDays;
 }
 
 String _extractJson(String response) {
 
-  final cleaned = response
-      .replaceAll(RegExp(r'```(?:json)?\s*'), '')
-      .replaceAll('```', '')
+  if (response.trim().isEmpty) {
+    throw Exception("Empty AI response");
+  }
+
+  // Remove markdown
+  String cleaned = response
+      .replaceAll(RegExp(r'```json'), '')
+      .replaceAll(RegExp(r'```'), '')
       .trim();
 
-  if (cleaned.isEmpty) {
-    throw Exception('Empty response');
-  }
+  // Find first JSON object OR array
+  final objectStart = cleaned.indexOf('{');
+  final arrayStart = cleaned.indexOf('[');
 
-  final startArray = cleaned.indexOf('[');
-  final startObject = cleaned.indexOf('{');
   int start = -1;
-  String open = '';
-  String close = '';
 
-  if (startArray != -1 &&
-      (startObject == -1 || startArray < startObject)) {
-    start = startArray;
-    open = '[';
-    close = ']';
-  } else if (startObject != -1) {
-    start = startObject;
-    open = '{';
-    close = '}';
+  if (objectStart == -1 && arrayStart == -1) {
+    throw Exception("No JSON found");
   }
 
-  if (start == -1) {
-    throw Exception('No JSON start token found');
+  if (objectStart == -1) {
+    start = arrayStart;
+  } else if (arrayStart == -1) {
+    start = objectStart;
+  } else {
+    start = objectStart < arrayStart
+        ? objectStart
+        : arrayStart;
   }
 
-  int depth = 0;
+  final opening = cleaned[start];
+  final closing = opening == '{' ? '}' : ']';
+
+  int balance = 0;
   int end = -1;
-  bool inString = false;
-  bool escaped = false;
 
   for (int i = start; i < cleaned.length; i++) {
-    final ch = cleaned[i];
 
-    if (escaped) {
-      escaped = false;
-      continue;
+    final char = cleaned[i];
+
+    if (char == opening) {
+      balance++;
     }
 
-    if (ch == '\\') {
-      escaped = true;
-      continue;
-    }
+    if (char == closing) {
+      balance--;
 
-    if (ch == '"') {
-      inString = !inString;
-      continue;
-    }
-
-    if (inString) {
-      continue;
-    }
-
-    if (ch == open) {
-      depth++;
-    } else if (ch == close) {
-      depth--;
-      if (depth == 0) {
+      if (balance == 0) {
         end = i;
         break;
       }
@@ -692,12 +1093,18 @@ String _extractJson(String response) {
   }
 
   if (end == -1) {
-    throw Exception('Unmatched JSON brackets/braces');
+    throw Exception("Incomplete JSON");
   }
 
-  final jsonStr = cleaned.substring(start, end + 1);
-  jsonDecode(jsonStr);
-  return jsonStr;
+  String jsonString =
+      cleaned.substring(start, end + 1);
+
+  // Remove trailing commas
+  jsonString = jsonString
+      .replaceAll(RegExp(r',\s*}'), '}')
+      .replaceAll(RegExp(r',\s*]'), ']');
+
+  return jsonString.trim();
 }
 
 DiseaseDietPlan _buildPlanWithMeals(
@@ -885,7 +1292,7 @@ DiseaseDietPlan _buildPlanWithMeals(
                       _buildHeader(),
                       _buildDiseaseTabBar(),
                       Expanded(
-                        child: _currentPlan.weeklyPlan.isEmpty
+                        child: _currentPlan == null || _currentPlan.weeklyPlan.isEmpty
                             ? const Center(child: Text('No plan generated'))
                             : SingleChildScrollView(
                                 child: Column(
@@ -1040,50 +1447,151 @@ DiseaseDietPlan _buildPlanWithMeals(
     );
   }
 
-  Widget _buildWeeklyPlanSection() {
+Widget _buildWeeklyPlanSection() {
+
+  // SAFETY CHECK
+  if (_currentPlan.weeklyPlan.isEmpty) {
+
     return _buildSection(
       title: '📅 Weekly Meal Plan',
       color: _currentPlan.primaryColor,
-      child: Column(
-        children: [
-          SizedBox(
-            height: 42,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: _currentPlan.weeklyPlan.length,
-              itemBuilder: (context, index) {
-                final isSelected = index == _selectedDayIndex;
-                return GestureDetector(
-                  onTap: () => setState(() => _selectedDayIndex = index),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    margin: const EdgeInsets.only(right: 8),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: isSelected ? _currentPlan.primaryColor : Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: _currentPlan.primaryColor, width: 1.5),
-                    ),
-                    child: Text(_currentPlan.weeklyPlan[index].day,
-                        style: TextStyle(color: isSelected ? Colors.white : _currentPlan.primaryColor, fontWeight: FontWeight.w700, fontSize: 13)),
-                  ),
-                );
-              },
+      child: const Center(
+        child: Padding(
+          padding: EdgeInsets.all(20),
+          child: Text(
+            'No meal plan available',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 16),
-          _buildMealCard('🌅 Breakfast', _currentPlan.weeklyPlan[_selectedDayIndex].breakfast, const Color(0xFFFFF3CD), const Color(0xFFD97706)),
-          const SizedBox(height: 12),
-          _buildMealCard('☀️ Lunch', _currentPlan.weeklyPlan[_selectedDayIndex].lunch, const Color(0xFFD1FAE5), const Color(0xFF059669)),
-          const SizedBox(height: 12),
-          _buildMealCard('🌙 Dinner', _currentPlan.weeklyPlan[_selectedDayIndex].dinner, const Color(0xFFEDE9FE), const Color(0xFF7C3AED)),
-          const SizedBox(height: 12),
-          _buildMealCard('🍎 Snack', _currentPlan.weeklyPlan[_selectedDayIndex].snack, const Color(0xFFFFE4E6), const Color(0xFFE11D48)),
-        ],
+        ),
       ),
     );
   }
 
+  // SAFE INDEX
+  final safeIndex =
+      _selectedDayIndex >= _currentPlan.weeklyPlan.length
+          ? 0
+          : _selectedDayIndex;
+
+  final selectedDay =
+      _currentPlan.weeklyPlan[safeIndex];
+
+  return _buildSection(
+    title: '📅 Weekly Meal Plan',
+    color: _currentPlan.primaryColor,
+    child: Column(
+      children: [
+
+        SizedBox(
+          height: 42,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: _currentPlan.weeklyPlan.length,
+            itemBuilder: (context, index) {
+
+              final isSelected =
+                  index == safeIndex;
+
+              return GestureDetector(
+
+                onTap: () {
+
+                  setState(() {
+                    _selectedDayIndex = index;
+                  });
+                },
+
+                child: AnimatedContainer(
+
+                  duration:
+                      const Duration(milliseconds: 200),
+
+                  margin:
+                      const EdgeInsets.only(right: 8),
+
+                  padding:
+                      const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
+
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? _currentPlan.primaryColor
+                        : Colors.white,
+
+                    borderRadius:
+                        BorderRadius.circular(20),
+
+                    border: Border.all(
+                      color: _currentPlan.primaryColor,
+                      width: 1.5,
+                    ),
+                  ),
+
+                  child: Text(
+
+                    _currentPlan
+                        .weeklyPlan[index]
+                        .day,
+
+                    style: TextStyle(
+                      color: isSelected
+                          ? Colors.white
+                          : _currentPlan.primaryColor,
+
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+
+        const SizedBox(height: 16),
+
+        _buildMealCard(
+          '🌅 Breakfast',
+          selectedDay.breakfast,
+          const Color(0xFFFFF3CD),
+          const Color(0xFFD97706),
+        ),
+
+        const SizedBox(height: 12),
+
+        _buildMealCard(
+          '☀️ Lunch',
+          selectedDay.lunch,
+          const Color(0xFFD1FAE5),
+          const Color(0xFF059669),
+        ),
+
+        const SizedBox(height: 12),
+
+        _buildMealCard(
+          '🌙 Dinner',
+          selectedDay.dinner,
+          const Color(0xFFEDE9FE),
+          const Color(0xFF7C3AED),
+        ),
+
+        const SizedBox(height: 12),
+
+        _buildMealCard(
+          '🍎 Snack',
+          selectedDay.snack,
+          const Color(0xFFFFE4E6),
+          const Color(0xFFE11D48),
+        ),
+      ],
+    ),
+  );
+}
   Widget _buildMealCard(String label, Meal meal, Color bgColor, Color accentColor) {
     return Container(
       decoration: BoxDecoration(
@@ -1168,91 +1676,331 @@ DiseaseDietPlan _buildPlanWithMeals(
   }
 
   Widget _buildExerciseSection() {
-    final plan = _currentPlan;
-    final workout = plan.workoutWeek.isNotEmpty ? plan.workoutWeek[_selectedWorkoutDayIndex] : null;
+
+  final plan = _currentPlan;
+
+  // SAFETY CHECK
+  if (plan.workoutWeek.isEmpty) {
 
     return _buildSection(
       title: '🏋️ Exercise & Workout Plan',
       color: plan.primaryColor,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(color: plan.accentColor, borderRadius: BorderRadius.circular(14), border: Border.all(color: plan.primaryColor.withOpacity(0.25))),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(Icons.info_outline_rounded, color: plan.primaryColor, size: 18),
-                const SizedBox(width: 10),
-                Expanded(child: Text(plan.exerciseOverview, style: TextStyle(fontSize: 13, color: plan.primaryColor.withOpacity(0.85), height: 1.5))),
-              ],
+      child: const Center(
+        child: Padding(
+          padding: EdgeInsets.all(20),
+          child: Text(
+            'No workout plan available',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 16),
-          Text('💡 Exercise Tips', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: plan.primaryColor)),
-          const SizedBox(height: 8),
-          ...plan.exerciseTips.map((tip) => Padding(
-            padding: const EdgeInsets.only(bottom: 7),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(margin: const EdgeInsets.only(top: 5), width: 7, height: 7, decoration: BoxDecoration(color: plan.primaryColor, shape: BoxShape.circle)),
-                const SizedBox(width: 10),
-                Expanded(child: Text(tip, style: const TextStyle(fontSize: 13, color: Color(0xFF444444), height: 1.4))),
-              ],
-            ),
-          )),
-          if (plan.workoutWeek.isNotEmpty) ...[
-            const SizedBox(height: 20),
-            Text('📆 Weekly Workout Schedule', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: plan.primaryColor)),
-            const SizedBox(height: 12),
-            SizedBox(
-              height: 42,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: plan.workoutWeek.length,
-                itemBuilder: (context, index) {
-                  final isSelected = index == _selectedWorkoutDayIndex;
-                  return GestureDetector(
-                    onTap: () => setState(() => _selectedWorkoutDayIndex = index),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      margin: const EdgeInsets.only(right: 8),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                      decoration: BoxDecoration(
-                        color: isSelected ? plan.primaryColor : Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: plan.primaryColor, width: 1.5),
-                      ),
-                      child: Text(plan.workoutWeek[index].day, style: TextStyle(color: isSelected ? Colors.white : plan.primaryColor, fontWeight: FontWeight.w700, fontSize: 13)),
-                    ),
-                  );
-                },
-              ),
-            ),
-            if (workout != null) ...[
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                decoration: BoxDecoration(gradient: LinearGradient(colors: [plan.primaryColor, plan.primaryColor.withOpacity(0.7)]), borderRadius: BorderRadius.circular(20)),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.flash_on_rounded, color: Colors.white, size: 16),
-                    const SizedBox(width: 6),
-                    Text('Focus: ${workout.focus}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13)),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 14),
-              ...workout.exercises.map((exercise) => _buildExerciseCard(exercise, plan.primaryColor, plan.accentColor)),
-            ],
-          ],
-        ],
+        ),
       ),
     );
   }
+
+  // SAFE INDEX
+  final safeWorkoutIndex =
+      _selectedWorkoutDayIndex >= plan.workoutWeek.length
+          ? 0
+          : _selectedWorkoutDayIndex;
+
+  final workout =
+      plan.workoutWeek[safeWorkoutIndex];
+
+  return _buildSection(
+    title: '🏋️ Exercise & Workout Plan',
+    color: plan.primaryColor,
+
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+
+      children: [
+
+        // OVERVIEW
+        Container(
+
+          padding: const EdgeInsets.all(14),
+
+          decoration: BoxDecoration(
+            color: plan.accentColor,
+
+            borderRadius:
+                BorderRadius.circular(14),
+
+            border: Border.all(
+              color:
+                  plan.primaryColor.withOpacity(0.25),
+            ),
+          ),
+
+          child: Row(
+            crossAxisAlignment:
+                CrossAxisAlignment.start,
+
+            children: [
+
+              Icon(
+                Icons.info_outline_rounded,
+                color: plan.primaryColor,
+                size: 18,
+              ),
+
+              const SizedBox(width: 10),
+
+              Expanded(
+                child: Text(
+
+                  plan.exerciseOverview,
+
+                  style: TextStyle(
+                    fontSize: 13,
+                    color:
+                        plan.primaryColor.withOpacity(
+                            0.85),
+                    height: 1.5,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 16),
+
+        // TIPS TITLE
+        Text(
+          '💡 Exercise Tips',
+
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            fontSize: 14,
+            color: plan.primaryColor,
+          ),
+        ),
+
+        const SizedBox(height: 8),
+
+        // TIPS
+        ...plan.exerciseTips.map(
+
+          (tip) => Padding(
+
+            padding:
+                const EdgeInsets.only(bottom: 7),
+
+            child: Row(
+              crossAxisAlignment:
+                  CrossAxisAlignment.start,
+
+              children: [
+
+                Container(
+
+                  margin:
+                      const EdgeInsets.only(top: 5),
+
+                  width: 7,
+                  height: 7,
+
+                  decoration: BoxDecoration(
+                    color: plan.primaryColor,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+
+                const SizedBox(width: 10),
+
+                Expanded(
+                  child: Text(
+
+                    tip,
+
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Color(0xFF444444),
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        // WORKOUT SCHEDULE
+        const SizedBox(height: 20),
+
+        Text(
+          '📆 Weekly Workout Schedule',
+
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            fontSize: 14,
+            color: plan.primaryColor,
+          ),
+        ),
+
+        const SizedBox(height: 12),
+
+        SizedBox(
+
+          height: 42,
+
+          child: ListView.builder(
+
+            scrollDirection: Axis.horizontal,
+
+            itemCount: plan.workoutWeek.length,
+
+            itemBuilder: (context, index) {
+
+              final isSelected =
+                  index == safeWorkoutIndex;
+
+              return GestureDetector(
+
+                onTap: () {
+
+                  setState(() {
+                    _selectedWorkoutDayIndex =
+                        index;
+                  });
+                },
+
+                child: AnimatedContainer(
+
+                  duration:
+                      const Duration(milliseconds: 200),
+
+                  margin:
+                      const EdgeInsets.only(right: 8),
+
+                  padding:
+                      const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
+
+                  decoration: BoxDecoration(
+
+                    color: isSelected
+                        ? plan.primaryColor
+                        : Colors.white,
+
+                    borderRadius:
+                        BorderRadius.circular(20),
+
+                    border: Border.all(
+                      color: plan.primaryColor,
+                      width: 1.5,
+                    ),
+                  ),
+
+                  child: Text(
+
+                    plan
+                        .workoutWeek[index]
+                        .day,
+
+                    style: TextStyle(
+                      color: isSelected
+                          ? Colors.white
+                          : plan.primaryColor,
+
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+
+        const SizedBox(height: 12),
+
+        // FOCUS CHIP
+        Container(
+
+          padding: const EdgeInsets.symmetric(
+            horizontal: 14,
+            vertical: 8,
+          ),
+
+          decoration: BoxDecoration(
+
+            gradient: LinearGradient(
+              colors: [
+                plan.primaryColor,
+                plan.primaryColor.withOpacity(0.7),
+              ],
+            ),
+
+            borderRadius:
+                BorderRadius.circular(20),
+          ),
+
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+
+            children: [
+
+              const Icon(
+                Icons.flash_on_rounded,
+                color: Colors.white,
+                size: 16,
+              ),
+
+              const SizedBox(width: 6),
+
+              Text(
+
+                'Focus: ${workout.focus}',
+
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 14),
+
+        // EXERCISES
+        if (workout.exercises.isEmpty)
+
+          const Padding(
+
+            padding: EdgeInsets.all(16),
+
+            child: Text(
+              'Rest day / No exercises',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          )
+
+        else
+
+          ...workout.exercises.map(
+
+            (exercise) => _buildExerciseCard(
+              exercise,
+              plan.primaryColor,
+              plan.accentColor,
+            ),
+          ),
+      ],
+    ),
+  );
+}
 
   Widget _buildExerciseCard(Exercise exercise, Color primary, Color accent) {
     final intensityColor = _intensityColor(exercise.intensity);
