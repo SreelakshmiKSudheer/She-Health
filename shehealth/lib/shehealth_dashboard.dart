@@ -31,6 +31,9 @@ class _DashboardPageState extends State<DashboardPage> {
   final LocalStorageService _localStorage = LocalStorageService.instance;
   final SessionService _sessionService = SessionService();
 
+  List<Map<String, dynamic>> _llmReminders = [];
+  bool _isReminderLoading = true;
+
   String _dailyTip = "Loading today's health tip...";
   bool _isTipLoading = true;
   bool _isDashboardLoading = true;
@@ -348,6 +351,67 @@ Medical disclaimer:
 This report is a screening-oriented interpretation and not a clinical diagnosis. A qualified healthcare professional should guide testing and treatment decisions.''';
   }
 
+
+  Future<void> _generateReminders() async {
+  try {
+    final predictions = _latestPrediction?['predictions'];
+
+    String conditionSummary = "";
+
+    if (predictions is Map<String, dynamic>) {
+      predictions.forEach((key, value) {
+        if (value is Map<String, dynamic>) {
+          final prob = value['probability'] ?? 0;
+          if (prob > 30) {
+            conditionSummary += "$key, ";
+          }
+        }
+      });
+    }
+
+    final prompt = '''
+Generate 4 personalized daily health reminders for a woman.
+
+User:
+- Risk Level: $_dashboardRiskLabel
+- Conditions: $conditionSummary
+
+Format:
+Return ONLY JSON like this:
+[
+  {"title":"...", "subtitle":"...", "icon":"water"},
+  {"title":"...", "subtitle":"...", "icon":"food"}
+]
+
+Rules:
+- Practical daily actions
+- Include diet, hydration, activity, or medication
+- Keep each short (under 10 words)
+''';
+
+    final response = await _groqService.sendMessage(prompt, []);
+
+    final cleaned = response.trim();
+
+    final parsed = jsonDecode(cleaned);
+
+    setState(() {
+      _llmReminders = List<Map<String, dynamic>>.from(parsed);
+      _isReminderLoading = false;
+    });
+  } catch (e) {
+    setState(() {
+      _isReminderLoading = false;
+      _llmReminders = [
+        {
+          "title": "Stay Hydrated",
+          "subtitle": "Drink enough water",
+          "icon": "water"
+        }
+      ];
+    });
+  }
+}
   Future<void> _fetchDailyTip() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -367,8 +431,19 @@ This report is a screening-oriented interpretation and not a clinical diagnosis.
       }
 
       // Generate new tip from Groq
-      String prompt =
-          "Give one short helpful women's health tip for today. Keep it under 30 words.";
+      String prompt = '''
+Give ONE personalized women's health tip.
+
+User details:
+- Risk level: $_dashboardRiskLabel
+- Conditions: ${_latestPrediction?.keys.join(", ") ?? "General health"}
+
+Rules:
+- Max 25 words
+- Actionable
+- Friendly tone
+- Focus on diet, hormones, or lifestyle
+''';
 
       String response = await _groqService.sendMessage(prompt, []);
 
@@ -397,12 +472,29 @@ This report is a screening-oriented interpretation and not a clinical diagnosis.
     }
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _loadDashboardData();
-    _fetchDailyTip();
+  IconData _getIcon(String? icon) {
+  switch (icon) {
+    case "water":
+      return Icons.water_drop;
+    case "food":
+      return Icons.apple;
+    case "walk":
+      return Icons.directions_walk;
+    case "medicine":
+      return Icons.medical_services;
+    default:
+      return Icons.favorite;
   }
+}
+
+  @override
+void initState() {
+  super.initState();
+  _loadDashboardData().then((_) {
+    _generateReminders(); // AFTER user data loads
+  });
+  _fetchDailyTip();
+}
 
   @override
   Widget build(BuildContext context) {
@@ -1444,25 +1536,30 @@ This report is a screening-oriented interpretation and not a clinical diagnosis.
   }
 
   Widget _buildRemindersContent() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Today\'s Reminders',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 20),
-        _buildReminderItem(
-            Icons.apple, 'Take Vitamin D', 'After breakfast', Colors.pink),
-        _buildReminderItem(Icons.water_drop, 'Drink Water - 2L',
-            'Stay hydrated throughout the day', Colors.blue),
-        _buildReminderItem(Icons.directions_walk, 'Evening Walk',
-            '30 minutes recommended', Colors.purple),
-        _buildReminderItem(Icons.calendar_today, 'Pap Smear Due',
-            'Schedule in 2 weeks', Colors.pink),
-      ],
-    );
-  }
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      const Text(
+        'Today\'s Reminders',
+        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+      ),
+      const SizedBox(height: 20),
+
+      if (_isReminderLoading)
+        const Center(child: CircularProgressIndicator()),
+
+      if (!_isReminderLoading && _llmReminders.isEmpty)
+        const Text("No reminders available"),
+
+      ..._llmReminders.map((item) => _buildReminderItem(
+            _getIcon(item['icon']),
+            item['title'],
+            item['subtitle'],
+            const Color(0xFFC85A7A),
+          )),
+    ],
+  );
+}
 
   // Updated: tappable tab button that updates _selectedTrendTab
   Widget _buildTabButton(String label) {

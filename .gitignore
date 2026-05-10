@@ -12,3 +12,5 @@ backend/dataset/data_cleaning/
 .venv/
 __pycache__/
 firebase.json
+.env.example
+backend/.env.example
