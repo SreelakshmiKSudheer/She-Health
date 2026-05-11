@@ -3,6 +3,8 @@ import 'services/groq_service.dart';
 import 'services/session_service.dart';
 import 'dart:convert';
 import 'services/notification_service.dart';
+import 'package:provider/provider.dart';
+import 'state/app_state.dart';
 
 class Meal {
   final String name;
@@ -163,6 +165,7 @@ class _DietPlanPageState extends State<DietPlanPage> with TickerProviderStateMix
 
   void initState() {
   super.initState();
+  
 
   _tabController = TabController(
     length: _diseases.length,
@@ -174,7 +177,6 @@ class _DietPlanPageState extends State<DietPlanPage> with TickerProviderStateMix
   // Generate ONLY current tab
   _generateCurrentDiseasePlan();
 }
-
 
   void _onDiseaseChanged() {
 
@@ -1278,6 +1280,8 @@ DiseaseDietPlan _buildPlanWithMeals(
 
   @override
   Widget build(BuildContext context) {
+    final diet = Provider.of<AppState>(context).dietPlan;
+    final workout = Provider.of<AppState>(context).workoutPlan;
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       body: SafeArea(

@@ -16,6 +16,8 @@ import 'services/backend_api_service.dart';
 import 'services/local_storage_service.dart';
 import 'services/session_service.dart';
 import 'services/notification_service.dart';
+import 'package:provider/provider.dart';
+import 'state/app_state.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -524,6 +526,8 @@ void initState() {
 
   @override
 Widget build(BuildContext context) {
+  final tip = Provider.of<AppState>(context).healthTip;
+  final reminder = Provider.of<AppState>(context).reminderText;
   return Scaffold(
     key: _scaffoldKey,
     backgroundColor: const Color(0xFFFDF2F8),
