@@ -523,82 +523,85 @@ void initState() {
 }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      key: _scaffoldKey,
-      backgroundColor: const Color(0xFFFDF2F8),
-      drawer: _buildDrawer(),
-      body: Column(
-        children: [
-          _buildHeader(),
-          Expanded(
-            child: Stack(
-  children: [
-    SingleChildScrollView(
-      controller: _scrollController,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            _buildWelcomeSection(),
-            const SizedBox(height: 20),
-            _buildHealthStatusCards(),
-            const SizedBox(height: 20),
-            _buildMainContent(),
-            const SizedBox(height: 20),
-            _buildHealthTipBanner(),
-            const SizedBox(height: 80),
-          ],
-        ),
-      ),
-    ),
+Widget build(BuildContext context) {
+  return Scaffold(
+    key: _scaffoldKey,
+    backgroundColor: const Color(0xFFFDF2F8),
+    drawer: _buildDrawer(),
 
-    // 🧪 Test Notification Button
-    Positioned(
-      right: 16,
-      bottom: 160,
-      child: FloatingActionButton(
-        heroTag: 'testNotification',
-        onPressed: () async {
-          await NotificationService.showInstantNotification(
-            "Test Notification",
-            "This is working ✅",
-          );
-        },
-        backgroundColor: Colors.green,
-        elevation: 8,
-        child: const Icon(Icons.notifications, color: Colors.white),
-      ),
-    ),
-
-    // 💬 Existing Chat Button
-    Positioned(
-      right: 16,
-      bottom: 90,
-      child: FloatingActionButton(
-        heroTag: 'chatAI',
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const HealthChatbotPage(),
-            ),
-          );
-        },
-        backgroundColor: const Color(0xFFC85A7A),
-        elevation: 8,
-        child: const Icon(Icons.chat_bubble,
-            color: Colors.white, size: 28),
-      ),
-    ),
-  ],
-),
+    body: Column(
+      children: [
+        _buildHeader(),
+        Expanded(
+          child: Stack(
+            children: [
+              SingleChildScrollView(
+                controller: _scrollController,
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    children: [
+                      _buildWelcomeSection(),
+                      const SizedBox(height: 20),
+                      _buildHealthStatusCards(),
+                      const SizedBox(height: 20),
+                      _buildMainContent(),
+                      const SizedBox(height: 20),
+                      _buildHealthTipBanner(),
+                      const SizedBox(height: 80),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
-      bottomNavigationBar: _buildBottomNavigationBar(),
-    );
-  }
+        ),
+      ],
+    ),
+
+    // ✅ ADD FLOATING BUTTONS HERE (CORRECT WAY)
+    floatingActionButton: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // 🧪 Test Notification Button
+        FloatingActionButton(
+          heroTag: 'testNotification',
+          onPressed: () async {
+            print("🔔 Button pressed");
+
+            await NotificationService.showInstantNotification(
+              "Test Notification",
+              "This is working ✅",
+            );
+
+            print("✅ Notification call done");
+          },
+          backgroundColor: Colors.green,
+          child: const Icon(Icons.notifications),
+        ),
+
+        const SizedBox(height: 12),
+
+        // 💬 Chat Button
+        FloatingActionButton(
+          heroTag: 'chatAI',
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const HealthChatbotPage(),
+              ),
+            );
+          },
+          backgroundColor: const Color(0xFFC85A7A),
+          child: const Icon(Icons.chat_bubble),
+        ),
+      ],
+    ),
+
+    bottomNavigationBar: _buildBottomNavigationBar(),
+  );
+}
 
   Widget _buildWelcomeSection() {
     return Stack(
