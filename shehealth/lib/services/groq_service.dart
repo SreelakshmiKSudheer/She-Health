@@ -100,6 +100,50 @@ Provide accurate, empathetic, and helpful information. Always remind users to co
     return 30;
   }
 
+  // Try to repair common JSON issues in model output and return a canonical JSON string.
+  // Returns null if unable to repair.
+  String? _attemptRepairJson(String raw) {
+    try {
+      var t = raw.trim();
+
+      // Replace smart quotes with ASCII quotes
+      t = t.replaceAll('“', '"').replaceAll('”', '"').replaceAll('‘', "'").replaceAll('’', "'");
+
+      // Extract the first JSON-like block (either object or array)
+      final startIdx = t.indexOf(RegExp(r'[\[{]'));
+      final endIdx = t.lastIndexOf(RegExp(r'[\]}]'));
+      if (startIdx != -1 && endIdx != -1 && endIdx > startIdx) {
+        t = t.substring(startIdx, endIdx + 1);
+      }
+
+      // Remove trailing commas before closing braces/brackets
+      t = t.replaceAllMapped(RegExp(r',\s*([}\]])'), (m) => m.group(1) ?? '');
+
+      // Balance curly braces
+      final openCurly = t.split('{').length - 1;
+      final closeCurly = t.split('}').length - 1;
+      if (openCurly > closeCurly) {
+        t = t + List.filled(openCurly - closeCurly, '}').join();
+      }
+
+      // Balance square brackets
+      final openSquare = t.split('[').length - 1;
+      final closeSquare = t.split(']').length - 1;
+      if (openSquare > closeSquare) {
+        t = t + List.filled(openSquare - closeSquare, ']').join();
+      }
+
+      // Final attempt to parse
+      final parsed = jsonDecode(t);
+      // Return a canonical JSON string so callers get valid JSON
+      return jsonEncode(parsed);
+    } catch (e) {
+      // Give up — return null to let caller decide how to handle
+      print('JSON repair failed: $e');
+      return null;
+    }
+  }
+
   Future<String> sendHealthPlanMessage(
     String prompt, {
     int retryCount = 0,
@@ -127,7 +171,18 @@ Provide accurate, empathetic, and helpful information. Always remind users to co
       );
 
       final content = data['choices']?[0]?['message']?['content'];
-      return content is String ? content : '';
+      if (content is! String) return '';
+
+      // Validate JSON — try to parse; if invalid, attempt to repair common issues
+      try {
+        jsonDecode(content);
+        return content;
+      } catch (_) {
+        final repaired = _attemptRepairJson(content);
+        // If repair succeeded, return the repaired string; otherwise fallthrough to throw below
+        if (repaired != null) return repaired;
+        throw Exception('Incomplete JSON');
+      }
 
     } catch (e) {
       final errorText = e.toString();

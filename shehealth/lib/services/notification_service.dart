@@ -1,4 +1,5 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter/services.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
 
@@ -80,80 +81,103 @@ class NotificationService {
   );
 }
 
+  static Future<void> _scheduleWithFallback({
+    required int id,
+    required String title,
+    required String body,
+    required tz.TZDateTime scheduledDate,
+    required NotificationDetails notificationDetails,
+    DateTimeComponents? matchDateTimeComponents,
+  }) async {
+    Future<void> schedule(AndroidScheduleMode androidScheduleMode) async {
+      await _notifications.zonedSchedule(
+        id,
+        title,
+        body,
+        scheduledDate,
+        notificationDetails,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+        androidScheduleMode: androidScheduleMode,
+        matchDateTimeComponents: matchDateTimeComponents,
+      );
+    }
+
+    try {
+      await schedule(AndroidScheduleMode.exactAllowWhileIdle);
+    } on PlatformException catch (e) {
+      final errorCode = e.code.toLowerCase();
+      if (errorCode == 'exact_alarms_not_permitted' ||
+          errorCode.contains('exact_alarm')) {
+        await schedule(AndroidScheduleMode.inexactAllowWhileIdle);
+        return;
+      }
+      rethrow;
+    }
+  }
+
   static Future<void> scheduleDietPlan(String dietSummary) async {
-  await _notifications.zonedSchedule(
-    3,
-    "Today's Diet Plan 🥗",
-    dietSummary,
-    _scheduleTime(7, 30),
-    const NotificationDetails(
+  await _scheduleWithFallback(
+    id: 3,
+    title: "Today's Diet Plan 🥗",
+    body: dietSummary,
+    scheduledDate: _scheduleTime(7, 30),
+    notificationDetails: const NotificationDetails(
       android: AndroidNotificationDetails(
         'diet_channel',
         'Diet Plans',
       ),
     ),
-    uiLocalNotificationDateInterpretation:
-        UILocalNotificationDateInterpretation.absoluteTime,
-    androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
     matchDateTimeComponents: DateTimeComponents.time,
   );
 }
 
   // ✅ WORKOUT
   static Future<void> scheduleWorkout(String workout) async {
-    await _notifications.zonedSchedule(
-  2,
-  "Workout Time 💪",
-  workout,
-  _scheduleTime(18, 0),
-  const NotificationDetails(
-    android: AndroidNotificationDetails(
-      'workout_channel',
-      'Workout',
-    ),
-  ),
-  uiLocalNotificationDateInterpretation:
-    UILocalNotificationDateInterpretation.absoluteTime,
-  androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle, // ✅ FIX
-  matchDateTimeComponents: DateTimeComponents.time,
-);
+    await _scheduleWithFallback(
+      id: 2,
+      title: "Workout Time 💪",
+      body: workout,
+      scheduledDate: _scheduleTime(18, 0),
+      notificationDetails: const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'workout_channel',
+          'Workout',
+        ),
+      ),
+      matchDateTimeComponents: DateTimeComponents.time,
+    );
   }
 
   static Future<void> scheduleHealthTip(String tip) async {
-  await _notifications.zonedSchedule(
-    3,
-    "Health Tip 💡",
-    tip, // ✅ dynamic from LLM
-    _scheduleTime(9, 0),
-    const NotificationDetails(
-      android: AndroidNotificationDetails(
-        'tip_channel',
-        'Health Tips',
+    await _scheduleWithFallback(
+      id: 3,
+      title: "Health Tip 💡",
+      body: tip,
+      scheduledDate: _scheduleTime(9, 0),
+      notificationDetails: const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'tip_channel',
+          'Health Tips',
+        ),
       ),
-    ),
-    uiLocalNotificationDateInterpretation:
-        UILocalNotificationDateInterpretation.absoluteTime,
-    androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-    matchDateTimeComponents: DateTimeComponents.time,
-  );
-}
+      matchDateTimeComponents: DateTimeComponents.time,
+    );
+  }
 
-static Future<void> scheduleReminder(String reminderText) async {
-  await _notifications.zonedSchedule(
-    2,
-    "Today's Reminders ⏰",
-    reminderText,
-    _scheduleTime(8, 0),
-    const NotificationDetails(
-      android: AndroidNotificationDetails(
-        'reminder_channel',
-        'Daily Reminders',
+  static Future<void> scheduleReminder(String reminderText) async {
+    await _scheduleWithFallback(
+      id: 2,
+      title: "Today's Reminders ⏰",
+      body: reminderText,
+      scheduledDate: _scheduleTime(8, 0),
+      notificationDetails: const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'reminder_channel',
+          'Daily Reminders',
+        ),
       ),
-    ),
-    uiLocalNotificationDateInterpretation:
-        UILocalNotificationDateInterpretation.absoluteTime,
-    androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-    matchDateTimeComponents: DateTimeComponents.time,
-  );
-}
+      matchDateTimeComponents: DateTimeComponents.time,
+    );
+  }
 }
