@@ -11,6 +11,7 @@ pip install -r requirements.txt
 fastapi dev app.main.py
 pip install uvicorn                             
 uvicorn app.main:app --reload
+uvicorn app.main:app --host 172.16.9.41 --port 8000
 ```
 Run the last two commands if the 3rd last one still shows error.
 
