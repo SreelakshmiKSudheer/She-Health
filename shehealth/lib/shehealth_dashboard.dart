@@ -15,6 +15,9 @@ import 'models/app_models.dart';
 import 'services/backend_api_service.dart';
 import 'services/local_storage_service.dart';
 import 'services/session_service.dart';
+import 'services/notification_service.dart';
+import 'package:provider/provider.dart';
+import 'state/app_state.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -33,7 +36,8 @@ class _DashboardPageState extends State<DashboardPage> {
 
   List<Map<String, dynamic>> _llmReminders = [];
   bool _isReminderLoading = true;
-
+  bool _tipNotificationSent = false;
+  bool _reminderNotificationSent = false;
   String _dailyTip = "Loading today's health tip...";
   bool _isTipLoading = true;
   bool _isDashboardLoading = true;
@@ -254,6 +258,13 @@ class _DashboardPageState extends State<DashboardPage> {
       ),
     );
   }
+  
+  String _cleanMarkdown(String text) {
+    return text
+        .replaceAll('**', '')
+        .replaceAll('*', '')
+        .trim();
+  }
 
   Future<String?> _generateLlmReportForPrediction(
     Map<String, dynamic> prediction,
@@ -299,7 +310,7 @@ class _DashboardPageState extends State<DashboardPage> {
     Prediction summary: $top.''';
 
       final result = await _groqService.sendSimpleMessage(prompt);
-      final cleaned = result.trim();
+      final cleaned = _cleanMarkdown(result);
       if (cleaned.isEmpty ||
           cleaned
               .startsWith('I apologize, but I\'m having trouble connecting')) {
@@ -399,6 +410,12 @@ Rules:
       _llmReminders = List<Map<String, dynamic>>.from(parsed);
       _isReminderLoading = false;
     });
+    if (!_reminderNotificationSent && _llmReminders.isNotEmpty) {
+  await NotificationService.scheduleReminder(
+    "${_llmReminders[0]['title']} - ${_llmReminders[0]['subtitle']}"
+  );
+  _reminderNotificationSent = true;
+}
   } catch (e) {
     setState(() {
       _isReminderLoading = false;
@@ -410,6 +427,9 @@ Rules:
         }
       ];
     });
+    await NotificationService.scheduleReminder(
+  _llmReminders[0]['title'],
+);
   }
 }
   Future<void> _fetchDailyTip() async {
@@ -455,11 +475,19 @@ Rules:
         _dailyTip = response;
         _isTipLoading = false;
       });
+      if (!_tipNotificationSent) {
+  await NotificationService.scheduleHealthTip(_dailyTip);
+  _tipNotificationSent = true;
+}
     } catch (e) {
       setState(() {
         _dailyTip = "Drink enough water and maintain a healthy routine.";
         _isTipLoading = false;
       });
+      if (!_tipNotificationSent) {
+  await NotificationService.scheduleHealthTip(_dailyTip);
+  _tipNotificationSent = true;
+}
     }
   }
 
@@ -497,64 +525,87 @@ void initState() {
 }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      key: _scaffoldKey,
-      backgroundColor: const Color(0xFFFDF2F8),
-      drawer: _buildDrawer(),
-      body: Column(
-        children: [
-          _buildHeader(),
-          Expanded(
-            child: Stack(
-              children: [
-                SingleChildScrollView(
-                  controller: _scrollController,
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      children: [
-                        _buildWelcomeSection(),
-                        const SizedBox(height: 20),
-                        _buildHealthStatusCards(),
-                        const SizedBox(height: 20),
-                        _buildMainContent(),
-                        const SizedBox(height: 20),
-                        _buildHealthTipBanner(),
-                        const SizedBox(
-                            height: 80), // Extra space for bottom nav
-                      ],
-                    ),
+Widget build(BuildContext context) {
+  final tip = Provider.of<AppState>(context).healthTip;
+  final reminder = Provider.of<AppState>(context).reminderText;
+  return Scaffold(
+    key: _scaffoldKey,
+    backgroundColor: const Color(0xFFFDF2F8),
+    drawer: _buildDrawer(),
+
+    body: Column(
+      children: [
+        _buildHeader(),
+        Expanded(
+          child: Stack(
+            children: [
+              SingleChildScrollView(
+                controller: _scrollController,
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    children: [
+                      _buildWelcomeSection(),
+                      const SizedBox(height: 20),
+                      _buildHealthStatusCards(),
+                      const SizedBox(height: 20),
+                      _buildMainContent(),
+                      const SizedBox(height: 20),
+                      _buildHealthTipBanner(),
+                      const SizedBox(height: 80),
+                    ],
                   ),
                 ),
-                // Floating Chat AI Button
-                Positioned(
-                  right: 16,
-                  bottom: 90,
-                  child: FloatingActionButton(
-                    heroTag: 'chatAI',
-                    onPressed: () {
-                      // Navigate to Health Chatbot Page
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const HealthChatbotPage()),
-                      );
-                    },
-                    backgroundColor: const Color(0xFFC85A7A),
-                    elevation: 8,
-                    child: const Icon(Icons.chat_bubble,
-                        color: Colors.white, size: 28),
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
-      ),
-      bottomNavigationBar: _buildBottomNavigationBar(),
-    );
-  }
+        ),
+      ],
+    ),
+
+    // ✅ ADD FLOATING BUTTONS HERE (CORRECT WAY)
+    floatingActionButton: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // 🧪 Test Notification Button
+        FloatingActionButton(
+          heroTag: 'testNotification',
+          onPressed: () async {
+            print("🔔 Button pressed");
+
+            await NotificationService.showInstantNotification(
+              "Test Notification",
+              "This is working ✅",
+            );
+
+            print("✅ Notification call done");
+          },
+          backgroundColor: Colors.green,
+          child: const Icon(Icons.notifications),
+        ),
+
+        const SizedBox(height: 12),
+
+        // 💬 Chat Button
+        FloatingActionButton(
+          heroTag: 'chatAI',
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const HealthChatbotPage(),
+              ),
+            );
+          },
+          backgroundColor: const Color(0xFFC85A7A),
+          child: const Icon(Icons.chat_bubble),
+        ),
+      ],
+    ),
+
+    bottomNavigationBar: _buildBottomNavigationBar(),
+  );
+}
 
   Widget _buildWelcomeSection() {
     return Stack(
