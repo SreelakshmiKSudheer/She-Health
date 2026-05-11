@@ -1,5 +1,7 @@
+# DATA MANIPULATION IMPORTS
 import pandas as pd
 import numpy as np
+# DATA SPLITTING & MODEL SELECTION IMPORTS
 from sklearn.discriminant_analysis import StandardScaler
 from sklearn.model_selection import GridSearchCV, StratifiedKFold, train_test_split
 # PREPROCESSING PIPELINE IMPORTS
@@ -20,6 +22,15 @@ from sklearn.metrics import (
 )
 # CALIBRATION IMPORT
 from sklearn.calibration import CalibratedClassifierCV, calibration_curve
+
+# FEATURE SELECTION IMPORTS
+# Filter Method (Fast Screening) - Remove low-importance features
+from sklearn.feature_selection import VarianceThreshold
+# Stage B: Statistical Selection - Remove features with low correlation to target
+from sklearn.feature_selection import SelectKBest, f_classif
+# Stage C: Wrapper Method (Refinement) - Recursive Feature Elimination
+from sklearn.feature_selection import RFE
+from sklearn.linear_model import LogisticRegression
 
 # ---------------- PROBABILITY TO RISK CATEGORY ----------------
 def risk_category(prob):
@@ -139,6 +150,70 @@ def tune_threshold_for_recall(model, x_valid, y_valid):
     df = pd.DataFrame(results)
     return df
 
+def get_selected_feature_names(pipeline, numeric_features, categorical_features):
+    # Step 1: Get preprocessor
+    preprocessor = pipeline.named_steps["preprocessor"]
+
+    # Step 2: Get feature names after preprocessing
+    num_features = numeric_features.tolist() if len(numeric_features) > 0 else []
+
+    # Safely extract categorical feature names. Many pipelines may have no
+    # categorical features or the encoder may not be fitted (e.g., if there
+    # were no categorical cols during fitting). Be defensive to avoid
+    # NotFittedError here.
+    cat_features = np.array([], dtype=object)
+    try:
+        if len(categorical_features) > 0 and hasattr(preprocessor, "named_transformers_"):
+            cat_transformer = preprocessor.named_transformers_.get("cat")
+            if cat_transformer is not None:
+                # cat_transformer might be a Pipeline with an 'encoder' step
+                encoder = None
+                if hasattr(cat_transformer, "named_steps"):
+                    encoder = cat_transformer.named_steps.get("encoder")
+                else:
+                    encoder = cat_transformer
+
+                if encoder is not None and hasattr(encoder, "get_feature_names_out"):
+                    try:
+                        cat_features = encoder.get_feature_names_out(categorical_features)
+                    except Exception:
+                        # encoder exists but not fitted or other issue — fall back
+                        cat_features = np.array([], dtype=object)
+    except Exception:
+        cat_features = np.array([], dtype=object)
+
+    # Ensure concatenation works even when one side is empty
+    all_features = np.concatenate([np.array(num_features, dtype=object), np.array(cat_features, dtype=object)])
+
+    # Step 3: Apply VarianceThreshold mask
+    # Apply masks safely: some masks may not align if feature counts differ
+    try:
+        var_mask = pipeline.named_steps["feature_selection"].named_steps["variance"].get_support()
+        features_after_var = all_features[var_mask]
+    except Exception:
+        features_after_var = all_features
+
+    try:
+        kbest_mask = pipeline.named_steps["feature_selection"].named_steps["select_kbest"].get_support()
+        # protect against mask/feature length mismatch
+        if len(kbest_mask) == len(features_after_var):
+            features_after_kbest = features_after_var[kbest_mask]
+        else:
+            features_after_kbest = features_after_var
+    except Exception:
+        features_after_kbest = features_after_var
+
+    try:
+        rfe_mask = pipeline.named_steps["feature_selection"].named_steps["rfe"].get_support()
+        if len(rfe_mask) == len(features_after_kbest):
+            final_features = features_after_kbest[rfe_mask]
+        else:
+            final_features = features_after_kbest
+    except Exception:
+        final_features = features_after_kbest
+
+    return final_features
+
 
 # -------- ADABOOST MODEL WITH TUNING & CALIBRATION --------
 def endometriosis_adaboost_with_tuning_and_calibration(
@@ -164,9 +239,26 @@ def endometriosis_adaboost_with_tuning_and_calibration(
         ]), categorical_features)
     ])
 
+    # FEATURE SELECTION PIPELINE
+    feature_selector = Pipeline([
+        # Stage A: Remove low variance features
+        ("variance", VarianceThreshold(threshold=0.01)),
+
+        # Stage B: Select top features statistically
+        ("select_kbest", SelectKBest(score_func=f_classif, k=24)),  # adjust k if needed
+        
+        # Stage C: Optimized RFE (wrapper method)
+        ("rfe", RFE(
+            estimator=LogisticRegression(max_iter=1000, solver="liblinear"),
+            n_features_to_select=22,   # final feature count
+            step=2                     # removes 2 features per iteration (faster)
+        ))
+    ])
+
     # Pipeline
     base_pipeline = Pipeline([
         ("preprocessor", preprocessor),
+        ("feature_selection", feature_selector),
         ("model", AdaBoostClassifier(
             estimator=DecisionTreeClassifier(max_depth=1),
             random_state=42
@@ -175,6 +267,10 @@ def endometriosis_adaboost_with_tuning_and_calibration(
 
     # Hyperparameter grid
     param_grid = {
+        # Feature Selection tuning
+        "feature_selection__select_kbest__k": [20, 22, 24],
+        "feature_selection__rfe__n_features_to_select": [16, 18, 20, 22],
+
         "model__n_estimators": [50, 100, 200],
         "model__learning_rate": [0.5, 1.0, 1.5],
         "model__estimator__max_depth": [1, 2, 3]
@@ -193,6 +289,27 @@ def endometriosis_adaboost_with_tuning_and_calibration(
     # Train
     grid.fit(x_train, y_train)
     best_pipeline = grid.best_estimator_
+
+    # -------- PRINT SELECTED FEATURES --------
+    selected_features = get_selected_feature_names(
+        best_pipeline,
+        numeric_features,
+        categorical_features
+    )
+
+    print("\n--- FINAL SELECTED FEATURES ---")
+    for f in selected_features:
+        print(f)
+
+    print("\nTotal Selected Features:", len(selected_features))
+
+    print("\n--- FEATURE IMPORTANCE (AdaBoost) ---")
+    model = best_pipeline.named_steps["model"]
+
+    importances = model.feature_importances_
+
+    for f, imp in zip(selected_features, importances):
+        print(f"{f}: {imp:.4f}")
 
     print("\n--- ENDOMETRIOSIS ADABOOST TUNING ---")
     print("Best params:", grid.best_params_)
@@ -224,7 +341,7 @@ def endometriosis_adaboost_with_tuning_and_calibration(
     )
     print("\nThreshold Tuning Results:\n", threshold_results)
 
-    chosen_threshold = 0.35
+    chosen_threshold = 0.30
 
     print("\nChosen Threshold:", chosen_threshold)
 
@@ -252,11 +369,23 @@ def endometriosis_adaboost_with_tuning_and_calibration(
     print("\n--- FEATURE IMPORTANCE (AdaBoost) ---")
     adaboost_model_uncal = best_pipeline.named_steps["model"]
     feature_importance_uncal = adaboost_model_uncal.feature_importances_
-    
-    # Get feature names - all selected features are numeric
-    feature_names = list(x_train.columns)
-    
-    # Create feature importance dataframe
+
+    # Align feature names with the length of `feature_importance_uncal`.
+    # Prefer `selected_features` computed earlier; fall back to x_train columns
+    # or generate placeholder names if lengths don't match.
+    n_imp = len(feature_importance_uncal)
+    feature_names = None
+    try:
+        if 'selected_features' in locals() and len(selected_features) == n_imp:
+            feature_names = list(selected_features)
+        elif len(x_train.columns) == n_imp:
+            feature_names = list(x_train.columns)
+        else:
+            feature_names = [f"f_{i}" for i in range(n_imp)]
+    except Exception:
+        feature_names = [f"f_{i}" for i in range(n_imp)]
+
+    # Create feature importance dataframe safely
     feature_imp_df_uncal = pd.DataFrame({
         "Feature": feature_names,
         "Importance": feature_importance_uncal
@@ -286,17 +415,33 @@ calibrated_ada, ada_grid = endometriosis_adaboost_with_tuning_and_calibration(
 # ---------------- SAVE FINAL MODEL ----------------
 import os
 import joblib
+import pickle
 
-MODEL_DIR = r"C:\Users\user\SreelakshmiK\personal\Projects\She-Health\backend\app\ml\models"
+# Save the fitted pipeline (best estimator) instead of the full calibrated
+# object. Serializing the CalibratedClassifierCV wrapper can sometimes
+# trigger low-level buffer/memoryview issues during pickle when running
+# in certain environments. The pipeline can be re-calibrated on load if
+# required.
+MODEL_DIR = r"C:\Users\user\SreelakshmiK\personal\Projects\She_Health_Clone\She-Health\backend\app\ml\models"
 os.makedirs(MODEL_DIR, exist_ok=True)
 
 model_path = os.path.join(MODEL_DIR, "endometriosis_model.pkl")
 
-# Save model
-joblib.dump({
-    "model": calibrated_ada,
+# Prefer the best estimator from the GridSearchCV if available. Fall
+# back to saving the calibrated object only if the grid object is missing.
+best_estimator = None
+try:
+    best_estimator = ada_grid.best_estimator_
+except Exception:
+    best_estimator = None
+
+to_save = {
+    "pipeline": best_estimator if best_estimator is not None else calibrated_ada,
     "features": x_train_ada.columns.tolist(),
-    "threshold": 0.10  # your chosen threshold
-}, model_path)
+    "threshold": 0.30  # your chosen threshold
+}
+
+# Use a robust protocol and light compression.
+joblib.dump(to_save, model_path, compress=3, protocol=pickle.HIGHEST_PROTOCOL)
 
 print(f"\nModel saved successfully at: {model_path}")

@@ -1,13 +1,14 @@
+# DATA MANIPULATION IMPORTS
 import pandas as pd
 import numpy as np
-from sklearn.discriminant_analysis import StandardScaler
+# DATA SPLITTING & MODEL SELECTION IMPORTS
+from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import GridSearchCV, StratifiedKFold, train_test_split
 # PREPROCESSING PIPELINE IMPORTS
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
-# MODEL IMPORTS
 # EVALUATION METRICS IMPORTS
 from sklearn.metrics import (
     confusion_matrix,
@@ -18,11 +19,67 @@ from sklearn.metrics import (
 )
 # CALIBRATION IMPORT
 from sklearn.calibration import CalibratedClassifierCV, calibration_curve
+# MODEL IMPORTS
 from xgboost import XGBClassifier
 
+# FEATURE SELECTION IMPORTS
+# Filter Method (Fast Screening) - Remove low-importance features
+from sklearn.feature_selection import VarianceThreshold
+# Stage B: Statistical Selection - Remove features with low correlation to target
+from sklearn.feature_selection import SelectKBest, f_classif
+# Stage C: Wrapper Method (Refinement) - Recursive Feature Elimination
+from sklearn.feature_selection import RFE
+from sklearn.linear_model import LogisticRegression
+
+
 # Load cleaned data
-pcos = pd.read_csv(r'C:\Users\user\SreelakshmiK\personal\Projects\She-Health\backend\dataset\final_dataset\pcos.csv')
+pcos = pd.read_csv(r'C:\Users\user\SreelakshmiK\personal\Projects\She_Health_Clone\She-Health\backend\dataset\final_dataset\pcos.csv')
+# ---------------- CLEANING & FEATURE TYPE FIX ----------------
+
 pcos.columns = pcos.columns.str.strip()
+
+# Replace blank strings with NaN
+pcos = pcos.replace(r'^\s*$', np.nan, regex=True)
+
+# ---------------- ORDINAL FEATURES ----------------
+# These have meaningful order:
+# 0 = none, 1 = mild, 2 = severe
+
+ordinal_features = [
+    'Hair growth on Chin',
+    'Hair growth  on Cheeks',
+    'Hair growth Between breasts',
+    'Hair growth  on Upper lips',
+    'Hair growth in Arms',
+    'Hair growth on Inner thighs'
+]
+
+# Convert ordinal features to numeric
+for col in ordinal_features:
+    if col in pcos.columns:
+        pcos[col] = pd.to_numeric(
+            pcos[col],
+            errors="coerce"
+        )
+
+# ---------------- TRUE CATEGORICAL FEATURES ----------------
+# Only features without ordinal meaning
+
+categorical_cols = [
+    "Overweight",
+    "Difficulty in conceiving",
+    "irregular or missed periods"
+]
+
+# Convert categorical columns to clean strings
+for col in categorical_cols:
+    if col in pcos.columns:
+        pcos[col] = (
+            pcos[col]
+            .fillna("Unknown")
+            .astype(str)
+            .str.strip()
+        )
 
 # Drop specified columns
 pcos = pcos.drop(columns=["City", 'loss weight gain / weight loss', 'more Mood Swings'], errors="ignore")
@@ -106,6 +163,29 @@ def tune_threshold_for_recall(model, x_valid, y_valid):
     df = pd.DataFrame(results)
     return df
 
+def get_selected_feature_names(pipeline, numeric_features, categorical_features):
+    # Step 1: Get preprocessor
+    preprocessor = pipeline.named_steps["preprocessor"]
+
+    # Step 2: Get feature names after preprocessing
+    num_features = numeric_features.tolist()
+
+    cat_encoder = preprocessor.named_transformers_["cat"].named_steps["encoder"]
+    cat_features = cat_encoder.get_feature_names_out(categorical_features)
+
+    all_features = np.concatenate([num_features, cat_features])
+
+    # Step 3: Apply VarianceThreshold mask
+    var_mask = pipeline.named_steps["feature_selection"]\
+        .named_steps["variance"].get_support()
+    features_after_var = all_features[var_mask]
+
+    # Step 4: Apply SelectKBest mask
+    kbest_mask = pipeline.named_steps["feature_selection"]\
+        .named_steps["select_kbest"].get_support()
+    final_features = features_after_var[kbest_mask]
+
+    return final_features
 
 # ---------------- XGBOOST MODEL WITH TUNING & CALIBRATION ----------------
 def pcos_xgboost_with_tuning_and_calibration(
@@ -122,18 +202,36 @@ def pcos_xgboost_with_tuning_and_calibration(
     numeric_features = x_train.select_dtypes(include=["int64", "float64"]).columns
     categorical_features = x_train.select_dtypes(include=["object", "category"]).columns
 
-    # Preprocessing
+    # ---------------- PREPROCESSING ----------------
+
+    numeric_transformer = Pipeline([
+        ("imputer", SimpleImputer(strategy="median")),
+        ("scaler", StandardScaler())
+    ])
+
+    categorical_transformer = Pipeline([
+        ("imputer", SimpleImputer(strategy="most_frequent")),
+        ("encoder", OneHotEncoder(handle_unknown="ignore"))
+    ])
+
     preprocessor = ColumnTransformer([
-        ("num", SimpleImputer(strategy="median"), numeric_features),
-        ("cat", Pipeline([
-            ("imputer", SimpleImputer(strategy="most_frequent")),
-            ("encoder", OneHotEncoder(handle_unknown="ignore"))
-        ]), categorical_features)
+        ("num", numeric_transformer, numeric_features),
+        ("cat", categorical_transformer, categorical_features)
+    ])
+
+    # FEATURE SELECTION PIPELINE
+    feature_selector = Pipeline([
+        # Stage A: Remove low variance features
+        ("variance", VarianceThreshold(threshold=0.01)),
+
+        # Stage B: Select top features statistically
+        ("select_kbest", SelectKBest(score_func=f_classif, k=25)),  # adjust k if needed
     ])
 
     # Pipeline
     base_pipeline = Pipeline([
         ("preprocessor", preprocessor),
+        ("feature_selection", feature_selector),
         ("model", XGBClassifier(
             objective="binary:logistic",
             eval_metric="logloss",
@@ -143,9 +241,12 @@ def pcos_xgboost_with_tuning_and_calibration(
             verbosity=0
         ))
     ])
-
     # Hyperparameter grid
     param_grid = {
+        # Feature Selection tuning
+        "feature_selection__select_kbest__k": [18, 20, 22, 24, 26],
+
+        # XGBoost tuning
         "model__n_estimators": [100, 200],
         "model__max_depth": [3, 6, 10],
         "model__learning_rate": [0.01, 0.1],
@@ -166,6 +267,27 @@ def pcos_xgboost_with_tuning_and_calibration(
     # Train
     grid.fit(x_train, y_train)
     best_pipeline = grid.best_estimator_
+
+    # -------- PRINT SELECTED FEATURES --------
+    selected_features = get_selected_feature_names(
+        best_pipeline,
+        numeric_features,
+        categorical_features
+    )
+
+    print("\n--- FINAL SELECTED FEATURES ---")
+    for f in selected_features:
+        print(f)
+
+    print("\nTotal Selected Features:", len(selected_features))
+
+    print("\n--- FEATURE IMPORTANCE (XGBoost) ---")
+    model = best_pipeline.named_steps["model"]
+
+    importances = model.feature_importances_
+
+    for f, imp in zip(selected_features, importances):
+        print(f"{f}: {imp:.4f}")
 
     print("\n--- PCOS XGBOOST TUNING ---")
     print("Best params:", grid.best_params_)
@@ -205,7 +327,7 @@ def pcos_xgboost_with_tuning_and_calibration(
     except Exception:
         pass
     '''
-    chosen_threshold = 0.25
+    chosen_threshold = 0.35
 
     print("\nChosen Threshold:", chosen_threshold)
 
@@ -230,40 +352,20 @@ def pcos_xgboost_with_tuning_and_calibration(
         )
     return calibrated, grid
 
+# ---------------- DATA SPLIT ----------------
+
 x_train, x_valid, x_test, y_train, y_valid, y_test = pcos_data_split(pcos)
+
 print_positive_counts(y_train, y_valid, y_test)
-
-binary_features = [ 'Overweight',  
-         'irregular or missed periods', 
-         'Acne or skin tags', 
-         'Hair thinning or hair loss', 
-         'Dark patches', 
-         'always tired', 
-         'canned food often']
-
-ternary_features = ['Hair growth  on Cheeks', 
-           'Hair growth Between breasts',
-           'Hair growth  on Upper lips',
-           'Hair growth in Arms',
-           'Hair growth on Inner thighs']
 
 numeric_features = x_train.select_dtypes(include=["int64", "float64"]).columns
 categorical_features = x_train.select_dtypes(include=["object", "category"]).columns
 
-numeric_transformer = Pipeline([
-    ("imputer", SimpleImputer(strategy="median")),
-    ("scaler", StandardScaler())
-])
-
-categorical_transformer = Pipeline([
-    ("imputer", SimpleImputer(strategy="most_frequent")),
-    ("encoder", OneHotEncoder(handle_unknown="ignore"))
-])
-
-preprocessor = ColumnTransformer([
-    ("num", numeric_transformer, numeric_features),
-    ("cat", categorical_transformer, categorical_features)
-])
+# FIX: Ensure ALL categorical columns are properly typed (strings, no NaN as float)
+for col in categorical_features:
+    x_train[col] = x_train[col].fillna("Unknown").astype(str).str.strip()
+    x_valid[col] = x_valid[col].fillna("Unknown").astype(str).str.strip()
+    x_test[col] = x_test[col].fillna("Unknown").astype(str).str.strip()
 
 # ----------------RUN XGBOOST WITH TUNING & CALIBRATION ----------------
 calibrated_xgb, xgb_grid = pcos_xgboost_with_tuning_and_calibration(
@@ -273,11 +375,13 @@ calibrated_xgb, xgb_grid = pcos_xgboost_with_tuning_and_calibration(
     method="sigmoid"
 )
 
+
+
 # ---------------- SAVE FINAL MODEL ----------------
 import os
 import joblib
 
-MODEL_DIR = r"C:\Users\user\SreelakshmiK\personal\Projects\She-Health\backend\app\ml\models"
+MODEL_DIR = r"C:\Users\user\SreelakshmiK\personal\Projects\She_Health_Clone\She-Health\backend\app\ml\models"
 os.makedirs(MODEL_DIR, exist_ok=True)
 
 model_path = os.path.join(MODEL_DIR, "pcos_model.pkl")
