@@ -2,6 +2,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter/services.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
+import 'package:shehealth/app_navigator.dart';
 
 class NotificationService {
   static final FlutterLocalNotificationsPlugin _notifications =
@@ -19,8 +20,27 @@ class NotificationService {
     tz.initializeTimeZones();
     tz.setLocalLocation(tz.getLocation('Asia/Kolkata'));
 
-    await _notifications.initialize(settings);
+    await _notifications.initialize(
+  settings,
+  onDidReceiveNotificationResponse: (response) {
+    final payload = response.payload;
+
+    if (payload != null) {
+      NotificationService.handleNavigation(payload);
+    }
+  },
+);
   }
+
+  static const AndroidNotificationDetails commonDetails =
+    AndroidNotificationDetails(
+  'health_channel',
+  'Health Notifications',
+  channelDescription: 'Daily women health notifications',
+  importance: Importance.max,
+  priority: Priority.high,
+  styleInformation: BigTextStyleInformation(''),
+);
 
   // ✅ INSTANT NOTIFICATION
   static Future<void> showNotification({
@@ -66,19 +86,35 @@ class NotificationService {
 
   static Future<void> showInstantNotification(
     String title, String body) async {
+
+  const details = NotificationDetails(android: commonDetails);
+
   await _notifications.show(
-    999,
+    0,
     title,
     body,
-    const NotificationDetails(
-      android: AndroidNotificationDetails(
-        'test_channel',
-        'Test Notifications',
-        importance: Importance.max,
-        priority: Priority.high,
-      ),
-    ),
+    details,
   );
+}
+
+static void handleNavigation(String payload) {
+  switch (payload) {
+    case "diet":
+      navigatorKey.currentState?.pushNamed('/diet');
+      break;
+
+    case "workout":
+      navigatorKey.currentState?.pushNamed('/workout');
+      break;
+
+    case "tip":
+      navigatorKey.currentState?.pushNamed('/tips');
+      break;
+
+    case "reminder":
+      navigatorKey.currentState?.pushNamed('/reminders');
+      break;
+  }
 }
 
   static Future<void> _scheduleWithFallback({
@@ -87,6 +123,7 @@ class NotificationService {
     required String body,
     required tz.TZDateTime scheduledDate,
     required NotificationDetails notificationDetails,
+    required String payload,
     DateTimeComponents? matchDateTimeComponents,
   }) async {
     Future<void> schedule(AndroidScheduleMode androidScheduleMode) async {
@@ -96,6 +133,7 @@ class NotificationService {
         body,
         scheduledDate,
         notificationDetails,
+        payload: payload,
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
         androidScheduleMode: androidScheduleMode,
@@ -118,66 +156,82 @@ class NotificationService {
 
   static Future<void> scheduleDietPlan(String dietSummary) async {
   await _scheduleWithFallback(
-    id: 3,
-    title: "Today's Diet Plan 🥗",
+    id: 1, // ✅ UNIQUE ID
+    title: "🥗 Today's Diet Plan",
     body: dietSummary,
     scheduledDate: _scheduleTime(7, 30),
     notificationDetails: const NotificationDetails(
       android: AndroidNotificationDetails(
         'diet_channel',
         'Diet Plans',
+        importance: Importance.max,
+        priority: Priority.high,
+        styleInformation: BigTextStyleInformation('Follow your healthy diet plan today.'),
       ),
     ),
+    payload: "diet",
     matchDateTimeComponents: DateTimeComponents.time,
   );
 }
 
   // ✅ WORKOUT
   static Future<void> scheduleWorkout(String workout) async {
-    await _scheduleWithFallback(
-      id: 2,
-      title: "Workout Time 💪",
-      body: workout,
-      scheduledDate: _scheduleTime(18, 0),
-      notificationDetails: const NotificationDetails(
-        android: AndroidNotificationDetails(
-          'workout_channel',
-          'Workout',
-        ),
+  await _scheduleWithFallback(
+    id: 4,
+    title: "💪 Workout Time",
+    body: workout,
+    scheduledDate: _scheduleTime(18, 0),
+    notificationDetails: const NotificationDetails(
+      android: AndroidNotificationDetails(
+        'workout_channel',
+        'Workout',
+        importance: Importance.max,
+        priority: Priority.high,
+        styleInformation: BigTextStyleInformation('Stay active and strong.'),
       ),
-      matchDateTimeComponents: DateTimeComponents.time,
-    );
-  }
+    ),
+    payload: "workout",
+    matchDateTimeComponents: DateTimeComponents.time,
+  );
+}
 
   static Future<void> scheduleHealthTip(String tip) async {
-    await _scheduleWithFallback(
-      id: 3,
-      title: "Health Tip 💡",
-      body: tip,
-      scheduledDate: _scheduleTime(9, 0),
-      notificationDetails: const NotificationDetails(
-        android: AndroidNotificationDetails(
-          'tip_channel',
-          'Health Tips',
-        ),
+  await _scheduleWithFallback(
+    id: 3,
+    title: "💡 Daily Health Tip",
+    body: tip,
+    scheduledDate: _scheduleTime(9, 0),
+    notificationDetails: const NotificationDetails(
+      android: AndroidNotificationDetails(
+        'tip_channel',
+        'Health Tips',
+        importance: Importance.max,
+        priority: Priority.high,
+        styleInformation: BigTextStyleInformation('Small habits create big health improvements.'),
       ),
-      matchDateTimeComponents: DateTimeComponents.time,
-    );
-  }
+    ),
+    payload: "tip",
+    matchDateTimeComponents: DateTimeComponents.time,
+  );
+}
 
   static Future<void> scheduleReminder(String reminderText) async {
-    await _scheduleWithFallback(
-      id: 2,
-      title: "Today's Reminders ⏰",
-      body: reminderText,
-      scheduledDate: _scheduleTime(8, 0),
-      notificationDetails: const NotificationDetails(
-        android: AndroidNotificationDetails(
-          'reminder_channel',
-          'Daily Reminders',
-        ),
+  await _scheduleWithFallback(
+    id: 2, // ✅ UNIQUE
+    title: "⏰ Today's Reminders",
+    body: reminderText,
+    scheduledDate: _scheduleTime(8, 0),
+    notificationDetails: const NotificationDetails(
+      android: AndroidNotificationDetails(
+        'reminder_channel',
+        'Daily Reminders',
+        importance: Importance.max,
+        priority: Priority.high,
+        styleInformation: BigTextStyleInformation('Stay on track with your tasks today.'),
       ),
-      matchDateTimeComponents: DateTimeComponents.time,
-    );
-  }
+    ),
+    payload: "reminder",
+    matchDateTimeComponents: DateTimeComponents.time,
+  );
+}
 }
