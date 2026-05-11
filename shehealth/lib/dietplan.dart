@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'services/groq_service.dart';
 import 'services/session_service.dart';
 import 'dart:convert';
+import 'services/notification_service.dart';
 
 class Meal {
   final String name;
@@ -138,8 +139,6 @@ final Map<String, Map<String, dynamic>>
   },
 };
 
-
-
 class DietPlanPage extends StatefulWidget {
   const DietPlanPage({Key? key}) : super(key: key);
   @override
@@ -155,6 +154,7 @@ class _DietPlanPageState extends State<DietPlanPage> with TickerProviderStateMix
   Map<String, DiseaseDietPlan> _generatedPlans = {};
   String _errorMessage = '';
   bool _isLoading = false;
+  Map<String, bool> _notificationSent = {};
   
   final List<String> _diseases = ['PCOS', 'Endometriosis', 'Thyroid', 'Cervical Cancer'];
   String _currentDisease = 'PCOS';
@@ -298,7 +298,33 @@ try {
     // =========================
     // BUILD FINAL PLAN
     // =========================
+    if (_notificationSent[disease] != true) { 
 
+  int todayIndex = DateTime.now().weekday - 1;
+
+  final todayMeal = meals.isNotEmpty
+      ? meals[todayIndex]
+      : null;
+
+  final todayWorkout = workouts.isNotEmpty
+      ? workouts[todayIndex]
+      : null;
+
+  if (todayMeal != null) {
+    await NotificationService.scheduleDietPlan(
+      todayMeal.breakfast.name,
+    );
+  }
+
+  if (todayWorkout != null &&
+      todayWorkout.exercises.isNotEmpty) {
+    await NotificationService.scheduleWorkout(
+      todayWorkout.exercises.first.name,
+    );
+  }
+
+  _notificationSent[disease] = true;
+}
     if (!mounted) return;
 
 setState(() {
@@ -598,6 +624,7 @@ try {
     });
   }
 }
+
 
 Future<List<DayPlan>> _generateWeeklyMealsSafe(String disease) async {
   const days = [
