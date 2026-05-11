@@ -113,10 +113,10 @@ class SheHealthApp extends StatelessWidget {
 
       /// 🧭 ROUTES (Navigation mapping for notifications + app)
       routes: {
-        '/diet': (context) => DietPlanPage(),
-        '/workout': (context) => DietPlanPage(),
-        '/tips': (context) => DashboardPage(),
-        '/reminders': (context) => DashboardPage(),
+        '/diet': (context) => const DietPlanPage(),
+'/workout': (context) => const DietPlanPage(),
+'/tips': (context) => const DashboardPage(),
+'/reminders': (context) => const DashboardPage(),
       },
 
       /// 🚀 FIRST SCREEN

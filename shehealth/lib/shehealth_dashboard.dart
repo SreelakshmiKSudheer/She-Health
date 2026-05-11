@@ -456,7 +456,7 @@ Give ONE personalized women's health tip.
 
 User details:
 - Risk level: $_dashboardRiskLabel
-- Conditions: ${_latestPrediction?.keys.join(", ") ?? "General health"}
+- Conditions: ${_latestPrediction?['predictions']?.keys.join(", ") ?? "General health"}
 
 Rules:
 - Max 25 words
@@ -491,6 +491,15 @@ Rules:
     }
   }
 
+  Future<void> _initializeDashboard() async {
+
+  await _loadDashboardData();
+
+  await _generateReminders();
+
+  await _fetchDailyTip();
+}
+
   Future<void> _openHealthArticle() async {
     final Uri url =
         Uri.parse("https://www.google.com/search?q=women+health+tips+daily");
@@ -522,6 +531,7 @@ void initState() {
     _generateReminders(); // AFTER user data loads
   });
   _fetchDailyTip();
+   _initializeDashboard();
 }
 
   @override

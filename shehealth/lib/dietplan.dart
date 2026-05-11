@@ -296,32 +296,45 @@ try {
 
       workouts = [];
     }
-
-    // =========================
-    // BUILD FINAL PLAN
-    // =========================
-    if (_notificationSent[disease] != true) { 
+    if (_notificationSent[disease] != true) {
 
   int todayIndex = DateTime.now().weekday - 1;
 
-  final todayMeal = meals.isNotEmpty
-      ? meals[todayIndex]
-      : null;
+  final todayMeal =
+      meals.isNotEmpty ? meals[todayIndex] : null;
 
-  final todayWorkout = workouts.isNotEmpty
-      ? workouts[todayIndex]
-      : null;
+  final todayWorkout =
+      workouts.isNotEmpty ? workouts[todayIndex] : null;
+
+  // -------------------------
+  // DIET NOTIFICATION
+  // -------------------------
 
   if (todayMeal != null) {
+
+    final dietMessage =
+        'Breakfast: ${todayMeal.breakfast.name}\n'
+        'Lunch: ${todayMeal.lunch.name}\n'
+        'Dinner: ${todayMeal.dinner.name}';
+
     await NotificationService.scheduleDietPlan(
-      todayMeal.breakfast.name,
+      dietMessage,
     );
   }
 
+  // -------------------------
+  // WORKOUT NOTIFICATION
+  // -------------------------
+
   if (todayWorkout != null &&
       todayWorkout.exercises.isNotEmpty) {
+
+    final workoutMessage =
+        '${todayWorkout.focus}: '
+        '${todayWorkout.exercises.map((e) => e.name).join(", ")}';
+
     await NotificationService.scheduleWorkout(
-      todayWorkout.exercises.first.name,
+      workoutMessage,
     );
   }
 
