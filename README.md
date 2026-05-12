@@ -21,4 +21,9 @@ Use a fixed port when running Flutter web so previously registered users remain 
 ```
 cd shehealth
 flutter run -d chrome --web-hostname 127.0.0.1 --web-port 8011
+flutter clean
+flutter doctor
+flutter pub get
+flutter devices
+flutter run
 ```
