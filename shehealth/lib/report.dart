@@ -1,6 +1,9 @@
 ﻿import 'package:flutter/material.dart';
-
 import 'models/app_models.dart';
+import 'services/backend_api_service.dart';
+import 'services/local_storage_service.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 
 class HealthReportPage extends StatefulWidget {
   final String? userId;
@@ -78,12 +81,12 @@ class _HealthReportPageState extends State<HealthReportPage>
   }
 
   String _resolveAge() {
-    final predictionAge = widget.predictionData?['age'];
+    final predictionAge = (widget.predictionData ?? _fetchedPrediction)?['age'];
     if (predictionAge is num && predictionAge > 0) {
       return predictionAge.toInt().toString();
     }
 
-    final profile = widget.predictionData?['user_profile'];
+    final profile = (widget.predictionData ?? _fetchedPrediction)?['user_profile'];
     if (profile is Map<String, dynamic>) {
       final profileAge = profile['age'];
       if (profileAge is num && profileAge > 0) {
@@ -91,7 +94,7 @@ class _HealthReportPageState extends State<HealthReportPage>
       }
     }
 
-    final dob = widget.localUser?.dob;
+    final dob = (_localUserState ?? widget.localUser)?.dob;
     if (dob != null && dob.isNotEmpty) {
       final calculated = _calculateAgeFromDob(dob);
       if (calculated != null && calculated > 0) {
@@ -129,7 +132,7 @@ class _HealthReportPageState extends State<HealthReportPage>
   }
 
   Map<String, dynamic> get reportData {
-    final rawPredictions = widget.predictionData?['predictions'];
+    final rawPredictions = (widget.predictionData ?? _fetchedPrediction)?['predictions'];
     List<Map<String, dynamic>> riskAssessment = [];
 
     if (rawPredictions is Map<String, dynamic>) {
@@ -165,23 +168,23 @@ class _HealthReportPageState extends State<HealthReportPage>
         '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
 
     return {
-      'patientName': widget.localUser?.fullName ?? 'Unknown',
-      'patientId': widget.userId ?? widget.localUser?.userId ?? 'Not available',
+      'patientName': (_localUserState ?? widget.localUser)?.fullName ?? 'Unknown',
+      'patientId': widget.userId ?? (_localUserState ?? widget.localUser)?.userId ?? 'Not available',
       'date': date,
       'age': _resolveAge(),
       'assessmentDate': date,
       'symptoms': [
         {
           'name': 'Blood Group',
-          'value': widget.localUser?.bloodGroup ?? 'Not provided'
+          'value': (_localUserState ?? widget.localUser)?.bloodGroup ?? 'Not provided'
         },
         {
           'name': 'Marital Status',
-          'value': widget.localUser?.maritalStatus ?? 'Not provided'
+          'value': (_localUserState ?? widget.localUser)?.maritalStatus ?? 'Not provided'
         },
         {
           'name': 'Activity Level',
-          'value': widget.localUser?.activityLevel ?? 'Not provided'
+          'value': (_localUserState ?? widget.localUser)?.activityLevel ?? 'Not provided'
         },
       ],
       'riskAssessment': riskAssessment,
@@ -191,7 +194,7 @@ class _HealthReportPageState extends State<HealthReportPage>
         'Consult a healthcare professional for clinical guidance.',
       ],
       'lifestyle': {
-        'exercise': widget.localUser?.activityLevel ?? 'Not provided',
+        'exercise': (_localUserState ?? widget.localUser)?.activityLevel ?? 'Not provided',
         'sleep': 'Track your sleep quality daily',
         'water': 'Aim for 1.5-2L daily',
         'stress': 'Practice stress-management routines',
@@ -221,6 +224,40 @@ class _HealthReportPageState extends State<HealthReportPage>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _animController.forward();
     });
+    // If no prediction data was provided, fetch latest from backend
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fetchLatestPredictionIfNeeded();
+    });
+  }
+
+  final BackendApiService _api = BackendApiService();
+  final LocalStorageService _localStorage = LocalStorageService.instance;
+  Map<String, dynamic>? _fetchedPrediction;
+  bool _isFetchingPrediction = false;
+  LocalUserProfile? _localUserState;
+
+  Future<void> _fetchLatestPredictionIfNeeded() async {
+    if (widget.predictionData != null) return;
+    if (widget.userId == null || widget.userId!.isEmpty) return;
+    if (_isFetchingPrediction) return;
+    _isFetchingPrediction = true;
+    try {
+      final latest = await _api.getLatestPrediction(widget.userId!);
+      final local = await _localStorage.findByUserId(widget.userId!);
+      if (!mounted) return;
+      setState(() {
+        _fetchedPrediction = latest;
+        if (widget.localUser == null) {
+          _localUserState = local;
+        }
+        _isFetchingPrediction = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isFetchingPrediction = false;
+      });
+    }
   }
 
   @override
@@ -239,53 +276,138 @@ class _HealthReportPageState extends State<HealthReportPage>
         ),
       );
 
-  void _downloadPDF() => _snack('PDF download functionality will be added');
-  void _shareReport() => _snack('Share report functionality will be added');
-  void _emailReport() => _snack('Email report functionality will be added');
-  void _printReport() => _snack('Print report functionality will be added');
+  Future<void> _downloadPDF() async {
+    try {
+      final regularFont = await PdfGoogleFonts.notoSansRegular();
+      final boldFont = await PdfGoogleFonts.notoSansBold();
+      final pdf = pw.Document(
+        theme: pw.ThemeData.withFont(
+          base: regularFont,
+          bold: boldFont,
+        ),
+      );
+
+      pdf.addPage(
+        pw.MultiPage(
+          build: (context) => [
+            pw.Text(
+              'Health Report',
+              style: pw.TextStyle(
+                fontSize: 24,
+                fontWeight: pw.FontWeight.bold,
+              ),
+            ),
+            pw.SizedBox(height: 20),
+            pw.Text('Patient Name: ${reportData['patientName']}'),
+            pw.Text('Patient ID: ${reportData['patientId']}'),
+            pw.Text('Age: ${reportData['age']}'),
+            pw.Text('Date: ${reportData['date']}'),
+            pw.SizedBox(height: 20),
+            pw.Text(
+              'Risk Assessment',
+              style: pw.TextStyle(
+                fontSize: 18,
+                fontWeight: pw.FontWeight.bold,
+              ),
+            ),
+            pw.SizedBox(height: 10),
+            ...((reportData['riskAssessment'] as List).map(
+              (risk) => pw.Padding(
+                padding: const pw.EdgeInsets.only(bottom: 8),
+                child: pw.Text(
+                  '${risk['condition']} : ${(risk['probability'] * 100).toStringAsFixed(1)}%',
+                ),
+              ),
+            )),
+            pw.SizedBox(height: 20),
+            pw.Text(
+              'Recommendations',
+              style: pw.TextStyle(
+                fontSize: 18,
+                fontWeight: pw.FontWeight.bold,
+              ),
+            ),
+            pw.SizedBox(height: 10),
+            ...((reportData['recommendations'] as List).map(
+              (rec) => pw.Bullet(text: rec.toString()),
+            )),
+          ],
+        ),
+      );
+
+      final bytes = await pdf.save();
+      await Printing.sharePdf(
+        bytes: bytes,
+        filename: 'health_report.pdf',
+      );
+
+      _snack('PDF generated successfully');
+    } catch (e, stackTrace) {
+      debugPrint('Failed to generate PDF: $e');
+      debugPrintStack(stackTrace: stackTrace);
+      _snack('Failed to generate PDF: $e');
+    }
+  }
 
   List<Widget> _buildAiSummaryContent(String reportText) {
-    const double baseFontSize = 14;
-    final lines = reportText.split('\n');
+  const double baseFontSize = 14;
 
-    return lines.map((line) {
-      final trimmed = line.trim();
-      if (trimmed.isEmpty) {
-        return const SizedBox(height: 8);
-      }
+  final lines = reportText.split('\n');
 
-      if (trimmed.startsWith('##')) {
-        final heading = trimmed.replaceFirst(RegExp(r'^##\s*'), '');
-        return Padding(
-          padding: const EdgeInsets.only(top: 6, bottom: 4),
-          child: Text(
-            heading,
-            style: TextStyle(
-              fontSize: baseFontSize + 2,
-              fontWeight: FontWeight.bold,
-              color: pinkStart,
-              height: 1.5,
-            ),
-          ),
-        );
-      }
+  // Known section headings
+  const headings = [
+    'Summary:',
+    'What the risk scores mean:',
+    'Possible contributing factors from current profile:',
+    'Action plan for next 2 weeks:',
+    'When to seek medical review:',
+    'Medical disclaimer:',
+  ];
 
+  return lines.map((line) {
+    final trimmed = line.trim();
+
+    if (trimmed.isEmpty) {
+      return const SizedBox(height: 8);
+    }
+
+    // Remove markdown bold markers if present
+    final cleanText = trimmed.replaceAll('**', '').trim();
+
+    // Detect heading
+    final isHeading = headings.contains(cleanText);
+
+    if (isHeading) {
       return Padding(
-        padding: const EdgeInsets.only(bottom: 4),
+        padding: const EdgeInsets.only(top: 10, bottom: 6),
         child: Text(
-          trimmed,
-          softWrap: true,
-          style: const TextStyle(
-            fontSize: baseFontSize,
-            color: Colors.black87,
-            height: 1.6,
+          cleanText,
+          style: TextStyle(
+            fontSize: baseFontSize + 2,
+            fontWeight: FontWeight.bold,
+            color: pinkStart,
+            height: 1.5,
           ),
         ),
       );
-    }).toList();
-  }
+    }
 
-  // ΓöÇΓöÇ BUILD ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    // Normal paragraph/bullet text
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Text(
+        cleanText,
+        softWrap: true,
+        style: const TextStyle(
+          fontSize: baseFontSize,
+          color: Colors.black87,
+          height: 1.6,
+        ),
+      ),
+    );
+  }).toList();
+}
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -346,7 +468,6 @@ class _HealthReportPageState extends State<HealthReportPage>
     );
   }
 
-  // ΓöÇΓöÇ Header ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
   Widget _buildHeader() {
     return Stack(
       children: [
@@ -407,9 +528,6 @@ class _HealthReportPageState extends State<HealthReportPage>
     );
   }
 
-  // ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
-  //  OVERALL RISK SUMMARY BAR  (retained as-is)
-  // ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
   Widget _buildOverallRiskBar() {
     final prob = _overallProbability;
     final cfg = riskConfig(prob);
@@ -1058,29 +1176,17 @@ class _HealthReportPageState extends State<HealthReportPage>
     );
   }
 
-  // ΓöÇΓöÇ Action Buttons ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
-  Widget _buildActionButtons() {
-    return GridView.count(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisCount: 2,
-      crossAxisSpacing: 12,
-      mainAxisSpacing: 12,
-      childAspectRatio: 2.5,
-      children: [
-        _buildActionButton(
-            icon: Icons.picture_as_pdf,
-            label: 'Download PDF',
-            onTap: _downloadPDF),
-        _buildActionButton(
-            icon: Icons.share, label: 'Share Report', onTap: _shareReport),
-        _buildActionButton(
-            icon: Icons.email, label: 'Email Report', onTap: _emailReport),
-        _buildActionButton(
-            icon: Icons.print, label: 'Print Report', onTap: _printReport),
-      ],
-    );
-  }
+  // ✅ Only Download PDF button
+Widget _buildActionButtons() {
+  return SizedBox(
+    width: double.infinity,
+    child: _buildActionButton(
+      icon: Icons.picture_as_pdf,
+      label: 'Download PDF',
+      onTap: _downloadPDF,
+    ),
+  );
+}
 
   Widget _buildActionButton({
     required IconData icon,
