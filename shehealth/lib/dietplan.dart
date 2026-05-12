@@ -128,12 +128,6 @@ final Map<String, Map<String, dynamic>>
     'accentColor': const Color(0xFFF3E8FF),
   },
 
-  'Thyroid': {
-    'icon': Icons.self_improvement,
-    'primaryColor': const Color(0xFF2E86AB),
-    'accentColor': const Color(0xFFE0F4FF),
-  },
-
   'Cervical Cancer': {
     'icon': Icons.shield_outlined,
     'primaryColor': const Color(0xFF1E8A6E),
@@ -158,7 +152,7 @@ class _DietPlanPageState extends State<DietPlanPage> with TickerProviderStateMix
   bool _isLoading = false;
   Map<String, bool> _notificationSent = {};
   
-  final List<String> _diseases = ['PCOS', 'Endometriosis', 'Thyroid', 'Cervical Cancer'];
+  final List<String> _diseases = ['PCOS', 'Endometriosis','Cervical Cancer'];
   String _currentDisease = 'PCOS';
 
   @override
@@ -166,18 +160,25 @@ class _DietPlanPageState extends State<DietPlanPage> with TickerProviderStateMix
   void initState() {
   super.initState();
   
-
+  _triggerNotifications();
   _tabController = TabController(
     length: _diseases.length,
     vsync: this,
   );
 
   _tabController.addListener(_onDiseaseChanged);
-
+  
   // Generate ONLY current tab
   _generateCurrentDiseasePlan();
 }
+void _triggerNotifications() {
+  // 🔹 Fetch dynamic data (NO hardcoding)
+  String diet = "Your diet plan for today!!";
+  String workout = "Your workout plan for today!!";
 
+  NotificationService.scheduleDietPlan(diet);
+  NotificationService.scheduleWorkout(workout);
+}
   void _onDiseaseChanged() {
 
   if (!_tabController.indexIsChanging) {
@@ -690,11 +691,6 @@ For PCOS:
 - omega 3 rich foods
 - avoid sugar and refined carbs
 
-For Thyroid:
-- iodine rich foods
-- selenium rich foods
-- avoid excessive soy and processed foods
-
 For Endometriosis:
 - anti inflammatory foods
 - omega 3 foods
@@ -922,7 +918,6 @@ if (decodedRaw is! List &&
 }
 
       success = true;
-
       break;
 
     } catch (e) {

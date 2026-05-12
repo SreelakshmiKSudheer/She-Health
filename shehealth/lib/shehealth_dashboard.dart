@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'dart:convert';
 import 'report.dart';
 import 'symptom_update_page.dart';
@@ -105,6 +106,9 @@ class _DashboardPageState extends State<DashboardPage> {
           builder: (context) => const SurveyPage(),
         ),
       );
+      // After returning from the survey, reload dashboard data so any changed
+      // questionnaire answers update the overall health and risk assessment.
+      if (mounted) await _loadDashboardData();
     }
 
     // Reset to home when returning
@@ -140,6 +144,9 @@ class _DashboardPageState extends State<DashboardPage> {
       Map<String, dynamic>? prediction;
       try {
         prediction = await _backendApi.getLatestPrediction(userId);
+        if (kDebugMode) {
+          debugPrint('[_loadDashboardData] raw prediction: ${prediction}');
+        }
       } catch (_) {
         prediction = null;
       }
@@ -279,7 +286,12 @@ class _DashboardPageState extends State<DashboardPage> {
         final value = entry.value is Map<String, dynamic>
             ? entry.value as Map<String, dynamic>
             : <String, dynamic>{};
-        final probability = (value['probability'] as num? ?? 0).toDouble();
+        double probability = (value['probability'] as num? ?? 0).toDouble();
+        if (probability > 1.0) {
+          probability = (probability / 100.0).clamp(0.0, 1.0);
+        } else {
+          probability = probability.clamp(0.0, 1.0);
+        }
         final label = value['label'] as String? ?? 'Unknown';
         return {
           'condition': entry.key,
@@ -372,8 +384,13 @@ This report is a screening-oriented interpretation and not a clinical diagnosis.
     if (predictions is Map<String, dynamic>) {
       predictions.forEach((key, value) {
         if (value is Map<String, dynamic>) {
-          final prob = value['probability'] ?? 0;
-          if (prob > 30) {
+          double prob = (value['probability'] as num? ?? 0).toDouble();
+          if (prob > 1.0) {
+            prob = (prob / 100.0).clamp(0.0, 1.0);
+          } else {
+            prob = prob.clamp(0.0, 1.0);
+          }
+          if (prob >= 0.30) {
             conditionSummary += "$key, ";
           }
         }
@@ -491,6 +508,16 @@ Rules:
     }
   }
 
+  void _triggerNotifications() {
+  // 🔹 Fetch dynamic data (NO hardcoding)
+  String tip = "Your health tip for today!!";
+  String reminder = "Your reminder for today!!";
+
+  // 🔔 Trigger all
+  NotificationService.scheduleHealthTip(tip);
+  NotificationService.scheduleReminder(reminder);
+}
+
   Future<void> _initializeDashboard() async {
 
   await _loadDashboardData();
@@ -499,15 +526,6 @@ Rules:
 
   await _fetchDailyTip();
 }
-
-  Future<void> _openHealthArticle() async {
-    final Uri url =
-        Uri.parse("https://www.google.com/search?q=women+health+tips+daily");
-
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url, mode: LaunchMode.externalApplication);
-    }
-  }
 
   IconData _getIcon(String? icon) {
   switch (icon) {
@@ -527,6 +545,7 @@ Rules:
   @override
 void initState() {
   super.initState();
+   _triggerNotifications();
   _loadDashboardData().then((_) {
     _generateReminders(); // AFTER user data loads
   });
@@ -661,7 +680,7 @@ Widget build(BuildContext context) {
                 child: Row(
                   children: [
                     ElevatedButton(
-                      onPressed: () {
+                      onPressed: () async {
                         final userId = _localUser?.userId;
                         if (userId == null || userId.isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -672,13 +691,16 @@ Widget build(BuildContext context) {
                           );
                           return;
                         }
-                        Navigator.push(
+                        await Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (context) =>
                                 SymptomUpdatePage(userId: userId),
                           ),
                         );
+                        // After returning from symptom update, reload dashboard data so
+                        // any changed answers are reflected in the overall risk.
+                        await _loadDashboardData();
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
@@ -871,14 +893,48 @@ Widget build(BuildContext context) {
   }
 
   Widget _buildDrawerItem(IconData icon, String title, GlobalKey key) {
-    return ListTile(
-      leading: Icon(icon, color: const Color(0xFFE59393)),
-      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w500)),
-      onTap: () => _scrollToSection(key),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-    );
-  }
+  return ListTile(
+    leading: Icon(icon, color: const Color(0xFFE59393)),
+    title: Text(
+      title,
+      style: const TextStyle(fontWeight: FontWeight.w500),
+    ),
+
+    onTap: () {
+
+      // Expand proper section first
+      if (title == 'Health Trends') {
+        setState(() {
+          _expandedSection = 'health_trends';
+        });
+      }
+
+      else if (title == 'Risk Assessment') {
+        setState(() {
+          _expandedSection = 'risk_assessment';
+        });
+      }
+
+      else if (title == "Today's Reminders") {
+        setState(() {
+          _expandedSection = 'reminders';
+        });
+      }
+
+      // Delay needed so widget builds before scrolling
+      Future.delayed(const Duration(milliseconds: 200), () {
+        _scrollToSection(key);
+      });
+    },
+
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(12),
+    ),
+
+    contentPadding:
+        const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+  );
+}
 
   Widget _buildHeader() {
     return Stack(
@@ -1214,7 +1270,6 @@ Widget build(BuildContext context) {
 
   Widget _buildMainContent() {
     return Column(
-      key: _healthTrendsKey,
       children: [
         Wrap(
           spacing: 12,
@@ -1317,17 +1372,30 @@ Widget build(BuildContext context) {
   }
 
   Widget _buildExpandedContent() {
-    switch (_expandedSection) {
-      case 'health_trends':
-        return _buildHealthTrendsContent();
-      case 'risk_assessment':
-        return _buildRiskAssessmentContent();
-      case 'reminders':
-        return _buildRemindersContent();
-      default:
-        return const SizedBox.shrink();
-    }
+  switch (_expandedSection) {
+
+    case 'health_trends':
+      return Container(
+        key: _healthTrendsKey,
+        child: _buildHealthTrendsContent(),
+      );
+
+    case 'risk_assessment':
+      return Container(
+        key: _riskAssessmentKey,
+        child: _buildRiskAssessmentContent(),
+      );
+
+    case 'reminders':
+      return Container(
+        key: _remindersKey,
+        child: _buildRemindersContent(),
+      );
+
+    default:
+      return const SizedBox.shrink();
   }
+}
 
   // Returns data based on the selected trend tab
   Map<String, Map<String, dynamic>> _getTrendData() {
@@ -1421,18 +1489,30 @@ Widget build(BuildContext context) {
     }
 
     double maxProb = 0;
-    String maxLabel = 'No Risk';
     for (final item in predictions.values) {
       if (item is! Map<String, dynamic>) {
         continue;
       }
-      final p = (item['probability'] as num? ?? 0).toDouble();
+      double p = (item['probability'] as num? ?? 0).toDouble();
+      if (p > 1.0) {
+        p = (p / 100.0).clamp(0.0, 1.0);
+      } else {
+        p = p.clamp(0.0, 1.0);
+      }
       if (p >= maxProb) {
         maxProb = p;
-        maxLabel = item['label'] as String? ?? maxLabel;
       }
     }
-    return maxLabel;
+    return _riskLabelFromProb(maxProb);
+  }
+
+  String _riskLabelFromProb(double prob) {
+    // Keep thresholds aligned with report.dart riskConfig().
+    if (prob < 0.10) return 'No Risk';
+    if (prob < 0.30) return 'Low Risk';
+    if (prob < 0.55) return 'Moderate Risk';
+    if (prob < 0.75) return 'High Risk';
+    return 'Very High Risk';
   }
 
   List<Map<String, dynamic>> get _predictionRows {
@@ -1448,14 +1528,21 @@ Widget build(BuildContext context) {
         continue;
       }
       final label = value['label'] as String? ?? 'Unknown';
-      final prob = (value['probability'] as num? ?? 0).toDouble();
+      double prob = (value['probability'] as num? ?? 0).toDouble();
+      // Normalize probabilities: backend may return 0..1 or 0..100
+      if (prob > 1.0) {
+        prob = (prob / 100.0).clamp(0.0, 1.0);
+      } else {
+        prob = prob.clamp(0.0, 1.0);
+      }
 
       Color color;
-      if (prob < 10) {
+      // Use 0..1 thresholds consistent with report.dart
+      if (prob < 0.10) {
         color = Colors.green;
-      } else if (prob < 30) {
+      } else if (prob < 0.30) {
         color = Colors.lightGreen;
-      } else if (prob < 55) {
+      } else if (prob < 0.55) {
         color = Colors.orange;
       } else {
         color = Colors.red;
@@ -1465,10 +1552,20 @@ Widget build(BuildContext context) {
         'name': entry.key,
         'label': label,
         'color': color,
+        'probability': prob,
       });
     }
 
     return rows;
+  }
+
+  String _statusLabelFromProb(double prob) {
+    // prob is normalized 0..1
+    if (prob < 0.10) return 'No Risk';
+    if (prob < 0.30) return 'Low';
+    if (prob < 0.55) return 'Moderate';
+    if (prob < 0.75) return 'High';
+    return 'Very High';
   }
 
   Widget _buildHealthTrendsContent() {
@@ -1562,12 +1659,16 @@ Widget build(BuildContext context) {
         if (_predictionRows.isEmpty)
           const Text('No assessment available. Complete questionnaire first.'),
         ..._predictionRows.map(
-          (item) => _buildRiskItem(
-            item['name'] as String,
-            'Latest',
-            item['label'] as String,
-            item['color'] as Color,
-          ),
+          (item) {
+            final prob = (item['probability'] as num? ?? 0).toDouble();
+            final statusLabel = _statusLabelFromProb(prob);
+            return _buildRiskItem(
+              item['name'] as String,
+              'Latest',
+              statusLabel,
+              item['color'] as Color,
+            );
+          },
         ),
         const SizedBox(height: 16),
         SizedBox(
@@ -1818,48 +1919,30 @@ Widget build(BuildContext context) {
               const SizedBox(width: 16),
               Expanded(
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Daily Health Tip',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      _isTipLoading
-                          ? "Generating today's health tip..."
-                          : _dailyTip,
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 13,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: ElevatedButton(
-                        onPressed: _openHealthArticle,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: const Color(0xFFE59393),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 10),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                        ),
-                        child: const Text(
-                          'Learn More',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+  crossAxisAlignment: CrossAxisAlignment.start,
+  children: [
+    const Text(
+      'Daily Health Tip',
+      style: TextStyle(
+        color: Colors.white,
+        fontSize: 18,
+        fontWeight: FontWeight.bold,
+      ),
+    ),
+
+    const SizedBox(height: 8),
+
+    Text(
+      _isTipLoading
+          ? "Generating today's health tip..."
+          : _dailyTip,
+      style: const TextStyle(
+        color: Colors.white70,
+        fontSize: 13,
+      ),
+    ),
+  ],
+),
               ),
             ],
           ),
