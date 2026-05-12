@@ -204,6 +204,18 @@ class BackendApiService {
         .toList();
   }
 
+  Future<List<QuestionnaireQuestion>> fetchThyroidQuestions() async {
+    final response = await _client.get(_uri('/thyroid/questions'));
+    if (response.statusCode >= 400) {
+      throw Exception('Failed to fetch thyroid questionnaire: ${response.body}');
+    }
+
+    final list = jsonDecode(response.body) as List<dynamic>;
+    return list
+        .map((e) => QuestionnaireQuestion.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
   Future<void> submitResponses({
     required String userId,
     required Map<String, List<String>> selectedOptionIdsByQuestion,
@@ -254,6 +266,55 @@ class BackendApiService {
     }
   }
 
+  Future<void> submitThyroidResponses({
+    required String userId,
+    required Map<String, List<String>> selectedOptionIdsByQuestion,
+  }) async {
+    final payload = {
+      'user_id': userId,
+      'responses': selectedOptionIdsByQuestion.entries
+          .map(
+            (entry) => {
+              'question_id': entry.key,
+              'selected_option_ids': entry.value,
+            },
+          )
+          .toList(),
+    };
+
+    final response = await _postWithLoopbackFallback('/thyroid/responses/submit', payload);
+    if (response.statusCode >= 400) {
+      throw Exception('Failed to submit thyroid responses: ${response.body}');
+    }
+  }
+
+  Future<void> updateThyroidResponses({
+    required String userId,
+    required Map<String, List<String>> selectedOptionIdsByQuestion,
+  }) async {
+    final payload = {
+      'user_id': userId,
+      'responses': selectedOptionIdsByQuestion.entries
+          .map(
+            (entry) => {
+              'question_id': entry.key,
+              'selected_option_ids': entry.value,
+            },
+          )
+          .toList(),
+    };
+
+    final response = await _requestWithLoopbackFallback(
+      method: 'PATCH',
+      path: '/thyroid/responses/update',
+      payload: payload,
+    );
+
+    if (response.statusCode >= 400) {
+      throw Exception('Failed to update thyroid responses: ${response.body}');
+    }
+  }
+
   Future<Map<String, dynamic>> runPrediction(String userId) async {
     final response = await _client.post(_uri('/predict/$userId'));
     if (response.statusCode >= 400) {
@@ -267,6 +328,35 @@ class BackendApiService {
     if (response.statusCode >= 400) {
       throw Exception('Failed to fetch latest prediction: ${response.body}');
     }
+    return jsonDecode(response.body) as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> getThyroidPrediction(String userId) async {
+    final response = await _client.post(_uri('/thyroid/predict/$userId'));
+    if (response.statusCode >= 400) {
+      throw Exception('Failed to run thyroid prediction: ${response.body}');
+    }
+    return jsonDecode(response.body) as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> getLatestThyroidPrediction(String userId) async {
+    final response = await _client.get(_uri('/thyroid/predict/latest/$userId'));
+    if (response.statusCode >= 400) {
+      throw Exception('Failed to fetch latest thyroid prediction: ${response.body}');
+    }
+    return jsonDecode(response.body) as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> validateThyroidFeatureCoverage(String userId) async {
+    final response = await _requestWithLoopbackFallback(
+      method: 'GET',
+      path: '/thyroid/predict/validate/$userId',
+    );
+
+    if (response.statusCode >= 400) {
+      throw Exception('Failed to validate thyroid feature coverage: ${response.body}');
+    }
+
     return jsonDecode(response.body) as Map<String, dynamic>;
   }
 

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import 'services/session_service.dart';
+import 'thyroid_questionnaire.dart';
+import 'thyroid_report.dart';
 // ── Entry point ──────────────────────────────────────────────────────────────
 class SurveyPage extends StatefulWidget {
   const SurveyPage({super.key});
@@ -160,12 +163,81 @@ class _SurveyPageState extends State<SurveyPage> {
         child: Column(
           children: [
             _buildHeader(),
+            // Thyroid entry sits above the regular category filter and list
+            _buildThyroidEntry(),
             _buildCategoryFilter(),
             Expanded(
               child: ListView.builder(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                 itemCount: _filtered.length,
                 itemBuilder: (ctx, i) => _buildSurveyCard(_filtered[i]),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildThyroidEntry() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: kPinkBorder),
+          boxShadow: [BoxShadow(color: kPink.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 3))],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(color: kPink.withOpacity(0.08), borderRadius: BorderRadius.circular(12)),
+              child: const Icon(Icons.monitor_heart, color: kPink, size: 28),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Thyroid Assessment', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Colors.black87)),
+                  const SizedBox(height: 6),
+                  Text('Check thyroid-related symptoms and risk. Questionnaire and report are separate flows.', style: TextStyle(fontSize: 13, color: Colors.grey.shade700)),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () async {
+                            final sess = SessionService();
+                            final uid = await sess.getCurrentUserId();
+                            if (uid == null || uid.isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please sign in to start the questionnaire'), backgroundColor: kPink));
+                              return;
+                            }
+                            Navigator.push(context, MaterialPageRoute(builder: (_) => ThyroidQuestionnairePage(userId: uid)));
+                          },
+                          child: const Text('Start Questionnaire'),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            final sess = SessionService();
+                            final uid = await sess.getCurrentUserId();
+                            Navigator.push(context, MaterialPageRoute(builder: (_) => ThyroidReportPage(userId: uid)));
+                          },
+                          style: ElevatedButton.styleFrom(backgroundColor: kPink),
+                          child: const Text('View Report', style: TextStyle(color: Colors.white)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
           ],
