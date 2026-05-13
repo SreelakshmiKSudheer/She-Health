@@ -133,11 +133,6 @@ class _ThyroidReportPageState extends State<ThyroidReportPage> {
     return result?['category_name']?.toString() ?? 'Unknown';
   }
 
-  String _statusLabel() {
-    final result = _thyroidResult;
-    return result?['status']?.toString() ?? 'unknown';
-  }
-
   Map<String, dynamic> _riskConfig(double p) {
     if (p < 10) {
       return {'label': 'Very Low Risk', 'color': const Color(0xFF9D8EC7), 'bg': const Color(0xFFF3F0FB), 'border': const Color(0xFFD4CCF0), 'icon': Icons.check_circle_outline};
@@ -320,20 +315,6 @@ class _ThyroidReportPageState extends State<ThyroidReportPage> {
               ),
             ),
             const SizedBox(height: 16),
-            if ((_statusLabel()).isNotEmpty && _statusLabel() != 'ok')
-              Container(
-                margin: const EdgeInsets.only(bottom: 16),
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFF7E6),
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: const Color(0xFFF1D59B)),
-                ),
-                child: Text(
-                  'Prediction status: ${_statusLabel()}',
-                  style: const TextStyle(color: Color(0xFF8A5A12), fontWeight: FontWeight.w600),
-                ),
-              ),
             if (comparison is Map<String, dynamic>) ...[
               _sectionTitle('Trend', subtitle: 'How this assessment compares with the previous thyroid prediction.'),
               ...[
@@ -400,7 +381,6 @@ class _ThyroidReportPageState extends State<ThyroidReportPage> {
                   _detailRow('Probability', '${probability.toStringAsFixed(2)}%'),
                   _detailRow('Risk level', _riskLevel().toString()),
                   _detailRow('Category', _categoryLabel()),
-                  _detailRow('Status', _statusLabel()),
                   _detailRow('User ID', widget.userId ?? 'Not available'),
                 ],
               ),

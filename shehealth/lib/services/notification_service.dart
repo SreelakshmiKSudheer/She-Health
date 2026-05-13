@@ -146,8 +146,7 @@ static void handleNavigation(String payload) {
         id,
         title,
         body,
-        tz.TZDateTime.now(tz.local)
-    .add(const Duration(seconds: 10)),
+        tz.TZDateTime.now(tz.local).add(const Duration(seconds: 5)),
         notificationDetails,
         payload: payload,
         uiLocalNotificationDateInterpretation:
