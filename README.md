@@ -1,6 +1,6 @@
 # 🩺 She-Health
 
-### *Empowering Preventive Women’s Healthcare Through AI-Driven Risk Prediction*
+### *Empowering Preventive Women’s Healthcare Through ML-Based Risk Prediction*
 
 She-Health is an AI-powered healthcare prediction system designed to support **early detection and preventive screening** for critical women’s health conditions using Machine Learning.
 
@@ -24,56 +24,26 @@ Many women’s health conditions remain undetected during their early stages due
 
 She-Health addresses these challenges by developing an intelligent prediction system capable of:
 
-* Identifying high-risk patients early
-* Supporting preventive healthcare
-* Assisting healthcare professionals in decision-making
-* Reducing diagnostic delays
+* Predict risks of PCOD/PCOS, Endometriosis, and Cervical Cancer
+* Provide personalised lifestyle and dietary recommendations
+* Enable early awareness and preventive healthcare
+* Generate health reports for medical consultations
+* Ensure user-friendly access with strong data privacy and security
 
 ---
 
-# ✨ Features
+## Features
 
-## 🧬 Cervical Cancer Risk Prediction
-
-Predicts cervical cancer risk using:
-
-* Medical history
-* Reproductive health information
-* Smoking habits
-* STD history
-* Screening test results
-
-### Important Features
-
-* Age
-* Smoking history
-* Number of sexual partners
-* Hormonal contraceptive usage
-* IUD usage
-* Hinselmann test
-* Schiller test
-* Cytology results
+* Secure user access and data privacy
+* Health data logging
+* ML-Powered risk prediction
+* Personalised guidance and reminders
+* LLM-Based health report generation
+* AI health chatbot
 
 ---
 
-## 🦋 Thyroid Disorder Prediction
-
-Predicts thyroid abnormalities using hormonal and diagnostic measurements.
-
-### Important Features
-
-* TSH
-* TT4
-* FTI
-* T4U
-* T3
-* Pregnancy information
-* Thyroxine medication history
-* Thyroid surgery history
-
----
-
-# 🧠 Machine Learning Models Used
+## 🧠 Machine Learning Models Used
 
 The project compares multiple ML algorithms to identify the best-performing models.
 
@@ -85,37 +55,65 @@ The project compares multiple ML algorithms to identify the best-performing mode
 
 ---
 
-# 📊 Final Selected Models
+## 📊 Final Selected Models
 
-## Cervical Cancer Prediction
+### Endometriosis Prediction
 
-### ✅ Calibrated Logistic Regression
+#### ✅ Calibrated AdaBoost
 
-### Why?
+** Performance Analysis **
+* Accuracy: 0.880
+* Precision: 0.867
+* Recall: 0.915
+* ROC-AUC: 0.962
+* PR-AUC: 0.967
+* Brier Score: 0.082
 
-* Clinically interpretable
-* Reliable probability estimates
-* Strong recall-oriented performance
-* Better suited for imbalanced medical datasets
+### PCOS Prediction
+
+#### ✅ Calibrated XGBoost
+
+** Performance Analysis **
+* Accuracy: 0.796
+* Precision: 0.919
+* Recall: 0.810
+* ROC-AUC: 0.875
+* PR-AUC: 0.7521
+* Brier Score: 0.1076
+
+### Cervical Cancer Prediction
+
+#### ✅ Calibrated Logistic Regression
+
+** Performance Analysis **
+
+* Accuracy: 0.860
+* Precision: 0.956
+* Recall: 0.893
+* ROC-AUC: 0.672
+* PR-AUC: 0.268
+* Brier Score: 0.056
 
 ---
 
-## Thyroid Disorder Prediction
+### Thyroid Disorder Prediction
 
-### ✅ AdaBoost
+#### ✅ AdaBoost
 
-### Performance Highlights
+** Performance Analysis **
 
-* Accuracy ≈ 99.6%
-* ROC-AUC ≈ 0.986
-* PR-AUC ≈ 0.964
-* Very low Brier Score
+* Accuracy: 0.996
+* Precision: 0.998
+* Recall: 0.998
+* ROC-AUC: 0.985
+* PR-AUC: 0.964
+* Brier Score: 0.0047
 
 ---
 
-# ⚙️ Key Techniques Implemented
+## ⚙️ Key Techniques Implemented
 
-## ✅ Probability Calibration
+### ✅ Probability Calibration
 
 Implemented using:
 
@@ -127,7 +125,7 @@ Ensures predicted probabilities reflect real-world likelihoods.
 
 ---
 
-## ✅ Threshold Optimization
+### ✅ Threshold Optimization
 
 Instead of using the default threshold (0.5), thresholds were tuned for:
 
@@ -137,7 +135,7 @@ Instead of using the default threshold (0.5), thresholds were tuned for:
 
 ---
 
-## ✅ Risk Categorization
+### ✅ Risk Categorization
 
 | Probability Range | Risk Level     |
 | ----------------- | -------------- |
@@ -149,7 +147,7 @@ Instead of using the default threshold (0.5), thresholds were tuned for:
 
 ---
 
-# 🛠️ Tech Stack
+## 🛠️ Tech Stack
 
 | Technology   | Purpose               |
 | ------------ | --------------------- |
@@ -162,10 +160,12 @@ Instead of using the default threshold (0.5), thresholds were tuned for:
 | Joblib       | Model Serialization   |
 | Flutter      | Frontend Application  |
 | Dart         | Frontend Development  |
+| MongoDB      | Server Storage        |
+| FirebaseDB   | Chatbot Storage       |
 
 ---
 
-# 📂 Project Structure
+## 📂 Project Structure
 
 ```bash
 She-Health/
@@ -190,7 +190,7 @@ She-Health/
 
 ---
 
-# 🔄 System Workflow
+## 🔄 System Workflow
 
 ```text
 Patient Data
@@ -216,7 +216,7 @@ Clinical Decision Support
 
 ---
 
-# 📈 Evaluation Metrics
+## 📈 Evaluation Metrics
 
 The models were evaluated using:
 
@@ -230,7 +230,7 @@ The models were evaluated using:
 
 ---
 
-# 🧪 Dataset Preprocessing
+## 🧪 Dataset Preprocessing
 
 The datasets underwent extensive preprocessing including:
 
@@ -243,41 +243,44 @@ The datasets underwent extensive preprocessing including:
 
 ---
 
-# 💻 Running the Project Locally
+## 💻 Running the Project Locally
 
-## Backend Setup
+### Backend Setup
 
 ```bash
 cd backend
-
 python -m venv .venv
-
-# Activate environment
-# Windows
-.venv\Scripts\activate
-
-# Install dependencies
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+echo "*" > .venv\.gitignore
+pip install "fastapi[standard]"
 pip install -r requirements.txt
-
-# Run backend
-python app/main.py
+pip install uvicorn                             
 ```
-
+#### Run the Backend
+```bash
+uvicorn app.main:app --reload
+```
+OR
+```bash
+uvicorn app.main:app --host <ip_address> --port 8000
+```
 ---
 
-## Frontend Setup
+### Frontend Setup
 
 ```bash
 cd shehealth
-
+flutter clean
+flutter doctor
 flutter pub get
-
+flutter devices
 flutter run
 ```
 
 ---
 
-# 🔮 Future Enhancements
+## 🔮 Future Enhancements
 
 * Explainable AI (SHAP/LIME)
 * Web & Mobile Deployment
@@ -288,7 +291,7 @@ flutter run
 
 ---
 
-# 🤝 Contributors
+## 🤝 Contributors
 
 * [Sreelakshmi K](https://github.com/SreelakshmiKSudheer?utm_source=chatgpt.com)
 * [Nanditha K M](https://github.com/NandithaRaveendranath?utm_source=chatgpt.com)
@@ -297,13 +300,13 @@ flutter run
 
 ---
 
-# 🔗 Repository
+## 🔗 Repository
 
 [She-Health GitHub Repository](https://github.com/SreelakshmiKSudheer/She-Health?utm_source=chatgpt.com)
 
 ---
 
-# 📌 Conclusion
+## 📌 Conclusion
 
 She-Health demonstrates how Machine Learning can be effectively utilized for:
 
@@ -312,32 +315,3 @@ She-Health demonstrates how Machine Learning can be effectively utilized for:
 * Risk-based clinical decision support
 
 By combining calibrated probability prediction, advanced ML algorithms, and clinically motivated optimization techniques, the project delivers a reliable and deployment-ready healthcare prediction system aimed at improving women’s healthcare accessibility and early screening support.
-
-## Backend Setup and Execution
-```
-cd backend
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-echo "*" > .venv\.gitignore
-pip install "fastapi[standard]"
-pip install -r requirements.txt
-fastapi dev app.main.py
-pip install uvicorn                             
-uvicorn app.main:app --reload
-uvicorn app.main:app --host 10.186.204.75 --port 8000
-```
-Run the last two commands if the 3rd last one still shows error.
-
-## Flutter Web Login Persistence
-For web, local login data is stored per browser origin (host + port).
-Use a fixed port when running Flutter web so previously registered users remain available:
-```
-cd shehealth
-flutter run -d chrome --web-hostname 127.0.0.1 --web-port 8011
-flutter clean
-flutter doctor
-flutter pub get
-flutter devices
-flutter run
-```
