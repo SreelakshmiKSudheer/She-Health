@@ -61,7 +61,7 @@ The project compares multiple ML algorithms to identify the best-performing mode
 
 #### ✅ Calibrated AdaBoost
 
-** Performance Analysis **
+**Performance Analysis**
 * Accuracy: 0.880
 * Precision: 0.867
 * Recall: 0.915
@@ -73,7 +73,7 @@ The project compares multiple ML algorithms to identify the best-performing mode
 
 #### ✅ Calibrated XGBoost
 
-** Performance Analysis **
+**Performance Analysis**
 * Accuracy: 0.796
 * Precision: 0.919
 * Recall: 0.810
@@ -85,7 +85,7 @@ The project compares multiple ML algorithms to identify the best-performing mode
 
 #### ✅ Calibrated Logistic Regression
 
-** Performance Analysis **
+**Performance Analysis**
 
 * Accuracy: 0.860
 * Precision: 0.956
@@ -100,7 +100,7 @@ The project compares multiple ML algorithms to identify the best-performing mode
 
 #### ✅ AdaBoost
 
-** Performance Analysis **
+**Performance Analysis**
 
 * Accuracy: 0.996
 * Precision: 0.998
