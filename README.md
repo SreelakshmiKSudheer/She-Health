@@ -135,18 +135,6 @@ Instead of using the default threshold (0.5), thresholds were tuned for:
 
 ---
 
-### ✅ Risk Categorization
-
-| Probability Range | Risk Level     |
-| ----------------- | -------------- |
-| < 5%              | No Risk        |
-| 5–10%             | Low Risk       |
-| 10–25%            | Moderate Risk  |
-| 25–50%            | High Risk      |
-| > 50%             | Very High Risk |
-
----
-
 ## 🛠️ Tech Stack
 
 | Technology   | Purpose               |
